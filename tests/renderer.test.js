@@ -35,7 +35,7 @@ test('repeated inputs retarget one hop; landing occurs once, compresses body/til
   const original = globalThis.window;
   globalThis.window = { matchMedia: () => ({ matches: false }) };
   try {
-    const game = new Game();
+    const game = new Game(Math.random, { events: false });
     const renderer = new Renderer({ getContext: () => ({}) }, game);
     const climb = () => {
       if (game.state.facing !== game.nextDirection) renderer.handle(game.act(ACTION.TURN), ACTION.TURN);

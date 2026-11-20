@@ -8,13 +8,25 @@ const freeze = (object) => {
 export const ACTION = Object.freeze({ TURN: 'turn', CLIMB: 'climb' });
 export const MODE = Object.freeze({
   PLAYING: 'playing', STUMBLE: 'stumble',
-  // Reserved states only. Phase 1 never enters these states.
   BRAKE_WARNING: 'brake-warning', BRAKE_HOLD: 'brake-hold',
   AUTO_CLIMB: 'auto-climb', PUZZLE: 'puzzle', SHOP: 'shop',
 });
 
 export const CONFIG = freeze({
-  features: { brake: false, puzzle: false, shop: false, persistence: false, cooldown: false, pwa: false },
+  features: { brake: true, puzzle: true, battle: true, shop: false, persistence: true, cooldown: false, pwa: false },
+  arcade: { homeIdleMs: 800, maxFrameMs: 100, storageKey: 'uju-arcade-profile', storageVersion: 1, maxCoins: 999999999 },
+  brake: { minSteps: 15, maxSteps: 25, warningMs: 500, holdMs: 2000, coins: 15, autoSteps: 5, autoStepMs: 190 },
+  puzzle: { everySteps: 50, brakeExclusionSteps: 3, chestCoins: 50, celebrationMs: 1800, wrongMs: 450 },
+  battle: {
+    initialSquad: 5, maxVisibleSquad: 24, spriteFrames: 16, maxSquad: 999999, penalty: 3, penaltyFraction: 0.15,
+    speed: 4.8, steerSpeed: 3.8, maxX: 0.8, playerZ: 1.8,
+    shotMs: 125, bulletSpeed: 42, maxBullets: 100, maxEntities: 12,
+    maxPellets: 5, maxDamage: 24, particles: 160, particleMs: 850,
+    gateZ: 38, gateTimes: [1000, 10000], enemyEveryMs: 3800, bossAtMs: 19000,
+    bossHp: 300, bossHpPerWave: 150, bossSpawnZ: 18, bossCoins: 60, waveBreakMs: 2200,
+    barrelCoins: 5, enemyCoins: 2, gateCoins: 3, hitMs: 100, maxOperand: 20,
+    maxFrameMs: 250, fixedStepMs: 16, farZ: 48,
+  },
   view: { width: 720, height: 1280, safeMinPx: 48, controlFraction: 0.22, maxDpr: 2 },
   stairs: {
     originX: 360, stepX: 112, stepY: 82, minColumn: -2, maxColumn: 2,
@@ -50,13 +62,10 @@ export const CONFIG = freeze({
     turnHz: [360, 230], turnSeconds: 0.045, stumbleHz: [210, 80], stumbleSeconds: 0.24,
     comboSemitones: [0, 4, 7, 12], comboSpacingSeconds: 0.06,
   },
-  // Configuration contracts for later phases; no event, shop, save or PWA code yet.
+  // Contracts reserved for the next release.
   future: {
-    brake: { minSteps: 15, maxSteps: 25, warningMs: 500, holdMs: 2000, coins: 15, autoSteps: 5 },
-    puzzle: { everySteps: 50, brakeExclusionSteps: 3, chestCoins: 50 },
     shop: { idleMs: 800, longPressMs: 2000, pin: '0808', normalPriceMin: 100, normalPriceMax: 300, legendaryPrice: 500, legendaryCount: 3 },
     cooldown: { afterMs: 15 * 60 * 1000 },
-    storage: { version: 1, key: 'uju-block-run' },
     pwa: { iconSizes: [192, 512], orientation: 'portrait', display: 'fullscreen' },
   },
 });

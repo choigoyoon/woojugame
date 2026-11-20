@@ -1,185 +1,188 @@
-"""Headless Chromium checks of the standalone HTML, without a preview server.
+"""Native ES-module arcade checks through a real /woojugame/ HTTP mount.
 
-Requires Python Playwright and Chromium. The document is loaded into about:blank
-to avoid relying on OS file-URL navigation policies. This is not an Android device test.
+Mobile emulation is not an Android hardware test. Functional scenes use a controlled
+clock; the optional stress run uses real time and a continuously held trusted drag.
 """
 import argparse
 import json
-import os
-from pathlib import Path
-import shutil
+import math
 import time
-from playwright.sync_api import sync_playwright
+from browser_support import ArcadeBrowser, OUTPUT, ROOT
 
-ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / "test-results"
-OUTPUT.mkdir(exist_ok=True)
-parser = argparse.ArgumentParser()
-parser.add_argument("--stress-seconds", type=int, default=5)
-parser.add_argument("--stress-hz", type=float, default=8)
-args = parser.parse_args()
-if args.stress_seconds <= 0 or args.stress_hz <= 0:
-    parser.error("stress duration and frequency must be positive")
+parser=argparse.ArgumentParser()
+parser.add_argument('--stress-seconds',type=int,default=5)
+parser.add_argument('--stress-hz',type=float,default=9)
+args=parser.parse_args()
+if args.stress_seconds<=0 or args.stress_hz<=0:parser.error('duration and frequency must be positive')
+report={'mode':'headless Chromium mobile emulation, real HTTP /woojugame/ ES modules','checks':[],'viewports':[]}
 
+with ArcadeBrowser() as h:
+    p=h.page
+    report['browser']=h.browser.version
+    assert h.state()['screen']=='lobby'
+    h.tap('mode-runner');assert h.state()['screen']=='lobby'
+    h.tap('mode-plaza');assert h.state()['screen']=='lobby'
+    h.capture('01-lobby')
+    h.tap('avatar');assert h.state()['screen']=='profile';h.capture('02-profile');h.tap('home')
+    for mode in ['lobby','stairs','battle']:
+        if mode!='lobby':h.tap('mode-'+mode)
+        for width,height in [(360,800),(412,915),(344,882),(768,1024),(1024,1366),(915,412)]:
+            p.set_viewport_size({'width':width,'height':height});h.advance(80)
+            box=p.locator('#game').bounding_box()
+            assert abs(box['width']/box['height']-9/16)<.001
+            assert box['y']>=47.9 and height-box['y']-box['height']>=47.9
+            assert abs(box['x']*2+box['width']-width)<1
+            for button in p.locator('.ui-control:visible').all():
+                b=button.bounding_box();assert b['x']>=-.1 and b['x']+b['width']<=width+.1
+                assert b['y']>=47.9 and b['y']+b['height']<=height-47.9
+            if mode=='stairs':assert abs(p.locator('#climb').bounding_box()['height']/box['height']-.22)<.001
+            report['viewports'].append({'screen':mode,'width':width,'height':height,'passed':True})
+        p.set_viewport_size({'width':412,'height':915});h.advance(80)
+        if mode!='lobby':h.home()
+    report['checks'].append('three screens × six viewports, centered 9:16, safe areas, full controls, locked future cartridges')
 
-def snapshot(page):
-    return page.evaluate("window.__uju.snapshot()")
+    h.tap('mode-stairs');initial_coins=h.state()['profile']['coins'];h.tap('climb');h.advance(72);h.capture('03-stair-jump')
+    assert h.state()['stairs']['step']==1 and h.state()['profile']['coins']==initial_coins+1
+    assert h.state()['audioState']=='running'
+    h.tap('home');assert h.state()['screen']=='stairs' and not h.state()['canHome']
+    s=h.state()['stairs']
+    if s['facing']==s['nextDirection']:h.tap('turn')
+    before=h.state()['stairs'];points=[]
+    for i,action in enumerate(['turn','climb'],1):
+        box=p.locator('#'+action).bounding_box();points.append({'id':i,'x':box['x']+box['width']/2,'y':box['y']+box['height']/2})
+    h.cdp.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':points})
+    assert h.state()['activeInputs']==2
+    h.cdp.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]})
+    after=h.state()['stairs'];assert after['step']==before['step']+1
+    assert after['metrics']['received']==before['metrics']['received']+2
+    assert h.state()['activeInputs']==0
+    assert p.evaluate("!document.querySelector('#game').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true}))")
+    if after['facing']==after['nextDirection']:h.tap('turn')
+    coins=h.state()['profile']['coins'];step=h.state()['stairs']['step'];h.tap('climb');h.advance(128);h.capture('04-stair-stumble')
+    assert h.state()['stairs']['mode']=='stumble' and h.state()['stairs']['combo']==0
+    assert h.state()['profile']['coins']==coins and h.state()['stairs']['step']==step
+    p.evaluate("window.dispatchEvent(new Event('pagehide'))");frozen=h.state();h.advance(1500)
+    assert h.state()['frames']==frozen['frames'] and h.state()['stairs']['stumbleRemainingMs']==frozen['stairs']['stumbleRemainingMs']
+    p.evaluate("window.dispatchEvent(new Event('pageshow'))");h.advance(1100)
+    assert h.state()['stairs']['mode']=='playing'
+    h.home();frozen=h.state()['stairs']['elapsedMs'];h.advance(2000);assert h.state()['stairs']['elapsedMs']==frozen
+    report['checks'].append('trusted first touch, ordered two-finger stair input, home idle guard, stumble, pagehide/pageshow, inactive mode freeze')
 
+    h.tap('mode-battle')
+    x1,y1=h.point(135,1090);x2,y2=h.point(600,1070)
+    h.cdp.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[{'id':1,'x':x1,'y':y1},{'id':2,'x':x2,'y':y2}]})
+    h.advance(200);assert h.state()['battle']['x']<-.4 and not h.state()['canHome']
+    x1,y1=h.point(550,1090);x2,y2=h.point(120,1070)
+    h.cdp.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{'id':1,'x':x1,'y':y1},{'id':2,'x':x2,'y':y2}]})
+    h.advance(400);assert h.state()['battle']['x']>.4
+    h.cdp.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[{'id':1,'x':x1,'y':y1}]})
+    h.advance(950);assert h.state()['dragId'] is None and not h.state()['canHome']
+    h.cdp.send('Input.dispatchTouchEvent',{'type':'touchCancel','touchPoints':[]})
+    assert h.state()['activeInputs']==0 and h.state()['dragId'] is None
+    report['checks'].append('one drag owner under simultaneous touch; second finger cannot steal steering; cancel/release clears input')
 
-def center(page, action):
-    bounds = page.locator(f"#{action}").bounding_box()
-    return bounds["x"] + bounds["width"] / 2, bounds["y"] + bounds["height"] / 2
+    captured_gate=False
+    while h.state()['battle']['gatesPassed']<1:
+        b=h.state()['battle']
+        if b['gates']:
+            gate=b['gates'][0];h.steer(.55 if gate['correct']==0 else -.55)
+            if gate['z']<16 and not captured_gate:h.capture('05-battle-gate');captured_gate=True
+        h.advance(125)
+    assert not h.state()['battle']['gateResult']['good'] and h.state()['battle']['squad']>=1
+    h.capture('06-smaller-gate')
+    while h.state()['battle']['gatesPassed']<2:
+        b=h.state()['battle']
+        if b['gates']:
+            gate=b['gates'][0];h.steer(-.55 if gate['correct']==0 else .55)
+        h.advance(125)
+    gate_result=h.state()['battle']['gateResult'];assert gate_result['good'] and gate_result['change']==gate_result['result']
+    h.advance(160);h.capture('07-squad-growth');h.steer(0)
+    while not any(e['kind']=='boss' for e in h.state()['battle']['entities']):h.advance(100)
+    h.capture('08-boss');before_coins=h.state()['profile']['coins']
+    for _ in range(400):
+        if h.state()['battle']['bosses']>=1:break
+        h.advance(100)
+    assert h.state()['battle']['bosses']==1
+    assert h.state()['profile']['coins']>=before_coins+60
+    h.advance(100);h.capture('09-boss-clear');h.advance(2300)
+    assert h.state()['battle']['wave']==2
+    assert h.state()['profile']['coins']==h.state()['stairs']['coins']+h.state()['battle']['coins']
+    h.home();report['checks'].append('smaller gate continues play, larger gate adds exact result, squad grows, boss pays once and wave two starts')
 
+    h.tap('mode-stairs');brake_seen=False;auto_seen=False
+    for _ in range(220):
+        s=h.state()['stairs']
+        if s['mode']=='puzzle':break
+        if s['mode']=='brake-warning':
+            if not brake_seen:h.capture('10-brake-warning')
+            h.advance(s['brakeRemainingMs']+16)
+        elif s['mode']=='brake-hold':
+            if not brake_seen:h.capture('11-brake-hold');brake_seen=True
+            coins=h.state()['profile']['coins'];h.advance(s['brakeRemainingMs']+16)
+            assert h.state()['profile']['coins']==coins+15
+            if not auto_seen:h.capture('12-auto-jump');auto_seen=True
+        elif s['mode']=='auto-climb':h.advance(190)
+        elif s['mode']=='stumble':h.advance(1100)
+        else:h.climb();h.advance(120)
+    assert brake_seen and auto_seen and h.state()['stairs']['mode']=='puzzle'
+    h.capture('13-picture-bridge');s=h.state()['stairs'];choices=s['puzzle']['choices'];correct=choices.index('listen')
+    coins=h.state()['profile']['coins'];h.tap('choice-'+str(1-correct));h.advance(80)
+    assert h.state()['profile']['coins']==coins and not h.state()['stairs']['puzzle']['solved']
+    h.capture('14-picture-retry');h.tap('choice-'+str(correct));h.tap('choice-'+str(correct))
+    assert h.state()['profile']['coins']==coins+50
+    h.advance(1250);h.capture('15-bridge-chest');h.advance(650)
+    assert h.state()['stairs']['mode']=='playing'
+    h.home();h.capture('16-shared-coins')
+    report['checks'].append('warning/hold/success/auto-climb, picture retry, bridge assembly and one-time chest reward')
 
-def tap(page, action):
-    page.touchscreen.tap(*center(page, action))
+    saved=h.state()['profile'];p.reload();h.advance(100)
+    assert h.state()['screen']=='lobby' and h.state()['profile']['coins']==saved['coins']
+    assert h.state()['profile']['equipped']==saved['equipped'] and h.state()['profile']['status']=='saved'
+    assert h.state()['stairs']['step']==0 and h.state()['battle']['wave']==1
+    report['checks'].append('real-origin localStorage restores shared coins/equipment after full page reload')
+    assert not h.errors,h.errors
+    assert not h.failures,h.failures
+    assert all(url.startswith(h.base) for url in h.requests if url.startswith(('http:','https:'))),h.requests
+    modules={url.split('/')[-1] for url in h.requests if url.endswith('.js')};assert len(modules)==14,modules
+    report['sourceModules']=sorted(modules)
+    # The separate single-file build must also boot and enter both released modes.
+    p.goto('about:blank?debug');p.set_content((ROOT/'dist/index.html').read_text());h.advance(100)
+    assert h.state()['screen']=='lobby';h.tap('mode-battle');h.advance(250);assert h.state()['screen']=='battle'
+    h.home();h.tap('mode-stairs');h.tap('climb');assert h.state()['stairs']['step']==1
+    report['checks'].append('native source module paths and self-contained HTML both execute without external assets')
+    report['functionalErrors']=h.errors
 
-
-with sync_playwright() as playwright:
-    executable = os.environ.get("CHROMIUM_PATH") or shutil.which("chromium") or shutil.which("google-chrome")
-    browser = playwright.chromium.launch(headless=True, executable_path=executable,
-                                         args=["--no-sandbox"] if getattr(os, "geteuid", lambda: 1)() == 0 else [])
-    context = browser.new_context(viewport={"width": 412, "height": 915},
-                                  device_scale_factor=2, is_mobile=True, has_touch=True)
-    page = context.new_page()
-    errors = []
-    requests = []
-    page.on("pageerror", lambda error: errors.append(str(error)))
-    page.on("request", lambda request: requests.append(request.url))
-
-    def load():
-        page.goto("about:blank?debug")
-        page.set_content((ROOT / "dist/index.html").read_text(), wait_until="load")
-        page.wait_for_function("window.__uju !== undefined")
-        page.bring_to_front()
-        page.wait_for_function("!window.__uju.snapshot().paused")
-
-    load()
-    report = {"browser": browser.version, "mode": "headless mobile emulation; in-memory standalone HTML",
-              "deviceScaleFactor": 2, "readyMs": snapshot(page)["readyMs"], "checks": [], "viewports": []}
-    # Screen bounds and hitboxes include the actual CSS pixel safe areas.
-    for width, height in [(360, 800), (412, 915), (344, 882), (768, 1024), (1024, 1366), (915, 412)]:
-        page.set_viewport_size({"width": width, "height": height})
-        page.wait_for_timeout(100)
-        bounds = page.locator("#game").bounding_box()
-        assert abs(bounds["width"] / bounds["height"] - 9 / 16) < 0.001
-        assert bounds["y"] >= 47.9 and height - bounds["y"] - bounds["height"] >= 47.9
-        assert abs(bounds["x"] * 2 + bounds["width"] - width) < 1
-        for action in ["turn", "climb"]:
-            button = page.locator(f"#{action}").bounding_box()
-            assert abs(button["height"] / bounds["height"] - 0.22) < 0.001
-            assert button["x"] >= -0.1 and button["x"] + button["width"] <= width + 0.1
-            assert button["y"] + button["height"] <= height - 47.9
-        report["viewports"].append({"width": width, "height": height, "game": bounds, "passed": True})
-    page.set_viewport_size({"width": 412, "height": 915})
-    page.wait_for_timeout(100)
-    page.screenshot(path=str(OUTPUT / "phase1-mobile.png"))
-    report["checks"].append("six viewports, centered 9:16, >=48px safe areas, full 22% controls")
-
-    tap(page, "climb")
-    first = snapshot(page)
-    assert first["step"] == 1 and first["coins"] == 1 and first["metrics"]["received"] == 1
-    assert first["activeTouches"] == 0
-    assert first["audioState"] == "running", first["audioState"]
-    report["checks"].append("first trusted touch: one move, one coin, audio unlocked, no compatibility double-fire")
-
-    # Both changedTouches in one touchstart must be handled in order, turn then climb.
-    if snapshot(page)["facing"] == snapshot(page)["nextDirection"]:
-        tap(page, "turn")
-    before = snapshot(page)
-    cdp = context.new_cdp_session(page)
-    points = []
-    for identifier, action in enumerate(["turn", "climb"], 1):
-        x, y = center(page, action)
-        points.append({"x": x, "y": y, "id": identifier})
-    cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": points})
-    assert snapshot(page)["activeTouches"] == 2
-    cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
-    after = snapshot(page)
-    assert after["step"] == before["step"] + 1, (before, after)
-    assert after["metrics"]["received"] == before["metrics"]["received"] + 2
-    assert after["activeTouches"] == 0
-    report["checks"].append("simultaneous two-finger turn + climb, ordered once each")
-
-    # Cancel a live pointer and confirm the pressed state is cleared.
-    x, y = center(page, "turn")
-    cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": x, "y": y, "id": 1}]})
-    cdp.send("Input.dispatchTouchEvent", {"type": "touchCancel", "touchPoints": []})
-    assert snapshot(page)["activeTouches"] == 0
-    assert page.evaluate("!document.querySelector('#game').dispatchEvent(new MouseEvent('contextmenu', {bubbles:true, cancelable:true}))")
-    report["checks"].append("touchcancel clears presses; context menu suppressed")
-
-    # A failed move must keep earned coins and position throughout the one-second stumble.
-    if snapshot(page)["facing"] == snapshot(page)["nextDirection"]:
-        tap(page, "turn")
-    before = snapshot(page)
-    tap(page, "climb")
-    fallen = snapshot(page)
-    assert fallen["mode"] == "stumble" and fallen["combo"] == 0
-    assert fallen["step"] == before["step"] and fallen["coins"] == before["coins"]
-    tap(page, "climb")
-    assert snapshot(page)["metrics"]["blocked"] == before["metrics"]["blocked"] + 1
-    page.screenshot(path=str(OUTPUT / "phase1-stumble.png"))
-    # Simulate browser page lifecycle signals; this is not a physical home-button test.
-    page.evaluate("window.dispatchEvent(new Event('pagehide'))")
-    frozen = snapshot(page)
-    page.wait_for_timeout(1100)
-    assert snapshot(page)["stumbleRemainingMs"] == frozen["stumbleRemainingMs"]
-    assert snapshot(page)["frames"] == frozen["frames"]
-    page.evaluate("window.dispatchEvent(new Event('pageshow'))")
-    page.wait_for_function("window.__uju.snapshot().mode === 'playing'")
-    assert snapshot(page)["step"] == before["step"] and snapshot(page)["coins"] == before["coins"]
-    report["checks"].append("stumble preserves position/coins; pagehide freezes timers/frames; pageshow recovers")
-
-    # Trusted touch input at the requested cadence, with no domain-state mutation.
-    load()
-    # The viewport is fixed during stress. Avoid a redundant layout round-trip per tap
-    # so test-driver overhead does not reduce the requested input rate.
-    coordinates = {action: center(page, action) for action in ["turn", "climb"]}
-    start = time.monotonic()
-    input_count = 0
-    climb_count = 0
-    next_log = 30
-    peaks = {"particles": 0, "voices": 0, "tileSprings": 0, "ripples": 0}
-    first_frame = snapshot(page)["frames"]
-    while time.monotonic() - start < args.stress_seconds:
-        current = snapshot(page)
-        peaks["particles"] = max(peaks["particles"], current["particles"])
-        peaks["voices"] = max(peaks["voices"], current["voices"])
-        peaks["tileSprings"] = max(peaks["tileSprings"], current["visual"]["tileSprings"])
-        peaks["ripples"] = max(peaks["ripples"], len(current["visual"]["ripples"]))
-        action = "climb" if current["facing"] == current["nextDirection"] else "turn"
-        page.touchscreen.tap(*coordinates[action])
-        input_count += 1
-        if action == "climb":
-            climb_count += 1
-        target = start + input_count / args.stress_hz
-        remaining = target - time.monotonic()
-        if remaining > 0:
-            page.wait_for_timeout(remaining * 1000)
-        if time.monotonic() - start >= next_log:
-            print(f"stress {next_log}s: {input_count} inputs, {climb_count} steps", flush=True)
-            next_log += 30
-    elapsed = time.monotonic() - start
-    state = snapshot(page)
-    assert state["step"] == climb_count
-    assert state["coins"] == climb_count + (climb_count // 10) * 5
-    assert state["metrics"] == {"received": input_count, "accepted": input_count, "blocked": 0}, state["metrics"]
-    assert state["stepObjects"] <= 16 and state["particles"] <= 96 and state["voices"] <= 12
-    assert peaks["particles"] <= 96 and peaks["voices"] <= 12
-    assert peaks["tileSprings"] <= 16 and peaks["ripples"] <= 12
-    assert state["activeTouches"] == 0 and not any(state["features"].values())
-    assert all(value is None for value in state["future"].values())
-    assert page.evaluate("visualViewport.scale") == 1
-    assert not errors, errors
-    assert not [url for url in requests if url.startswith(("http:", "https:"))], requests
-    report["stress"] = {"seconds": round(elapsed, 2), "inputs": input_count, "steps": climb_count,
-                        "targetHz": args.stress_hz, "inputsPerSecond": round(input_count / elapsed, 2),
-                        "coins": state["coins"], "stepObjects": state["stepObjects"],
-                        "averageFps": round((state["frames"] - first_frame) / elapsed, 1),
-                        "poolPeaks": peaks, "errors": errors, "networkRequests": requests}
-    report["checks"].append("paced trusted touch (measured rate in stress report); exact rewards; bounded pools; no zoom or future features")
-    page.screenshot(path=str(OUTPUT / "phase1-playing.png"))
-    (OUTPUT / "browser-report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2))
-    print(json.dumps(report, ensure_ascii=False, indent=2), flush=True)
-    browser.close()
+with ArcadeBrowser(controlled=False) as h:
+    h.tap('mode-battle')
+    box=h.page.locator('#game').bounding_box()
+    def pixel(x,y):return box['x']+x/720*box['width'],box['y']+y/1280*box['height']
+    x,y=pixel(360,1080);h.cdp.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[{'id':1,'x':x,'y':y}]})
+    initial=h.state();start=time.monotonic();first_frames=initial['frames'];first_simulated=initial['battle']['elapsedMs'];moves=0;next_log=30
+    peaks={'entities':0,'bullets':0,'particles':0,'voices':0,'visibleSquad':0}
+    while time.monotonic()-start<args.stress_seconds:
+        state=h.state();b=state['battle'];gate=b['gates'][0] if b['gates'] else None
+        target=(-.55 if gate['correct']==0 else .55) if gate else math.sin(moves*.12)*.35
+        target+=.012 if moves%2 else -.012
+        x,y=pixel(360+target*300,1080)
+        h.cdp.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{'id':1,'x':x,'y':y}]})
+        moves+=1
+        peaks['entities']=max(peaks['entities'],b['entityCount']);peaks['bullets']=max(peaks['bullets'],b['bulletCount'])
+        peaks['particles']=max(peaks['particles'],state['battleVisual']['particles']);peaks['voices']=max(peaks['voices'],state['voices']);peaks['visibleSquad']=max(peaks['visibleSquad'],state['battleVisual']['visibleSquad'])
+        assert not state['canHome'] and b['squad']>=1
+        delay=start+moves/args.stress_hz-time.monotonic()
+        if delay>0:h.page.wait_for_timeout(delay*1000)
+        if time.monotonic()-start>=next_log:print(f'drag {next_log}s: {moves} moves, {b["bosses"]} bosses',flush=True);next_log+=30
+    elapsed=time.monotonic()-start
+    h.cdp.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]})
+    s=h.state();assert s['activeInputs']==0 and s['dragId'] is None
+    simulated=(s['battle']['elapsedMs']-first_simulated)/1000
+    assert abs(simulated-elapsed)<max(.5,elapsed*.02),(simulated,elapsed)
+    assert peaks['entities']<=12 and peaks['bullets']<=100 and peaks['particles']<=160 and peaks['voices']<=12 and peaks['visibleSquad']<=24
+    assert s['battleVisual']['spriteFrames']==16
+    assert s['profile']['coins']==s['battle']['coins']
+    assert h.page.evaluate('visualViewport.scale')==1
+    assert not h.errors and not h.failures,(h.errors,h.failures)
+    report['stress']={'seconds':round(elapsed,2),'simulatedSeconds':round(simulated,2),'dragMoves':moves,'targetHz':args.stress_hz,'movesPerSecond':round(moves/elapsed,2),'averageFps':round((s['frames']-first_frames)/elapsed,1),'wave':s['battle']['wave'],'bosses':s['battle']['bosses'],'coins':s['profile']['coins'],'squad':s['battle']['squad'],'poolPeaks':peaks,'errors':h.errors}
+    h.capture('17-battle-stress')
+(OUTPUT/'browser-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
+print(json.dumps(report,ensure_ascii=False,indent=2),flush=True)

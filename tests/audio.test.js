@@ -54,3 +54,20 @@ test('jump sounds follow the major scale without exceeding an octave; bonus adds
   assert.ok(chord.every((tone, i) => !i || tone[0] > chord[i - 1][0]));
   assert.ok(chord.every((tone, i) => tone[4] === i * CONFIG.audio.comboSpacingSeconds));
 });
+
+test('missing Korean/local TTS uses a distinct synthesized cue for each situation without throwing', () => {
+  const original=globalThis.speechSynthesis;
+  globalThis.speechSynthesis={cancel(){},getVoices(){return[{lang:'ko-KR',localService:false}];}};
+  try {
+    const audio=new Audio(),patterns=[];let tones=[];
+    audio.tone=(...args)=>tones.push(args);
+    for(const cue of ['teacher','bell','rain','friend']){
+      tones=[];assert.equal(audio.speak('상황',cue),false);assert.ok(tones.length>=2);patterns.push(JSON.stringify(tones));
+    }
+    assert.equal(new Set(patterns).size,4);
+    globalThis.speechSynthesis.getVoices=()=>{throw Error('not available');};
+    assert.doesNotThrow(()=>audio.speak('상황','rain'));
+  } finally {
+    if(original===undefined)delete globalThis.speechSynthesis;else globalThis.speechSynthesis=original;
+  }
+});

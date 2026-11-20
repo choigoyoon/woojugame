@@ -4,22 +4,27 @@ import { ACTION, CONFIG, MODE } from '../js/config.js';
 import { Game } from '../js/game.js';
 import { actionAt, toGamePoint } from '../js/input.js';
 
+const coreGame = (random = Math.random) => new Game(random, { events: false });
+
 function climb(game) {
   if (game.state.facing !== game.nextDirection) game.act(ACTION.TURN);
   return game.act(ACTION.CLIMB);
 }
 
-test('starts immediately with a reachable path and no future-phase features', () => {
-  const game = new Game(() => 0.5);
+test('core stair action starts ready; only released arcade features are enabled', () => {
+  const game = coreGame(() => 0.5);
   assert.equal(game.state.mode, MODE.PLAYING);
   assert.equal(game.state.facing, game.nextDirection);
   assert.equal(game.state.step, 0);
-  assert.ok(Object.values(CONFIG.features).every((enabled) => !enabled));
+  assert.equal(CONFIG.features.brake, true);
+  assert.equal(CONFIG.features.puzzle, true);
+  assert.equal(CONFIG.features.shop, false);
+  assert.equal(CONFIG.features.pwa, false);
   assert.ok(Object.values(game.state.future).every((value) => value === null));
 });
 
 test('turn changes only facing; ten and twenty successful steps award exact coin bonuses', () => {
-  const game = new Game();
+  const game = coreGame();
   const before = { ...game.state };
   game.act(ACTION.TURN);
   assert.equal(game.state.facing, -before.facing);
@@ -33,7 +38,7 @@ test('turn changes only facing; ten and twenty successful steps award exact coin
 });
 
 test('wrong direction keeps coins and position, resets only combo, and recovers at 1000ms', () => {
-  const game = new Game();
+  const game = coreGame();
   for (let n = 0; n < 12; n += 1) climb(game);
   if (game.state.facing === game.nextDirection) game.act(ACTION.TURN);
   const { coins, step } = game.state;
@@ -56,7 +61,7 @@ test('wrong direction keeps coins and position, resets only combo, and recovers 
 });
 
 test('background time and input do not alter the game or expire a stumble', () => {
-  const game = new Game();
+  const game = coreGame();
   game.act(ACTION.TURN); game.act(ACTION.CLIMB); game.advance(300);
   game.setPaused(true);
   game.advance(100_000);
@@ -68,7 +73,7 @@ test('background time and input do not alter the game or expire a stumble', () =
 });
 
 test('every same-frame action is processed in order without animation locking', () => {
-  const game = new Game();
+  const game = coreGame();
   for (let n = 0; n < 200; n += 1) climb(game); // No advance/render between inputs.
   assert.equal(game.state.step, 200);
   assert.equal(game.state.coins, 300);
@@ -80,7 +85,7 @@ test('every same-frame action is processed in order without animation locking', 
 
 test('10,000 steps reuse a fixed pool and every platform remains reachable inside the screen', () => {
   let seed = 7;
-  const game = new Game(() => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32));
+  const game = coreGame(() => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32));
   for (let n = 0; n < 20; n += 1) climb(game);
   const pool = new Set(game.steps);
   for (let n = 0; n < 10_000; n += 1) {
@@ -95,7 +100,7 @@ test('10,000 steps reuse a fixed pool and every platform remains reachable insid
 });
 
 test('invalid actions and invalid time cannot corrupt state', () => {
-  const game = new Game();
+  const game = coreGame();
   const before = game.snapshot();
   game.act('shop'); game.advance(NaN); game.advance(-100); game.advance(Infinity);
   assert.deepEqual(game.snapshot(), before);
@@ -116,7 +121,7 @@ test('hit testing uses the full bottom 22 percent after scaling and centering', 
 });
 
 test('fast climbs ascend the scale; turns preserve rhythm, pauses and slow climbs restart it', () => {
-  const game = new Game();
+  const game = coreGame();
   for (let n = 0; n < 20; n += 1) {
     const event = climb(game);
     assert.equal(event.noteIndex, Math.min(n, 7));
@@ -132,7 +137,7 @@ test('fast climbs ascend the scale; turns preserve rhythm, pauses and slow climb
 });
 
 test('star eyes start at ten; dizziness overrides them and recovery resets the melody', () => {
-  const game = new Game();
+  const game = coreGame();
   for (let n = 0; n < 9; n += 1) climb(game);
   assert.equal(game.expression, 'smile');
   climb(game);

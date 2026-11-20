@@ -6,7 +6,7 @@ export function noteFrequency(index = 0) {
 }
 
 export class Audio {
-  constructor() { this.context = null; this.master = null; this.voices = new Map(); }
+  constructor() { this.context = null; this.master = null; this.voices = new Map(); this.speechToken = 0; }
 
   unlock() {
     try {
@@ -27,8 +27,13 @@ export class Audio {
   }
 
   pause() {
-    for (const [voice, envelope] of this.voices) this.release(voice, envelope);
+    this.stopEffects();
     if (this.context?.state === 'running') this.context.suspend().catch(() => {});
+  }
+
+  stopEffects() {
+    this.cancelSpeech();
+    for (const [voice, envelope] of this.voices) this.release(voice, envelope);
   }
 
   release(voice, envelope, stop = true) {
@@ -63,6 +68,25 @@ export class Audio {
   play(event) {
     if (!event) return;
     const a = CONFIG.audio;
+    if (event.type === 'shot') this.tone(470, 105, 0.055, 'square', 0, 0.10);
+    if (event.type === 'boss') { this.tone(120,60,.35,'sawtooth',0,.3);this.tone(523,262,.2,'triangle',.2,.22); }
+    if (event.type === 'hit') this.tone(190, 90, 0.04, 'triangle', 0, 0.13);
+    if (event.type === 'explode') {
+      this.tone(180, 36, event.boss ? 0.42 : 0.22, 'sawtooth', 0, 0.27);
+      this.tone(80, 34, 0.27, 'sine', 0, 0.65);
+      if (event.boss) this.play({ type: 'reward' });
+    }
+    if (['select', 'wave'].includes(event.type)) this.tone(523, 784, 0.12, 'triangle', 0, 0.45);
+    if (['gate-miss', 'bump', 'puzzle-miss', 'locked'].includes(event.type)) this.tone(320, 190, 0.13, 'triangle', 0, 0.4);
+    if (['reward', 'gate-win', 'puzzle-win', 'brake-win'].includes(event.type)) {
+      if (event.type === 'puzzle-win') this.cancelSpeech();
+      [523.25,659.25,783.99,1046.5].forEach((hz,i)=>this.tone(hz,hz,0.23,'sine',i*.075,.45));
+    }
+    if (event.type === 'brake-warning') {
+      this.tone(1100, 1450, .12, 'sine', 0, .4);this.tone(1100, 1450, .14, 'sine', .17, .4);
+    }
+    if (event.type === 'brake-hold') this.tone(520, 390, .12, 'triangle', 0, .5);
+    if (event.type === 'puzzle') this.speak(event.speech,event.scenario);
     if (event.type === 'turn') this.tone(...a.turnHz, a.turnSeconds, 'triangle', 0, 0.42);
     if (event.type === 'stumble') {
       this.tone(...a.stumbleHz, a.stumbleSeconds, 'triangle', 0, 0.65);
@@ -83,5 +107,24 @@ export class Audio {
         });
       }
     }
+  }
+
+  cancelSpeech() {
+    this.speechToken += 1;
+    try { globalThis.speechSynthesis?.cancel(); } catch { /* Optional platform API. */ }
+  }
+
+  speak(text, cue = 'teacher') {
+    this.cancelSpeech();
+    // Every scene has a local synthesized cue, even without a Korean voice or network.
+    const notes = cue === 'bell' ? [1047, 784, 1047] : cue === 'rain' ? [1700, 1300, 1900, 1100] : cue === 'friend' ? [392, 523, 659] : [880, 1175];
+    notes.forEach((hz,i)=>this.tone(hz,hz*.91,cue==='rain'?.07:.21,'sine',i*.12,cue==='rain'?.12:.32));
+    try {
+      const synth=globalThis.speechSynthesis;
+      const voice=synth?.getVoices().find((v)=>v.lang.toLowerCase().startsWith('ko')&&v.localService);
+      if(!voice||!globalThis.SpeechSynthesisUtterance)return false;
+      const utterance=new SpeechSynthesisUtterance(text);utterance.voice=voice;utterance.lang='ko-KR';utterance.rate=.9;utterance.volume=.8;
+      utterance.onerror=()=>{};synth.speak(utterance);return true;
+    }catch{return false;}
   }
 }

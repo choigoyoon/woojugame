@@ -6,11 +6,15 @@ import { resolve, sep } from 'node:path';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const portIndex = process.argv.indexOf('--port');
 const port = Number(portIndex >= 0 ? process.argv[portIndex + 1] : process.env.PORT || 3000);
+const baseIndex = process.argv.indexOf('--base');
+const base = baseIndex >= 0 ? process.argv[baseIndex + 1] : '/';
+if (!/^\/(?:[\w-]+\/)*$/.test(base)) throw new Error('Base must be a path such as /woojugame/');
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css' };
 const server = createServer(async (request, response) => {
   try {
     const pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
-    const relative = pathname === '/' ? 'index.html' : pathname.slice(1);
+    if (!pathname.startsWith(base)) { response.writeHead(404); response.end('Not found'); return; }
+    const relative = pathname.slice(base.length) || 'index.html';
     // Serve only game assets; repository documents and .git stay private.
     if (relative !== 'index.html' && !/^(js\/[\w-]+\.js|css\/[\w-]+\.css)$/.test(relative)) {
       response.writeHead(404); response.end('Not found'); return;
@@ -27,6 +31,6 @@ const server = createServer(async (request, response) => {
 });
 server.listen(port, '0.0.0.0', () => {
   const actualPort = server.address().port;
-  console.log(`Uju Block Run: http://localhost:${actualPort}`);
-  console.log(`Mobile: open http://<this computer's LAN IP>:${actualPort} on the same Wi-Fi.`);
+  console.log(`Uju Block Arcade: http://localhost:${actualPort}${base}`);
+  console.log(`Mobile: open http://<this computer's LAN IP>:${actualPort}${base} on the same Wi-Fi.`);
 });

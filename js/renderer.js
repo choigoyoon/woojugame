@@ -1,4 +1,6 @@
 import { ACTION, CONFIG, MODE } from './config.js';
+import { Art } from './art.js';
+import { AVATAR_PALETTE } from './profile.js';
 
 const mix = (a, b, t) => a + (b - a) * t;
 const smooth = (t) => t * t * (3 - 2 * t);
@@ -36,6 +38,7 @@ export class Renderer {
   constructor(canvas, game) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d', { alpha: false });
+    this.art = new Art(this.ctx);
     this.game = game;
     this.ratio = 1;
     this.cameraY = 0;
@@ -100,9 +103,12 @@ export class Renderer {
         this.aura = CONFIG.motion.auraMs;
         this.burst(this.pose.x, this.pose.y - 130, CONFIG.motion.particlesPerCombo, true);
       }
-      const popup = this.popups[this.popupCursor++ % this.popups.length];
-      Object.assign(popup, { x: event.x, y: event.y - 240, life: CONFIG.motion.popupLifeMs, bonus: event.bonus });
+      if (!event.auto) {
+        const popup = this.popups[this.popupCursor++ % this.popups.length];
+        Object.assign(popup, { x: event.x, y: event.y - 240, life: CONFIG.motion.popupLifeMs, bonus: event.bonus });
+      }
     }
+    if (event.type === 'brake-win') { this.aura = CONFIG.motion.auraMs; this.burst(this.pose.x, this.pose.y - 130, CONFIG.motion.particlesPerCombo, true); }
     if (event.type === 'stumble') { this.shake = CONFIG.motion.shakeMs; this.aura = 0; }
   }
 
@@ -393,6 +399,7 @@ export class Renderer {
 
   avatar() {
     const c = this.ctx; const { state } = this.game;
+    const palette = this.game.wallet?.palette ?? AVATAR_PALETTE;
     const { x, y, lift } = this.pose;
     const tile = !this.jump ? (this.tiles.get(state.step)?.value ?? 0) * (this.reducedMotion ? 0.25 : 1) : 0;
     const sy = this.screenY(y) + tile;
@@ -425,7 +432,7 @@ export class Renderer {
     this.limb('arm', far, stride, crouch, flight);
     this.limb('leg', far, stride, crouch, flight);
     this.limb('leg', near, stride, crouch, flight);
-    this.box(-37, -147, 74, 69, 11, ['#ff7c64', '#ffa58a', '#bd505b']);
+    this.box(-37, -147, 74, 69, 11, [palette.shirt, palette.shirtTop, palette.shirtSide]);
     this.rect(-28, -140, 12, 52, '#bd515d', 3);
     this.rect(22, -140, 8, 52, '#ffb897', 2);
     this.rect(-12, -135, 31, 36, '#fff3d9', 8, '#eab897');
@@ -436,7 +443,7 @@ export class Renderer {
     this.box(-33, -211, 66, 56, 10, ['#ffda96', '#ffedbc', '#cba06c']);
     this.rect(-31, -207, 7, 41, '#eabd7b', 3);
     // Rounded block helmet, split rim and glossy inset retain the toy silhouette.
-    this.box(-40, -224, 79, 23, 11, ['#39cbd6', '#a2fff1', '#248eab']);
+    this.box(-40, -224, 79, 23, 11, [palette.helmet, palette.helmetTop, palette.helmetSide]);
     this.rect(-32, -219, 61, 6, '#bafff5', 3);
     this.rect(-42, -202, 12, 26, '#36b5c5', 4, '#25607a');
     this.rect(34, -202, 11, 26, '#248eab', 4, '#25607a');
@@ -457,8 +464,7 @@ export class Renderer {
     const shade = c.createLinearGradient(0, 0, 0, 228);
     shade.addColorStop(0, '#142957db'); shade.addColorStop(1, '#14295700');
     c.fillStyle = shade; c.fillRect(0, 0, 720, 228);
-    this.polygon([[36, 36], [49, 28], [62, 36], [62, 52], [49, 60], [36, 52]], '#85fff0');
-    this.text('우주 블록 런', 77, 44, 28, '#ecffff');
+    this.text('블록 계단 점프', 139, 48, 28, '#ecffff');
     for (const [x, width] of [[28, 312], [356, 336]]) {
       this.rect(x, 91, width, 104, '#11275045', 25);
       this.rect(x, 85, width, 104, '#1835578c', 25, '#c2f5ff4a');
@@ -467,7 +473,8 @@ export class Renderer {
     this.rect(54, 145, 12, 16, '#9aefef', 3); this.rect(70, 130, 12, 31, '#9aefef', 3); this.rect(86, 114, 12, 47, '#c8ffff', 3);
     this.text(state.step, 126, 140, state.step > 99999 ? 34 : 48, '#fff');
     this.coin(397, 139, 1.1);
-    this.text(state.coins, 436, 140, state.coins > 99999 ? 34 : 48, '#fff4b2');
+    const coins = this.game.wallet?.coins ?? state.coins;
+    this.text(coins, 436, 140, coins > 999999 ? 26 : coins > 99999 ? 34 : 48, '#fff4b2');
     if (state.combo > 1) {
       c.save(); c.translate(360, 235);
       const elapsed = CONFIG.motion.auraMs - this.aura;
@@ -487,7 +494,7 @@ export class Renderer {
     const fade = c.createLinearGradient(0, top - 40, 0, top + 40);
     fade.addColorStop(0, '#16294d00'); fade.addColorStop(1, '#16294df5');
     c.fillStyle = fade; c.fillRect(0, top - 40, 720, 322);
-    const blocked = this.game.state.mode !== MODE.PLAYING;
+    const blocked = ![MODE.PLAYING, MODE.BRAKE_WARNING].includes(this.game.state.mode);
     for (const [i, action] of [ACTION.TURN, ACTION.CLIMB].entries()) {
       const x = 24 + i * 360;
       const depth = clamp(this.buttons[action].value, -3, 18) * (this.reducedMotion ? 0.35 : 1);
@@ -528,7 +535,25 @@ export class Renderer {
     this.rect(302, 1254, 116, 5, '#7593b04a', 3);
   }
 
-  render() {
+  brakeOverlay() {
+    const s = this.game.state, c = this.ctx, a = this.art;
+    if (s.mode === MODE.AUTO_CLIMB) {
+      a.rect(150,300,420,110,'#17385be8',28,'#fff0a6');
+      a.text('SUPER STOP!',360,340,38,'#fff0a6'); a.text('+' + CONFIG.brake.coins,360,383,29,'#b5ffe5');
+      return;
+    }
+    if (![MODE.BRAKE_WARNING, MODE.BRAKE_HOLD].includes(s.mode)) return;
+    const warning = s.mode === MODE.BRAKE_WARNING, color = warning ? '#ffe583' : '#ff657d';
+    c.strokeStyle=color;c.lineWidth=12;c.beginPath();c.roundRect(8,8,704,1264,26);c.stroke();
+    a.rect(234,294,252,161,'#172a51eb',34,color);
+    a.text(warning?'READY':'HOLD!',360,327,27,color);
+    a.rect(338,370,44,48,color,14);
+    for(let i=0;i<4;i++) a.rect(338+i*11,348-(i===1||i===2?8:0),9,43,color,5);
+    a.rect(323,382,18,29,color,8);
+    c.strokeStyle=color;c.lineWidth=5;c.beginPath();c.arc(360,384,55,-Math.PI/2,-Math.PI/2+Math.PI*2*(s.brakeRemainingMs/(warning?CONFIG.brake.warningMs:CONFIG.brake.holdMs)));c.stroke();
+  }
+
+  render(canHome = false) {
     const c = this.ctx;
     c.setTransform(this.ratio, 0, 0, this.canvas.height / CONFIG.view.height, 0, 0);
     this.background(); c.save();
@@ -553,10 +578,6 @@ export class Renderer {
       this.text('+' + (CONFIG.rules.stepCoins + popup.bonus), x + 2, y + 3, popup.bonus ? 46 : 29, '#654b62', 'center');
       this.text('+' + (CONFIG.rules.stepCoins + popup.bonus), x, y, popup.bonus ? 46 : 29, '#fff5b6', 'center'); c.restore();
     }
-    c.restore(); this.hud(); this.controls();
-    if (this.game.state.paused) {
-      this.rect(0, 0, 720, 1280, '#112e5370'); this.rect(302, 569, 116, 116, '#183861cc', 25);
-      this.rect(332, 600, 17, 54, '#f5fbff', 3); this.rect(371, 600, 17, 54, '#f5fbff', 3);
-    }
+    c.restore(); this.hud(); this.controls(); this.brakeOverlay(); this.art.home(canHome);
   }
 }

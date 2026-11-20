@@ -13,75 +13,43 @@ export function actionAt(point) {
   return point.x < width / 2 ? ACTION.TURN : ACTION.CLIMB;
 }
 
+/** One ordered input stream for every arcade mode. Touch compatibility events are ignored. */
 export class Input {
-  constructor(element, buttons, onAction, unlockAudio) {
-    this.element = element;
-    this.active = new Map();
-    this.abort = new AbortController();
-    const options = { passive: false, signal: this.abort.signal };
-    const listen = (target, type, callback) => target.addEventListener(type, callback, options);
-    const press = (id, action, point) => {
-      if (!action || this.active.has(id)) return;
-      this.active.set(id, action);
-      // Synchronous dispatch preserves every changedTouch and its browser event order,
-      // including several presses between two requestAnimationFrame callbacks.
-      unlockAudio();
-      onAction(action, point);
+  constructor(element, handlers, unlockAudio) {
+    this.element=element;this.handlers=handlers;this.active=new Map();this.abort=new AbortController();
+    const opts={passive:false,signal:this.abort.signal};
+    const on=(target,type,fn)=>target.addEventListener(type,fn,opts);
+    const point=(event)=>toGamePoint(event.clientX,event.clientY,element.getBoundingClientRect());
+    const targetAction=(target)=>target?.closest?.('[data-action]')?.dataset.action??null;
+    const press=(id,position,action)=>{
+      if(this.active.has(id))return;
+      unlockAudio();const record={id,point:position,action,gameplay:false};this.active.set(id,record);handlers.press(record);
     };
-    const gamePoint = (point) => toGamePoint(point.clientX, point.clientY, element.getBoundingClientRect());
-    listen(element, 'touchstart', (event) => {
-      event.preventDefault();
-      for (const touch of event.changedTouches) {
-        const point = gamePoint(touch);
-        press(`touch:${touch.identifier}`, actionAt(point), point);
-      }
+    const release=(id)=>{const record=this.active.get(id);this.active.delete(id);if(record)handlers.release?.(record);};
+    on(element,'touchstart',(event)=>{event.preventDefault();for(const touch of event.changedTouches)press('touch:'+touch.identifier,point(touch),targetAction(touch.target));});
+    on(element,'touchmove',(event)=>{event.preventDefault();for(const touch of event.changedTouches){const record=this.active.get('touch:'+touch.identifier);if(record){record.point=point(touch);handlers.move?.(record);}}});
+    for(const type of ['touchend','touchcancel'])on(document,type,(event)=>{for(const touch of event.changedTouches)release('touch:'+touch.identifier);});
+    on(element,'pointerdown',(event)=>{if(event.pointerType==='touch'||event.button!==0)return;event.preventDefault();press('pointer:'+event.pointerId,point(event),targetAction(event.target));element.setPointerCapture?.(event.pointerId);});
+    on(element,'pointermove',(event)=>{if(event.pointerType==='touch')return;const record=this.active.get('pointer:'+event.pointerId);if(record){record.point=point(event);handlers.move?.(record);}});
+    for(const type of ['pointerup','pointercancel','lostpointercapture'])on(document,type,(event)=>release('pointer:'+event.pointerId));
+    for(const type of ['contextmenu','dragstart','selectstart','dblclick'])on(element,type,(event)=>event.preventDefault());
+    on(document,'keydown',(event)=>{
+      if(event.repeat)return;
+      let action=null;
+      if(['Space','Enter'].includes(event.code))action=targetAction(event.target)||'up';
+      if(['ArrowLeft','KeyA'].includes(event.code))action='left';
+      if(['ArrowRight','KeyD'].includes(event.code))action='right';
+      if(['ArrowUp','KeyX'].includes(event.code))action='up';
+      if(event.code==='KeyZ')action='turn';
+      if(event.code==='Escape')action='home';
+      if(action){event.preventDefault();press('key:'+event.code,null,action);}
     });
-    listen(document, 'touchend', (event) => {
-      for (const touch of event.changedTouches) this.active.delete(`touch:${touch.identifier}`);
-    });
-    listen(document, 'touchcancel', (event) => {
-      for (const touch of event.changedTouches) this.active.delete(`touch:${touch.identifier}`);
-    });
-    listen(element, 'touchmove', (event) => event.preventDefault());
-    listen(element, 'pointerdown', (event) => {
-      // Touch uses touchstart exclusively. Ignore its compatibility pointer/mouse events.
-      if (event.pointerType === 'touch' || event.button !== 0) return;
-      event.preventDefault();
-      const point = gamePoint(event);
-      press(`pointer:${event.pointerId}`, actionAt(point), point);
-      element.setPointerCapture?.(event.pointerId);
-    });
-    for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {
-      listen(document, type, (event) => this.active.delete(`pointer:${event.pointerId}`));
-    }
-    for (const type of ['contextmenu', 'dragstart', 'selectstart', 'dblclick']) {
-      listen(element, type, (event) => event.preventDefault());
-    }
-    const keyAction = (event) => {
-      if (['ArrowLeft', 'KeyZ'].includes(event.code)) return ACTION.TURN;
-      if (['ArrowUp', 'ArrowRight', 'KeyX'].includes(event.code)) return ACTION.CLIMB;
-      if (['Space', 'Enter'].includes(event.code)) {
-        return event.target === buttons.turn ? ACTION.TURN : ACTION.CLIMB;
-      }
-      return null;
-    };
-    listen(document, 'keydown', (event) => {
-      const action = keyAction(event);
-      if (!action) return;
-      event.preventDefault();
-      if (!event.repeat) press(`key:${event.code}`, action);
-    });
-    listen(document, 'keyup', (event) => this.active.delete(`key:${event.code}`));
-    for (const [action, button] of Object.entries(buttons)) {
-      // Assistive technology can activate a button without a pointer or key event.
-      listen(button, 'click', (event) => {
-        event.preventDefault();
-        if (event.detail === 0) { unlockAudio(); onAction(action); }
-      });
-    }
+    on(document,'keyup',(event)=>release('key:'+event.code));
+    on(element,'click',(event)=>{event.preventDefault();if(event.detail===0){const action=targetAction(event.target);if(action){press('assistive',null,action);release('assistive');}}});
   }
-
-  isPressed(action) { return [...this.active.values()].includes(action); }
-  reset() { this.active.clear(); }
-  destroy() { this.abort.abort(); this.reset(); }
+  isPressed(action){return[...this.active.values()].some(record=>record.action===action);}
+  hasGameplayInput(){return[...this.active.values()].some(record=>record.gameplay);}
+  axis(){return(this.isPressed('right')?1:0)-(this.isPressed('left')?1:0);}
+  reset(){const records=[...this.active.values()];this.active.clear();for(const record of records)this.handlers.release?.(record);}
+  destroy(){this.abort.abort();this.reset();}
 }

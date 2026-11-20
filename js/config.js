@@ -86,6 +86,7 @@ export const CONFIG = freeze({
     ],
   },
   performance: {
+    targetFps:60, frameToleranceMs:.25,
     minScale:.75, scaleStep:.125, windowMs:1000, warmupMs:1200, cooldownMs:4000, recoverMs:15000, maxGapMs:250,
     missedFrameRatio:1.45, stableRatio:1.15, osLimitedCost:.4, busyCost:.75, busyMisses:.08, busyWindows:2, healthyCost:.45, healthyMisses:.025,
   },

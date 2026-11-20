@@ -14,7 +14,7 @@ import { Haptics } from './engine.js';
 import { setupPWA } from './pwa.js';
 import { Juice } from './juice.js';
 import { materialStats } from './material.js';
-import { FrameBudget } from './frame-budget.js';
+import { FrameBudget, FramePacer } from './frame-budget.js';
 
 const canvas=document.querySelector('#scene'),element=document.querySelector('#game'),viewport=document.querySelector('#viewport'),score=document.querySelector('#score');
 const profile=new Profile(),arcade=new Arcade(profile),audio=new Audio(profile),haptics=new Haptics(profile);
@@ -23,7 +23,7 @@ const battleView=new BattleRenderer(ctx,arcade.battle,profile),puzzleView=new Pu
 const adventureView=new AdventureRenderer(ctx,arcade.runner,arcade.plaza,profile),center=new Center(ctx,profile);
 const juice=new Juice(canvas,profile);
 const controls=new Map();
-const timer=new FrameClock(performance.now()),frameBudget=new FrameBudget();
+const timer=new FrameClock(performance.now()),frameBudget=new FrameBudget(),framePacer=new FramePacer();
 let viewWidth=0,viewHeight=0,viewDpr=0,qualityPending=false;
 let frames=0,frameId=null,pageAway=false,dragId=null,uiKey='';
 const readyMs=performance.now();
@@ -194,7 +194,9 @@ function render(force=false){
 }
 function backingResize(){return renderer.resize(viewWidth,viewHeight,Math.max(1,Math.min(viewDpr,CONFIG.view.maxDpr)*frameBudget.scale));}
 function frame(now){
-  frameId=null;const start=performance.now();
+  frameId=null;
+  if(!framePacer.due(now)){if(!arcade.paused)frameId=requestAnimationFrame(frame);return;}
+  const start=performance.now();
   // Resize before drawing: never clear the presented frame or release an owned touch.
   const resized=qualityPending&&backingResize();qualityPending=false;
   advance(now);syncUI();render(resized);frames+=1;
@@ -212,7 +214,7 @@ function syncVisibility(){
   const paused=document.hidden||pageAway||!document.hasFocus();if(paused===arcade.paused)return;
   advance(performance.now());arcade.setPaused(paused);input.reset();dragId=null;
   if(paused){juice.stop();audio.pause();haptics.stop();if(['profile','parents'].includes(arcade.mode))center.open(arcade.mode);profile.save();if(frameId!==null)cancelAnimationFrame(frameId);frameId=null;render();}
-  else{timer.reset(performance.now());frameBudget.reset(performance.now());audio.resume();events();if(arcade.mode==='stairs')speakPuzzle();if(frameId===null)frameId=requestAnimationFrame(frame);}
+  else{timer.reset(performance.now());framePacer.reset();frameBudget.reset(performance.now());audio.resume();events();if(arcade.mode==='stairs')speakPuzzle();if(frameId===null)frameId=requestAnimationFrame(frame);}
 }
 new ResizeObserver(resize).observe(viewport);window.visualViewport?.addEventListener('resize',resize);window.addEventListener('resize',resize);
 document.addEventListener('visibilitychange',syncVisibility);window.addEventListener('blur',syncVisibility);window.addEventListener('focus',syncVisibility);
@@ -225,5 +227,5 @@ if(new URLSearchParams(location.search).has('debug'))Object.defineProperty(windo
   battleVisual:{particles:battleView.particles.filter(p=>p.life>0).length,visibleSquad:Math.min(CONFIG.battle.maxVisibleSquad,Math.round(battleView.displaySquad)),spriteFrames:battleView.troopSprites.length,
     impacts:battleView.impacts.filter(p=>p.life>0).length,debris:battleView.debris.filter(p=>p.life>0).length,loot:battleView.loot.filter(p=>p.life>0).length,
     totalImpacts:battleView.totalImpacts,totalBreaks:battleView.totalBreaks,reduced:battleView.reduced},
-  audio:audio.diagnostics(),juice:juice.snapshot(),materials:materialStats(),performance:{...frameBudget.snapshot(),backingWidth:canvas.width,backingHeight:canvas.height},frames,readyMs,activeInputs:input.active.size,dragId,audioState:audio.context?.state??'locked',voices:audio.voices.size,features:{...CONFIG.features}
+  audio:audio.diagnostics(),juice:juice.snapshot(),materials:materialStats(),performance:{...frameBudget.snapshot(),targetFps:CONFIG.performance.targetFps,backingWidth:canvas.width,backingHeight:canvas.height},frames,readyMs,activeInputs:input.active.size,dragId,audioState:audio.context?.state??'locked',voices:audio.voices.size,features:{...CONFIG.features}
 })})});

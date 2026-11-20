@@ -1,13 +1,37 @@
 import { CONFIG } from './config.js';
 
-// RAF remains display-driven. This controller changes pixel density, never game time.
+// Preserve the 60fps phase on 90/120Hz displays; do not delay a fresh interval
+// from each presented frame (which would turn 90Hz into 45fps).
+export class FramePacer {
+  constructor() { this.reset(); }
+  reset() { this.next = null; this.last = -Infinity; }
+  due(now) {
+    if (!Number.isFinite(now)) return false;
+    const interval = 1000 / CONFIG.performance.targetFps;
+    const tolerance = CONFIG.performance.frameToleranceMs;
+    if (now < this.last) this.reset();
+    const arrival = now - this.last;
+    this.last = now;
+    // Native 60Hz (or slower) needs every callback. Re-anchor to its phase so
+    // gradual display-clock drift cannot alternate a skipped and a late frame.
+    if (this.next === null || arrival >= interval - tolerance) {
+      this.next = now + interval; return true;
+    }
+    if (now + tolerance < this.next) return false;
+    // Missed deadlines are discarded, never replayed in a burst.
+    this.next += (Math.floor(Math.max(0, now + tolerance - this.next) / interval) + 1) * interval;
+    return true;
+  }
+}
+
+// Observe presented frames. Only pixel density changes; game time remains elapsed time.
 export class FrameBudget {
   constructor() {
     this.scale = 1;
     this.changes = 0;
     this.intervals = new Float32Array(512);
     this.costs = new Float32Array(512);
-    this.stats = { fps: 0, rafHz: 0, workMs: 0, missRatio: 0 };
+    this.stats = { fps: 0, cadenceHz: 0, workMs: 0, missRatio: 0 };
     this.changedAt = -Infinity;
     this.reset(0);
   }
@@ -37,12 +61,12 @@ export class FrameBudget {
     const times = Array.from(this.intervals.subarray(0, n)).sort((a, b) => a - b);
     const costs = Array.from(this.costs.subarray(0, n)).sort((a, b) => a - b);
     const cadence = times[Math.floor(n * .2)];
-    const budget = Math.min(1000 / 60, Math.max(1000 / 240, cadence));
+    const budget = 1000 / cfg.targetFps;
     const cost = costs[Math.floor(n * .75)];
     const missed = times.filter(t => t > budget * cfg.missedFrameRatio).length / n;
     this.stats = {
       fps: 1000 * n / times.reduce((a, b) => a + b, 0),
-      rafHz: 1000 / cadence, workMs: cost, missRatio: missed,
+      cadenceHz: 1000 / cadence, workMs: cost, missRatio: missed,
     };
 
     // Stable low-rate RAF with cheap draws can be Android's battery/refresh policy.

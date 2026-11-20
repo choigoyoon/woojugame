@@ -20,6 +20,9 @@ test('suspended audio remains bounded even when the browser never delivers onend
     destination = {};
     createGain() { return new Node(); }
     createOscillator() { return new Node(); }
+    sampleRate = 8000;
+    createBuffer(channels,length) { return {getChannelData:()=>new Float32Array(length)}; }
+    createBufferSource() { return new Node(); }
     resume() { return Promise.resolve(); }
   }
   const originalWindow = globalThis.window;
@@ -28,6 +31,9 @@ test('suspended audio remains bounded even when the browser never delivers onend
     const audio = new Audio();
     audio.unlock();
     for (let index = 0; index < 500; index += 1) audio.play({ type: 'jump', bonus: 5 });
+    for (let index = 0; index < 500; index += 1) {
+      audio.play({type:'shot',powered:true});audio.play({type:'explode',boss:index%10===0});audio.play({type:'armor-break'});
+    }
     assert.equal(audio.voices.size, CONFIG.audio.maxVoices);
     assert.equal(connected.size, CONFIG.audio.maxVoices * 2 + 1); // Oscillator + envelope, plus master.
     audio.pause();

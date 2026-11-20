@@ -140,6 +140,8 @@ syncUI();resize();frameId=requestAnimationFrame(frame);syncVisibility();
 if(new URLSearchParams(location.search).has('debug'))Object.defineProperty(window,'__uju',{value:Object.freeze({snapshot:()=>({
   screen:arcade.mode,paused:arcade.paused,clock:arcade.clock,canHome:arcade.canHome(input.hasGameplayInput()),profile:profile.snapshot(),
   stairs:arcade.stairs.snapshot(),battle:arcade.battle.snapshot(),visual:renderer.snapshot(),
-  battleVisual:{particles:battleView.particles.filter(p=>p.life>0).length,visibleSquad:Math.min(CONFIG.battle.maxVisibleSquad,Math.round(battleView.displaySquad)),spriteFrames:battleView.troopSprites.length},
+  battleVisual:{particles:battleView.particles.filter(p=>p.life>0).length,visibleSquad:Math.min(CONFIG.battle.maxVisibleSquad,Math.round(battleView.displaySquad)),spriteFrames:battleView.troopSprites.length,
+    impacts:battleView.impacts.filter(p=>p.life>0).length,debris:battleView.debris.filter(p=>p.life>0).length,loot:battleView.loot.filter(p=>p.life>0).length,
+    totalImpacts:battleView.totalImpacts,totalBreaks:battleView.totalBreaks,reduced:battleView.reduced},
   frames,readyMs,activeInputs:input.active.size,dragId,audioState:audio.context?.state??'locked',voices:audio.voices.size,features:{...CONFIG.features}
 })})});

@@ -26,34 +26,58 @@ export class Battle {
     this.random = random; this.wallet = wallet; this.events = [];
     this.state = { paused: false, elapsedMs: 0, waveMs: 0, wave: 1, squad: CONFIG.battle.initialSquad,
       x: 0, targetX: 0, coins: 0, kills: 0, bosses: 0, gatesPassed: 0, shots: 0,
-      shotClock: 0, recoilMs: 0, shakeMs: 0, banner: '', bannerMs: 0, clearingMs: 0, distance: 0, gateResult: null };
+      shotClock: 0, recoilMs: 0, shakeMs: 0, banner: '', bannerMs: 0, clearingMs: 0, distance: 0, gateResult: null,
+      charge: 0, powerMs: 0, powerStarts: 0, combo: 0, comboMs: 0, attack: null, bossAttacks: 0, dodges: 0, bossHits: 0 };
     this.entities = []; this.gates = []; this.bullets = []; this.nextId = 1;
     this.startWave();
   }
   emit(event) { if (this.events.length < 128) this.events.push(event); }
   takeEvents() { return this.events.splice(0); }
   reward(amount) { this.state.coins += amount; this.wallet?.credit(amount); }
-  setPaused(paused) { this.state.paused = Boolean(paused); }
+  setPaused(paused) {
+    if(this.state.paused&&!paused&&this.state.attack?.phase==='warning')this.state.attack.remainingMs=CONFIG.battle.bossWarningMs;
+    this.state.paused = Boolean(paused);
+  }
   steer(x) { if (Number.isFinite(x) && !this.state.paused) this.state.targetX = limit(x, -CONFIG.battle.maxX, CONFIG.battle.maxX); }
   startWave() {
     this.state.waveMs = 0; this.gateIndex = 0; this.nextEnemy = CONFIG.battle.enemyEveryMs;
-    this.heavySpawned = false; this.bossSpawned = false;
+    this.heavySpawned = false; this.bossSpawned = false; this.supplySpawned = false; this.formation = 0;
+    this.state.attack = null; this.bossAttackClock = CONFIG.battle.bossFirstAttackMs;
     this.entities = []; this.gates = []; this.bullets = [];
-    this.spawn('barrel', 0, 22, 30);
+    this.spawn('barrel', 0, CONFIG.battle.openingZ, 30, { explosive: true });
+    for(const side of [-1,1])this.spawn('enemy',side*.48,CONFIG.battle.openingZ+2,12);
   }
-  spawn(kind, x, z, hp) {
+  spawn(kind, x, z, hp, options = {}) {
     if (this.entities.length >= CONFIG.battle.maxEntities) return;
-    this.entities.push({ id: this.nextId++, kind, x, z, hp, maxHp: hp, hitMs: 0, dead: false, radius: kind === 'boss' ? 1.25 : 0.28 });
+    this.entities.push({ id: this.nextId++, kind, x, baseX:x, z, hp, maxHp: hp, hitMs: 0, dead: false,
+      crack: 0, rage: false, radius: kind === 'boss' ? 1.25 : 0.28, ...options });
+  }
+  firepower(powered = this.state.powerMs > 0) {
+    const b=CONFIG.battle;
+    return {pellets:Math.min(b.maxPellets,Math.max(powered?b.powerMinPellets:1,1+Math.floor(this.state.squad/12))),
+      damage:Math.min(b.maxDamage,Math.ceil(this.state.squad/3))*(powered?b.powerDamage:1),interval:powered?b.powerShotMs:b.shotMs};
+  }
+  powerUp() {
+    const s=this.state;s.powerMs=CONFIG.battle.powerMs;s.charge=0;s.powerStarts+=1;s.shotClock=0;
+    this.emit({type:'power-up',x:s.x,z:CONFIG.battle.playerZ});
+  }
+  spawnFormation() {
+    const pattern=(this.formation++ + this.state.wave-1)%3,hp=18+Math.min(60,this.state.wave*4);
+    if(pattern===0){for(const x of[-.64,0,.64])this.spawn('enemy',x,30+Math.abs(x)*4,hp);}
+    else if(pattern===1){
+      const x=this.random()<.5?-.38:.38;
+      this.spawn('barrel',x,29,30,{explosive:true});
+      for(const side of[-1,1])this.spawn('enemy',x+side*.32,31,hp);
+    }else for(const x of[-.5,.5])this.spawn('enemy',x,31,hp,{weave:true});
   }
   shoot() {
     const s = this.state; const b = CONFIG.battle;
-    const pellets = Math.min(b.maxPellets, 1 + Math.floor(s.squad / 12));
-    const damage = Math.min(b.maxDamage, Math.ceil(s.squad / 3));
+    const {pellets,damage} = this.firepower();
     for (let i = 0; i < pellets && this.bullets.length < b.maxBullets; i += 1) {
-      this.bullets.push({ x: s.x + (i - (pellets - 1) / 2) * 0.10, z: b.playerZ + 0.3, damage, id: this.nextId++ });
+      this.bullets.push({ x: s.x + (i - (pellets - 1) / 2) * 0.10, z: b.playerZ + 0.3, damage, powered:s.powerMs>0, id: this.nextId++ });
     }
     s.shots += pellets; s.recoilMs = 65;
-    this.emit({ type: 'shot', power: pellets });
+    this.emit({ type: 'shot', power: pellets, powered:s.powerMs>0 });
   }
   passGate(gate) {
     if (gate.passed) return;
@@ -70,26 +94,57 @@ export class Battle {
     s.shakeMs = good ? 160 : 90;
     this.emit({ type: good ? 'gate-win' : 'gate-miss', x: s.x, z: CONFIG.battle.playerZ, change: s.squad - previous });
   }
-  hit(entity, damage) {
+  hit(entity, damage, chain = false) {
     if (entity.dead) return;
+    const dealt=Math.min(entity.hp,damage),beforeCrack=entity.crack;
     entity.hp = Math.max(0, entity.hp - damage); entity.hitMs = CONFIG.battle.hitMs;
-    this.emit({ type: 'hit', x: entity.x, z: entity.z, damage });
+    entity.crack=entity.hp>0?Math.min(2,Math.floor((1-entity.hp/entity.maxHp)*3)):3;
+    this.emit({ type: 'hit', id:entity.id, kind:entity.kind, x: entity.x, z: entity.z, damage:dealt, crack:entity.crack, chain });
+    if(entity.crack>beforeCrack&&entity.hp>0)this.emit({type:'armor-break',kind:entity.kind,x:entity.x,z:entity.z});
+    if(entity.kind==='boss'&&!entity.rage&&entity.hp>0&&entity.hp<=entity.maxHp*.5){entity.rage=true;this.emit({type:'boss-rage',x:0,z:entity.z});}
     if (entity.hp) return;
     entity.dead = true; this.state.kills += 1;
     const boss = entity.kind === 'boss';
-    const coins = boss ? CONFIG.battle.bossCoins : entity.kind === 'barrel' ? CONFIG.battle.barrelCoins : CONFIG.battle.enemyCoins;
+    const coins = boss ? CONFIG.battle.bossCoins : entity.kind === 'crate' ? CONFIG.battle.supplyCoins : entity.kind === 'barrel' ? CONFIG.battle.barrelCoins : CONFIG.battle.enemyCoins;
     this.reward(coins); this.state.shakeMs = boss ? 360 : 130;
-    this.emit({ type: 'explode', x: entity.x, z: entity.z, boss, coins });
+    this.state.combo=this.state.comboMs>0?this.state.combo+1:1;this.state.comboMs=CONFIG.battle.comboMs;
+    this.emit({ type: 'explode', kind:entity.kind, explosive:entity.explosive, x: entity.x, z: entity.z, boss, coins, combo:this.state.combo, chain });
+    if(entity.kind==='crate')this.powerUp();
+    else if(!boss&&!this.state.powerMs){this.state.charge+=1;if(this.state.charge>=CONFIG.battle.chargeKills)this.powerUp();}
+    // Mark the source dead before the cascade: every prop/reward can resolve only once.
+    if(entity.explosive)for(const target of this.entities){
+      if(!target.dead&&target.kind!=='boss'&&Math.abs(target.x-entity.x)<=CONFIG.battle.chainRadiusX&&Math.abs(target.z-entity.z)<=CONFIG.battle.chainRadiusZ)this.hit(target,CONFIG.battle.chainDamage,true);
+    }
     if (boss) {
       this.state.bosses += 1; this.state.clearingMs = CONFIG.battle.waveBreakMs;
       this.state.banner = 'CLEAR!'; this.state.bannerMs = CONFIG.battle.waveBreakMs;
-      this.entities.forEach((item) => { item.dead = true; }); this.gates = []; this.bullets = [];
+      this.entities.forEach((item) => { item.dead = true; }); this.gates = []; this.bullets = [];this.state.attack=null;
+    }
+  }
+  updateBoss(ms) {
+    const s=this.state,b=CONFIG.battle,boss=this.entities.find(e=>e.kind==='boss'&&!e.dead);
+    if(!boss)return;
+    if(s.attack){
+      s.attack.remainingMs=Math.max(0,s.attack.remainingMs-ms);
+      if(s.attack.remainingMs>0)return;
+      if(s.attack.phase==='warning'){
+        const hit=(s.x<0?0:1)===s.attack.lane;
+        s.attack.phase='slam';s.attack.remainingMs=b.bossSlamMs;s.bossAttacks+=1;
+        if(hit){s.squad=Math.max(1,s.squad-b.bossPenalty);s.bossHits+=1;}else s.dodges+=1;
+        s.shakeMs=hit?240:100;
+        this.emit({type:'boss-slam',x:s.attack.lane===0?-.55:.55,z:b.playerZ,hit});
+      }else{s.attack=null;this.bossAttackClock=boss.rage?b.bossRageGapMs:b.bossAttackGapMs;}
+    }else{
+      this.bossAttackClock-=ms;
+      if(this.bossAttackClock<=0){s.attack={lane:s.x<0?0:1,phase:'warning',remainingMs:b.bossWarningMs};this.emit({type:'boss-warning'});}
     }
   }
   tick(ms) {
     const s = this.state; const b = CONFIG.battle; const dt = ms / 1000;
     s.elapsedMs += ms; s.recoilMs = Math.max(0, s.recoilMs - ms); s.shakeMs = Math.max(0, s.shakeMs - ms);
     s.bannerMs = Math.max(0, s.bannerMs - ms);
+    s.powerMs=Math.max(0,s.powerMs-ms);s.comboMs=Math.max(0,s.comboMs-ms);
+    if(!s.comboMs)s.combo=0;
     const movement = limit(s.targetX - s.x, -b.steerSpeed * dt, b.steerSpeed * dt);
     s.x += movement;
     if (s.clearingMs > 0) {
@@ -103,14 +158,16 @@ export class Battle {
       this.gateIndex += 1;
     }
     if (s.waveMs >= this.nextEnemy && s.waveMs < b.bossAtMs - 2500) {
-      this.spawn('enemy', this.random() < 0.5 ? -0.56 : 0.56, 36, 18 + Math.min(60, s.wave * 4));
+      this.spawnFormation();
       this.nextEnemy += b.enemyEveryMs;
     }
+    if(s.waveMs>=b.supplyAtMs&&!this.supplySpawned){this.spawn('crate',0,22,b.supplyHp);this.supplySpawned=true;}
     if (s.waveMs >= 8000 && !this.heavySpawned) {
       this.spawn('barrel', this.random() < 0.5 ? -0.5 : 0.5, 32, 150); this.heavySpawned = true;
     }
     if (s.waveMs >= b.bossAtMs && !this.bossSpawned) {
-      this.spawn('boss', 0, b.bossSpawnZ, b.bossHp + (s.wave - 1) * b.bossHpPerWave); this.bossSpawned = true;
+      const power=this.firepower(false),hp=Math.max(b.bossHp+(s.wave-1)*b.bossHpPerWave,Math.ceil(power.pellets*power.damage*1000/power.interval*b.bossCombatSeconds));
+      this.spawn('boss', 0, b.bossSpawnZ, hp); this.bossSpawned = true;
       s.shakeMs = 150;
       this.emit({ type: 'boss' });
     }
@@ -120,11 +177,12 @@ export class Battle {
     }
     this.gates = this.gates.filter((gate) => !gate.passed);
     s.shotClock -= ms;
-    while (s.shotClock <= 0) { this.shoot(); s.shotClock += b.shotMs; }
+    while (s.shotClock <= 0) { this.shoot(); s.shotClock += this.firepower().interval; }
     for (const entity of this.entities) {
       entity.previousZ = entity.z;
       entity.z = entity.kind === 'boss' ? Math.max(9, entity.z - b.speed * dt) : entity.z - b.speed * dt;
       entity.hitMs = Math.max(0, entity.hitMs - ms);
+      if(entity.weave)entity.x=entity.baseX+Math.sin(s.elapsedMs/550+entity.id)*.18;
     }
     // Sweep relative motion: a projectile cannot tunnel through a moving target.
     for (const bullet of this.bullets) {
@@ -143,6 +201,7 @@ export class Battle {
       entity.dead = true;
     }
     this.entities = this.entities.filter((entity) => !entity.dead);
+    this.updateBoss(ms);
   }
   advance(deltaMs) {
     if (this.state.paused || !Number.isFinite(deltaMs) || deltaMs <= 0) return;
@@ -150,7 +209,7 @@ export class Battle {
     while (left > 0) { const dt = Math.min(left, CONFIG.battle.fixedStepMs); this.tick(dt); left -= dt; }
   }
   snapshot() {
-    return { ...this.state, gateResult: this.state.gateResult ? { ...this.state.gateResult } : null,
+    return { ...this.state, attack:this.state.attack?{...this.state.attack}:null, gateResult: this.state.gateResult ? { ...this.state.gateResult } : null,
       entities: this.entities.map((entity) => ({ ...entity })),
       gates: this.gates.map((gate) => ({ ...gate, options: gate.options.map((option) => ({ ...option })) })),
       bulletCount: this.bullets.length, entityCount: this.entities.length, queuedEvents: this.events.length };

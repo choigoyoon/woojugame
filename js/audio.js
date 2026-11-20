@@ -6,7 +6,7 @@ export function noteFrequency(index = 0) {
 }
 
 export class Audio {
-  constructor() { this.context = null; this.master = null; this.voices = new Map(); this.speechToken = 0; }
+  constructor() { this.context = null; this.master = null; this.voices = new Map(); this.speechToken = 0; this.noiseBuffer=null;this.lastImpact=-Infinity; }
 
   unlock() {
     try {
@@ -65,13 +65,45 @@ export class Audio {
     } catch { /* A device can revoke audio while backgrounding. */ }
   }
 
+  noise(seconds, level = .3) {
+    if(!this.context||this.context.state==='closed')return;
+    try {
+      if(!this.noiseBuffer){
+        this.noiseBuffer=this.context.createBuffer(1,Math.ceil(this.context.sampleRate*.5),this.context.sampleRate);
+        const samples=this.noiseBuffer.getChannelData(0);let low=0;
+        for(let i=0;i<samples.length;i++){const white=Math.random()*2-1;low=.83*low+.17*white;samples[i]=white*.35+low*1.8;}
+      }
+      while(this.voices.size>=CONFIG.audio.maxVoices)this.release(...this.voices.entries().next().value);
+      const voice=this.context.createBufferSource(),envelope=this.context.createGain(),now=this.context.currentTime;
+      voice.buffer=this.noiseBuffer;envelope.gain.setValueAtTime(CONFIG.audio.floorGain,now);
+      envelope.gain.linearRampToValueAtTime(level,now+.004);envelope.gain.exponentialRampToValueAtTime(CONFIG.audio.floorGain,now+seconds);
+      voice.connect(envelope);envelope.connect(this.master);this.voices.set(voice,envelope);
+      voice.onended=()=>this.release(voice,envelope,false);voice.start(now);voice.stop(now+seconds);
+    }catch{/* Optional percussion must never interrupt a frame. */}
+  }
+
   play(event) {
     if (!event) return;
     const a = CONFIG.audio;
-    if (event.type === 'shot') this.tone(470, 105, 0.055, 'square', 0, 0.10);
+    if (event.type === 'shot') {
+      this.tone(event.powered?740:340,event.powered?170:72,event.powered?.075:.065,event.powered?'sawtooth':'square',0,event.powered?.18:.16);
+      this.noise(.035,event.powered?.23:.17);
+    }
     if (event.type === 'boss') { this.tone(120,60,.35,'sawtooth',0,.3);this.tone(523,262,.2,'triangle',.2,.22); }
-    if (event.type === 'hit') this.tone(190, 90, 0.04, 'triangle', 0, 0.13);
+    if (event.type === 'hit'&&(this.context?.currentTime??0)-this.lastImpact>=.035) {
+      this.lastImpact=this.context?.currentTime??0;
+      this.tone(530+(event.crack??0)*100,145,.065,'triangle',0,.35);this.noise(.04,.22);
+    }
+    if(event.type==='armor-break'){this.noise(.11,.45);this.tone(860,280,.12,'square',0,.19);}
+    if(event.type==='power-up'){
+      [392,523,784,1046].forEach((hz,i)=>this.tone(hz*.5,hz,.18,'sawtooth',i*.055,.25));
+      this.tone(80,190,.28,'sine',0,.5);
+    }
+    if(event.type==='boss-warning')for(const delay of[0,.18])this.tone(740,880,.12,'triangle',delay,.45);
+    if(event.type==='boss-rage'){this.tone(180,80,.3,'sawtooth',0,.4);this.noise(.2,.3);}
+    if(event.type==='boss-slam'){this.noise(.2,.45);this.tone(110,36,.24,'sine',0,.7);if(!event.hit)this.tone(880,1320,.13,'sine',.08,.35);}
     if (event.type === 'explode') {
+      this.noise(event.boss?.45:.25,event.boss?.75:.5);
       this.tone(180, 36, event.boss ? 0.42 : 0.22, 'sawtooth', 0, 0.27);
       this.tone(80, 34, 0.27, 'sine', 0, 0.65);
       if (event.boss) this.play({ type: 'reward' });

@@ -37,10 +37,11 @@ test('home waits 800ms plus release; inactive modes freeze and both games credit
   app.advance(1);assert.equal(app.home(true),false);assert.equal(app.home(),true);
   const time=app.stairs.state.elapsedMs;app.advance(1000);assert.equal(app.stairs.state.elapsedMs,time);
   assert.equal(app.enter('battle'),true);const barrel=app.battle.entities[0];app.battle.hit(barrel,barrel.hp);
-  assert.equal(p.coins,6);app.advance(800);assert.equal(app.home(),true);assert.equal(app.enter('stairs'),true);
-  assert.equal(app.stairs.state.step,1);assert.equal(app.stairs.wallet.coins,6);
+  const coins=1+CONFIG.battle.barrelCoins+2*CONFIG.battle.enemyCoins;
+  assert.equal(p.coins,coins);app.advance(800);assert.equal(app.home(),true);assert.equal(app.enter('stairs'),true);
+  assert.equal(app.stairs.state.step,1);assert.equal(app.stairs.wallet.coins,coins);
   app.setPaused(true);const clock=app.clock;app.advance(9000);assert.equal(app.clock,clock);
-  assert.equal(new Profile(p.storage).coins,6);
+  assert.equal(new Profile(p.storage).coins,coins);
 });
 test('brake warning permits input until exactly 500ms; hold input fails without coin loss',()=>{
   const g=new Game(()=>0);for(let i=0;i<15;i++)climb(g);

@@ -104,10 +104,11 @@ with ArcadeBrowser() as h:
         h.advance(100)
     assert h.state()['battle']['bosses']==1
     assert h.state()['profile']['coins']>=before_coins+60
-    h.advance(100);h.capture('09-boss-clear');h.advance(2300)
-    assert h.state()['battle']['wave']==2
+    h.advance(100);h.capture('09-boss-clear');h.advance(3300)
+    assert h.state()['battle']['phase']=='result'
+    h.tap('weapon-0');assert h.state()['battle']['round']==1 and h.state()['battle']['weapon']=='spread'
     assert h.state()['profile']['coins']==h.state()['stairs']['coins']+h.state()['battle']['coins']
-    h.home();report['checks'].append('smaller gate continues play, larger gate adds exact result, squad grows, boss pays once and wave two starts')
+    h.home();report['checks'].append('smaller/larger gates, squad grows, boss pays once, explicit weapon choice starts round two')
 
     h.tap('mode-stairs');brake_seen=False;auto_seen=False
     for _ in range(220):
@@ -135,15 +136,16 @@ with ArcadeBrowser() as h:
     h.home();h.capture('16-shared-coins')
     report['checks'].append('warning/hold/success/auto-climb, picture retry, bridge assembly and one-time chest reward')
 
-    saved=h.state()['profile'];p.reload();h.advance(100)
+    saved=h.state()['profile'];saved_battle=h.state()['battle'];p.reload();h.advance(100)
     assert h.state()['screen']=='lobby' and h.state()['profile']['coins']==saved['coins']
     assert h.state()['profile']['equipped']==saved['equipped'] and h.state()['profile']['status']=='saved'
-    assert h.state()['stairs']['step']==0 and h.state()['battle']['wave']==1
+    assert h.state()['stairs']['step']==0 and h.state()['battle']['round']==saved_battle['round']
+    assert h.state()['battle']['waveMs']==saved_battle['waveMs'] and not h.state()['battle']['recovered']
     report['checks'].append('real-origin localStorage restores shared coins/equipment after full page reload')
     assert not h.errors,h.errors
     assert not h.failures,h.failures
     assert all(url.startswith(h.base) for url in h.requests if url.startswith(('http:','https:'))),h.requests
-    modules={url.split('/')[-1] for url in h.requests if url.endswith('.js')};assert len(modules)==14,modules
+    modules={url.split('/')[-1] for url in h.requests if url.endswith('.js')};assert len(modules)==len(list((ROOT/'js').glob('*.js'))),modules
     report['sourceModules']=sorted(modules)
     # The separate single-file build must also boot and enter both released modes.
     p.goto('about:blank?debug');p.set_content((ROOT/'dist/index.html').read_text());h.advance(100)

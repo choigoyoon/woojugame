@@ -72,11 +72,15 @@ export class Lobby {
       c.save();c.beginPath();c.roundRect(x+9,y+9,w-18,252,20);c.clip();
       const halo=c.createRadialGradient(x+w/2,y+130,12,x+w/2,y+130,160);halo.addColorStop(0,card.accent+'38');halo.addColorStop(1,card.accent+'00');c.fillStyle=halo;c.fillRect(x,y,w,260);
       this.mini(card.id,x+w/2,y+150);c.restore();
-      a.text(card.tag,x+22,y+34,14,card.accent,'left');
+      const progress=this.profile.data.progress.battle;
+      a.text(card.id==='battle'?'하늘 항구  1-'+(progress.round+1):card.tag,x+22,y+34,14,card.accent,'left');
       a.rect(x+12,y+263,w-24,87,'#0b163c8c',20);
       a.text(card.title,x+w/2,y+288,card.id==='plaza'?24:27,'#fff4de');
       if(card.locked){a.lock(x+w/2,y+328,.57);}
-      else {a.poly([[x+w/2-7,y+315],[x+w/2+10,y+325],[x+w/2-7,y+335]],card.accent);}
+      else if(card.id==='battle'){
+        a.line([[x+104,y+325],[x+202,y+325]],'#a3b2e46b',3);
+        for(let i=0;i<3;i++){const px=x+104+i*49;a.ellipse(px,y+325,12,12,i<progress.cleared?'#ffdc85':'#263b68');if(i<progress.cleared)a.star(px,y+325,8,'#8b5f45');else a.text(i+1,px,y+325,13,'#b5ccea');}
+      }else {a.poly([[x+w/2-7,y+315],[x+w/2+10,y+325],[x+w/2-7,y+335]],card.accent);}
     }
     a.text('UJU • BLOCK ARCADE',360,1222,17,'#7e91b8', 'center',700);
   }

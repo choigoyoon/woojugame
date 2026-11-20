@@ -37,6 +37,7 @@ test('home waits 800ms plus release; inactive modes freeze and both games credit
   app.advance(1);assert.equal(app.home(true),false);assert.equal(app.home(),true);
   const time=app.stairs.state.elapsedMs;app.advance(1000);assert.equal(app.stairs.state.elapsedMs,time);
   assert.equal(app.enter('battle'),true);const barrel=app.battle.entities[0];app.battle.hit(barrel,barrel.hp);
+  app.advance(1); // Commit the combat transaction at the simulation boundary.
   const coins=1+CONFIG.battle.barrelCoins+2*CONFIG.battle.enemyCoins;
   assert.equal(p.coins,coins);app.advance(800);assert.equal(app.home(),true);assert.equal(app.enter('stairs'),true);
   assert.equal(app.stairs.state.step,1);assert.equal(app.stairs.wallet.coins,coins);

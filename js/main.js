@@ -24,6 +24,9 @@ function button(id,action,label,x,y,w,h){
   element.append(node);controls.set(id,node);return node;
 }
 button('battle-field','steer','부대를 좌우로 드래그 이동',0,108,720,1172);
+button('weapon-0','weapon-0','왼쪽 무기로 다음 라운드',36,824,306,332);
+button('weapon-1','weapon-1','오른쪽 무기로 다음 라운드',378,824,306,332);
+button('replay','replay','하늘 항구 다시 출동',105,987,510,112);
 for(const card of CARTRIDGES){const b=button('mode-'+card.id,card.id,card.title+(card.locked?' · 준비 중':''),card.x,card.y,306,364);if(card.locked)b.setAttribute('aria-disabled','true');}
 button('avatar','profile','내 아바타와 코인 보관함 · 파츠 상점 준비 중',37,180,646,148);
 button('coins','profile','코인 보관함',455,47,226,76);
@@ -83,6 +86,11 @@ const input=new Input(element,{
         if(mapped){record.action=mapped;record.gameplay=true;arcade.interact();const e=arcade.stairs.act(mapped);renderer.handle(e,mapped,record.point);audio.play(e);events();}
       }
     }else if(arcade.mode==='battle'){
+      if(arcade.battle.state.phase!=='combat'){
+        if(input.hasGameplayInput())return;
+        const accepted=action==='weapon-0'?arcade.battle.choose(0):action==='weapon-1'?arcade.battle.choose(1):action==='replay'?arcade.battle.replay():false;
+        if(accepted){arcade.interact();changed();}return;
+      }
       if(['left','right'].includes(action)){record.gameplay=true;arcade.interact();}
       else if(record.point){record.gameplay=true;arcade.interact();if(dragId===null){dragId=record.id;arcade.battle.steer((record.point.x-360)/300);}}
     }
@@ -96,21 +104,27 @@ const input=new Input(element,{
 
 function syncUI(){
   const puzzle=arcade.mode==='stairs'&&arcade.stairs.state.mode===MODE.PUZZLE;
-  const key=arcade.mode+':'+puzzle+':'+(arcade.stairs.state.puzzle?.choices.join(',')??'');
+  const phase=arcade.battle.state.phase;
+  const key=arcade.mode+':'+puzzle+':'+phase+':'+(arcade.stairs.state.puzzle?.choices.join(',')??'');
   if(key!==uiKey){
+    if(arcade.mode==='battle'&&phase!=='combat'){input.reset();dragId=null;}
     uiKey=key;
     for(const [id,node]of controls){
       node.hidden=!(arcade.mode==='lobby'&&(id.startsWith('mode-')||['avatar','coins'].includes(id))
         ||arcade.mode!=='lobby'&&id==='home'
-        ||arcade.mode==='battle'&&id==='battle-field'
+        ||arcade.mode==='battle'&&phase==='combat'&&id==='battle-field'
+        ||arcade.mode==='battle'&&phase==='result'&&id.startsWith('weapon-')
+        ||arcade.mode==='battle'&&phase==='complete'&&id==='replay'
         ||arcade.mode==='stairs'&&!puzzle&&['turn','climb'].includes(id)
         ||puzzle&&['choice-0','choice-1','speech'].includes(id));
     }
     if(puzzle){const p=arcade.stairs.state.puzzle,s=SCENARIOS.find(s=>s.id===p.id);p.choices.forEach((choice,i)=>controls.get('choice-'+i).setAttribute('aria-label',s.labels[s.choices.indexOf(choice)]));}
+    if(arcade.mode==='battle'&&phase==='result')arcade.battle.offers.forEach((o,i)=>controls.get('weapon-'+i).setAttribute('aria-label',CONFIG.campaign.weapons[o.id].name+(o.rank===2?' 강화':'')+' 선택, 다음 라운드'));
     canvas.setAttribute('aria-label',arcade.mode==='battle'?'현수교 위 블록 부대와 수식 게이트':puzzle?'상황 그림과 용암 다리':arcade.mode==='stairs'?'하늘 위 블록 계단과 캐릭터':arcade.mode==='profile'?'내 아바타와 공통 코인':'네 개의 입체 게임 카트리지');
   }
   const enabled=arcade.mode==='profile'||arcade.canHome(input.hasGameplayInput());
   const home=controls.get('home');if(home.getAttribute('aria-disabled')!==String(!enabled))home.setAttribute('aria-disabled',String(!enabled));
+  for(const id of ['weapon-0','weapon-1','replay'])controls.get(id).setAttribute('aria-disabled',String(arcade.battle.state.resultMs<CONFIG.campaign.resultGuardMs));
   score.value='코인 '+profile.coins;
 }
 function render(){

@@ -99,6 +99,10 @@ export class Audio {
       [392,523,784,1046].forEach((hz,i)=>this.tone(hz*.5,hz,.18,'sawtooth',i*.055,.25));
       this.tone(80,190,.28,'sine',0,.5);
     }
+    if(event.type==='round-clear'){
+      [523,659,784,1046,1318].forEach((hz,i)=>this.tone(hz,hz,.35,'triangle',i*.13,.5));
+      if(event.final)this.tone(262,523,.6,'sine',.4,.4);
+    }
     if(event.type==='boss-warning')for(const delay of[0,.18])this.tone(740,880,.12,'triangle',delay,.45);
     if(event.type==='boss-rage'){this.tone(180,80,.3,'sawtooth',0,.4);this.noise(.2,.3);}
     if(event.type==='boss-slam'){this.noise(.2,.45);this.tone(110,36,.24,'sine',0,.7);if(!event.hit)this.tone(880,1320,.13,'sine',.08,.35);}

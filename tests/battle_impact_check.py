@@ -20,7 +20,7 @@ with ArcadeBrowser() as h:
                 h.page.emulate_media(reduced_motion='reduce');h.advance(32)
                 assert h.state()['battleVisual']['reduced']
                 h.page.emulate_media(reduced_motion='no-preference');h.advance(32);captured.add('reduced')
-        if any(e.get('weave') for e in b['entities']):capture('04-moving-formation')
+        if b['waveMs']>10000 and any(e.get('explosive') for e in b['entities']):capture('04-explosive-convoy')
         boss=next((e for e in b['entities'] if e['kind']=='boss'),None)
         if boss and boss['rage']:capture('06-boss-rage')
         attack=b['attack']
@@ -49,10 +49,10 @@ with ArcadeBrowser() as h:
     assert b['bosses']==1 and b['powerStarts']>=1 and b['dodges']>=1,b
     assert v['totalImpacts']>30 and v['totalBreaks']>8,v
     assert peaks['impacts']<=24 and peaks['debris']<=40 and peaks['loot']<=24,peaks
-    assert {'01-cracked-barrel','02-chain-explosion','03-max-fire','04-moving-formation','05-boss-warning','06-boss-rage','07-boss-slam','08-clear'}.issubset(captured),captured
+    assert {'01-cracked-barrel','02-chain-explosion','03-max-fire','04-explosive-convoy','05-boss-warning','06-boss-rage','07-boss-slam','08-clear'}.issubset(captured),captured
     assert not h.errors and not h.failures,(h.errors,h.failures)
     report={'mode':'mobile Chromium, actual touch play with controlled time',
-        'checks':['progressive cracks, damage numbers, chain explosion and flying coin rewards','supply crate and visible overdrive; live reduced-motion switch','moving formations, locked warning lane, boss dodge/slam/rage and clear','background freezes warning/power; resume grants full warning','bounded impact/debris/coin pools'],
+        'checks':['progressive cracks, damage numbers, chain explosion and flying coin rewards','supply crate and visible overdrive; live reduced-motion switch','explosive convoy, locked warning lane, boss dodge/slam/rage and clear','background freezes warning/power; resume grants full warning','bounded impact/debris/coin pools'],
         'captures':sorted(captured),'impacts':v['totalImpacts'],'breaks':v['totalBreaks'],'powerStarts':b['powerStarts'],
         'bossAttacks':b['bossAttacks'],'dodges':b['dodges'],'bossHits':b['bossHits'],'peaks':peaks,'errors':h.errors}
     (OUTPUT/'battle-impact-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))

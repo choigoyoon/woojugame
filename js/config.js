@@ -14,7 +14,26 @@ export const MODE = Object.freeze({
 
 export const CONFIG = freeze({
   features: { brake: true, puzzle: true, battle: true, shop: false, persistence: true, cooldown: false, pwa: false },
-  arcade: { homeIdleMs: 800, maxFrameMs: 100, storageKey: 'uju-arcade-profile', storageVersion: 1, maxCoins: 999999999 },
+  arcade: { homeIdleMs: 800, maxFrameMs: 100, storageKey: 'uju-arcade-profile', storageVersion: 2, maxCoins: 999999999 },
+  campaign: {
+    checkpointVersion: 1, saveMs: 1000, resultGuardMs: 800, stableChoiceMs: 900, sampleCount: 10,
+    gateEveryMs: 22000, gateFirstMs:5000, gateReserveMs:16000, assistedGateSpeed:.75,
+    extraSupplyMs: 30000, maxSaveBytes: 262144, bossSafeX:.35,
+    math:{maxOperands:[10,20,20],minGaps:[3,3,1],promoteWins:8,demoteWins:5},
+    rounds: [
+      {id:'harbor-1',title:'선착장 돌격',boss:'철통 대장',durationMs:120000,enemyEveryMs:6500,patterns:[0,1,0,1],squad:5,reward:40,bossSeconds:8,warningMs:1500,theme:0},
+      {id:'harbor-2',title:'화물선 추격',boss:'쌍둥이 집게',durationMs:130000,enemyEveryMs:6000,patterns:[1,2,0,2],squad:8,reward:60,bossSeconds:10,warningMs:1400,theme:1},
+      {id:'harbor-3',title:'항구를 지켜라',boss:'항구 수호 거인',durationMs:140000,enemyEveryMs:5500,patterns:[2,1,0,2],squad:10,reward:100,bossSeconds:12,warningMs:1300,theme:2},
+    ],
+    weapons: {
+      pulse:{name:'펄스포',color:'#ffd277'},
+      spread:{name:'확산포',color:'#8cffe0'},
+      pierce:{name:'관통포',color:'#cdb3ff'},
+      arc:{name:'연쇄포',color:'#9bdcff'},
+    },
+    spreadDamage:.7, spreadInterval:1.12, spreadWidth:.25,
+    pierceTargets:2, arcDamage:.8, arcSplash:.5, arcRangeX:.75, arcRangeZ:3, rankBonus:.18,
+  },
   brake: { minSteps: 15, maxSteps: 25, warningMs: 500, holdMs: 2000, coins: 15, autoSteps: 5, autoStepMs: 190 },
   puzzle: { everySteps: 50, brakeExclusionSteps: 3, chestCoins: 50, celebrationMs: 1800, wrongMs: 450 },
   battle: {

@@ -32,17 +32,22 @@ export class Battle {
     this.startWave();
   }
   emit(event) { if (this.events.length < 128) this.events.push(event); }
+  get rules() { return CONFIG.battle; }
+  createGate() { return makeGate(this.random,this.state.wave===1&&this.gateIndex===0); }
+  finishWave() { this.state.wave+=1;this.startWave();this.emit({type:'wave'}); }
+  nextAttackLane() { return this.state.x<0?0:1; }
+  attackHits(attack) { return (this.state.x<0?0:1)===attack.lane; }
   takeEvents() { return this.events.splice(0); }
   reward(amount) { this.state.coins += amount; this.wallet?.credit(amount); }
   setPaused(paused) {
-    if(this.state.paused&&!paused&&this.state.attack?.phase==='warning')this.state.attack.remainingMs=CONFIG.battle.bossWarningMs;
+    if(this.state.paused&&!paused&&this.state.attack?.phase==='warning')this.state.attack.remainingMs=this.rules.bossWarningMs;
     this.state.paused = Boolean(paused);
   }
   steer(x) { if (Number.isFinite(x) && !this.state.paused) this.state.targetX = limit(x, -CONFIG.battle.maxX, CONFIG.battle.maxX); }
   startWave() {
-    this.state.waveMs = 0; this.gateIndex = 0; this.nextEnemy = CONFIG.battle.enemyEveryMs;
+    this.state.waveMs = 0; this.gateIndex = 0; this.nextEnemy = this.rules.enemyEveryMs;
     this.heavySpawned = false; this.bossSpawned = false; this.supplySpawned = false; this.formation = 0;
-    this.state.attack = null; this.bossAttackClock = CONFIG.battle.bossFirstAttackMs;
+    this.state.attack = null; this.bossAttackClock = this.rules.bossFirstAttackMs;
     this.entities = []; this.gates = []; this.bullets = [];
     this.spawn('barrel', 0, CONFIG.battle.openingZ, 30, { explosive: true });
     for(const side of [-1,1])this.spawn('enemy',side*.48,CONFIG.battle.openingZ+2,12);
@@ -62,7 +67,7 @@ export class Battle {
     this.emit({type:'power-up',x:s.x,z:CONFIG.battle.playerZ});
   }
   spawnFormation() {
-    const pattern=(this.formation++ + this.state.wave-1)%3,hp=18+Math.min(60,this.state.wave*4);
+    const order=this.rules.patterns,pattern=order?order[this.formation++%order.length]:(this.formation++ + this.state.wave-1)%3,hp=18+Math.min(60,this.state.wave*4);
     if(pattern===0){for(const x of[-.64,0,.64])this.spawn('enemy',x,30+Math.abs(x)*4,hp);}
     else if(pattern===1){
       const x=this.random()<.5?-.38:.38;
@@ -122,25 +127,25 @@ export class Battle {
     }
   }
   updateBoss(ms) {
-    const s=this.state,b=CONFIG.battle,boss=this.entities.find(e=>e.kind==='boss'&&!e.dead);
+    const s=this.state,b=this.rules,boss=this.entities.find(e=>e.kind==='boss'&&!e.dead);
     if(!boss)return;
     if(s.attack){
       s.attack.remainingMs=Math.max(0,s.attack.remainingMs-ms);
       if(s.attack.remainingMs>0)return;
       if(s.attack.phase==='warning'){
-        const hit=(s.x<0?0:1)===s.attack.lane;
+        const hit=this.attackHits(s.attack);
         s.attack.phase='slam';s.attack.remainingMs=b.bossSlamMs;s.bossAttacks+=1;
         if(hit){s.squad=Math.max(1,s.squad-b.bossPenalty);s.bossHits+=1;}else s.dodges+=1;
         s.shakeMs=hit?240:100;
-        this.emit({type:'boss-slam',x:s.attack.lane===0?-.55:.55,z:b.playerZ,hit});
+        this.emit({type:'boss-slam',x:s.attack.lane===2?0:s.attack.lane===0?-.55:.55,z:b.playerZ,hit});
       }else{s.attack=null;this.bossAttackClock=boss.rage?b.bossRageGapMs:b.bossAttackGapMs;}
     }else{
-      this.bossAttackClock-=ms;
-      if(this.bossAttackClock<=0){s.attack={lane:s.x<0?0:1,phase:'warning',remainingMs:b.bossWarningMs};this.emit({type:'boss-warning'});}
+      this.bossAttackClock=Math.max(0,this.bossAttackClock-ms);
+      if(this.bossAttackClock<=0){s.attack={lane:this.nextAttackLane(),phase:'warning',remainingMs:b.bossWarningMs};this.emit({type:'boss-warning'});}
     }
   }
   tick(ms) {
-    const s = this.state; const b = CONFIG.battle; const dt = ms / 1000;
+    const s = this.state; const b = this.rules; const dt = ms / 1000;
     s.elapsedMs += ms; s.recoilMs = Math.max(0, s.recoilMs - ms); s.shakeMs = Math.max(0, s.shakeMs - ms);
     s.bannerMs = Math.max(0, s.bannerMs - ms);
     s.powerMs=Math.max(0,s.powerMs-ms);s.comboMs=Math.max(0,s.comboMs-ms);
@@ -149,12 +154,12 @@ export class Battle {
     s.x += movement;
     if (s.clearingMs > 0) {
       s.clearingMs = Math.max(0, s.clearingMs - ms);
-      if (!s.clearingMs) { s.wave += 1; this.startWave(); this.emit({ type: 'wave' }); }
+      if (!s.clearingMs) this.finishWave();
       return;
     }
     s.waveMs += ms; s.distance += b.speed * dt;
     if (this.gateIndex < b.gateTimes.length && s.waveMs >= b.gateTimes[this.gateIndex]) {
-      this.gates.push({ ...makeGate(this.random, s.wave === 1 && this.gateIndex === 0), z: b.gateZ, passed: false, id: this.nextId++ });
+      this.gates.push({ ...this.createGate(), z: b.gateZ, passed: false, id: this.nextId++ });
       this.gateIndex += 1;
     }
     if (s.waveMs >= this.nextEnemy && s.waveMs < b.bossAtMs - 2500) {
@@ -172,7 +177,7 @@ export class Battle {
       this.emit({ type: 'boss' });
     }
     for (const gate of this.gates) {
-      gate.z -= b.speed * dt;
+      gate.z -= b.speed * dt*(gate.speedMultiplier??1);
       if (gate.z <= b.playerZ) this.passGate(gate);
     }
     this.gates = this.gates.filter((gate) => !gate.passed);
@@ -187,9 +192,12 @@ export class Battle {
     // Sweep relative motion: a projectile cannot tunnel through a moving target.
     for (const bullet of this.bullets) {
       const previousZ = bullet.z; bullet.z += b.bulletSpeed * dt;
-      const candidates = this.entities.filter((entity) => !entity.dead && Math.abs(entity.x - bullet.x) <= entity.radius
+      const candidates = this.entities.filter((entity) => !entity.dead && !bullet.hitIds?.includes(entity.id) && Math.abs(entity.x - bullet.x) <= entity.radius
         && previousZ <= entity.previousZ + 0.45 && bullet.z >= entity.z - 0.45).sort((a, c) => a.z - c.z);
-      if (candidates.length) { this.hit(candidates[0], bullet.damage); bullet.spent = true; }
+      for(const target of candidates){
+        this.hit(target,bullet.damage);(bullet.hitIds??=[]).push(target.id);bullet.remaining=(bullet.remaining??1)-1;
+        if(bullet.remaining<=0){bullet.spent=true;break;}
+      }
     }
     this.bullets = this.bullets.filter((bullet) => !bullet.spent && bullet.z < b.farZ);
     for (const entity of this.entities) {

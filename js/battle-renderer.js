@@ -11,6 +11,7 @@ export class BattleRenderer {
     this.debris=Array.from({length:CONFIG.battle.debrisCount},()=>({life:0}));this.debrisCursor=0;
     this.loot=Array.from({length:CONFIG.battle.lootCount},()=>({life:0}));this.lootCursor=0;
     this.kick=0;this.powerIntro=0;this.chain=0;this.chainMs=0;this.totalImpacts=0;this.totalBreaks=0;
+    this.links=Array.from({length:12},()=>({life:0}));this.linkCursor=0;
     const motion=window.matchMedia('(prefers-reduced-motion: reduce)');this.reduced=motion.matches;
     motion.addEventListener('change',event=>{this.reduced=event.matches;});
     this.troopSprites=[];this.spriteKey='';this.prepareTroops();
@@ -39,10 +40,12 @@ export class BattleRenderer {
     for(const p of this.popups){p.life=Math.max(0,p.life-ms);p.y-=ms*.045;}
     for(const p of this.impacts)p.life=Math.max(0,p.life-ms);
     for(const p of this.loot)p.life=Math.max(0,p.life-ms);
+    for(const link of this.links)link.life=Math.max(0,link.life-ms);
     for(const p of this.debris){if(p.life<=0)continue;p.life=Math.max(0,p.life-ms);p.x+=p.vx*ms/1000;p.y+=p.vy*ms/1000;p.vy+=800*ms/1000;p.angle+=p.spin*ms/1000;}
   }
   handle(event) {
     if(!event)return;
+    if(event.type==='arc-link')Object.assign(this.links[this.linkCursor++%this.links.length],{from:this.project(event.x,event.z,65),to:this.project(event.toX,event.toZ,65),life:140});
     const point=this.project(event.x??this.game.state.x,event.z??CONFIG.battle.playerZ,event.kind==='boss'?170:event.kind==='barrel'?90:65);
     if(event.type==='gate-win')this.glow=900;
     if(event.type==='power-up'){this.glow=900;this.powerIntro=1100;this.kick=130;}
@@ -79,13 +82,14 @@ export class BattleRenderer {
   }
   ocean() {
     const a=this.art,c=a.c;
-    c.fillStyle=a.gradient(0,0,0,650,['#348fd2','#a3ebf1','#d4faf2']);c.fillRect(0,0,720,1280);
+    const theme=this.game.campaign?this.game.round.theme:0;
+    c.fillStyle=a.gradient(0,0,0,650,[['#348fd2','#a3ebf1','#d4faf2'],['#6455a1','#ffbba7','#ffdfb0'],['#152e67','#5061b3','#c29fe1']][theme]);c.fillRect(0,0,720,1280);
     a.ellipse(596,267,48,48,'#fff4ba');a.ellipse(596,267,64,64,'#fff9d224');
     for(let i=0;i<5;i++){
       const x=(i*197+(this.reduced?0:this.time/1000*5))%920-100,y=210+i%3*45;
       a.rect(x,y,134,25,'#f1ffff98',16);a.rect(x+23,y-16,47,30,'#fff9',15);a.rect(x+62,y-8,47,24,'#fff9',13);
     }
-    c.fillStyle=a.gradient(0,353,0,1280,['#54c9e2','#198fb6','#12668d']);c.fillRect(0,353,720,927);
+    c.fillStyle=a.gradient(0,353,0,1280,[['#54c9e2','#198fb6','#12668d'],['#8da8cb','#4d7db0','#2b5186'],['#486fb0','#284d8b','#18355f']][theme]);c.fillRect(0,353,720,927);
     for(let i=0;i<30;i++){
       const phase=(i*91+this.time*.015)%930,y=365+phase,x=(i*157+Math.sin(this.time/1100+i)*18)%800-40;
       a.line([[x,y],[x+24+phase*.05,y]],i%3?'#b1f5eb32':'#d5ffff69',2+phase*.001);
@@ -148,13 +152,15 @@ export class BattleRenderer {
   }
   barrel(entity) {
     const a=this.art,c=a.c,p=this.project(entity.x,entity.z),boss=entity.kind==='boss';
+    const bossStyle=this.game.campaign?this.game.round.theme:2;
+    const bossColors=[['#126d88','#40c5d4','#245572'],['#8c4151','#ee9567','#8b4059'],['#68336b','#b75d93','#4c2e62']][bossStyle];
     const s=p.s,w=(boss?430:184)*s,h=(boss?340:192)*s,x=p.x-w/2,y=p.y-h;
     const impact=entity.hitMs/CONFIG.battle.hitMs;
     const dent=this.reduced?0:Math.sin(impact*Math.PI)*.15;
     c.save();c.translate(p.x,p.y);c.rotate(this.reduced?0:Math.sin(impact*9)*impact*.045);c.scale(1+dent,1-dent*.7);c.translate(-p.x,-p.y);
     a.ellipse(p.x,p.y+8*s,w*.61,19*s,'#14304748');
-    a.rect(x,y+10*s,w,h-10*s,a.gradient(x,y,x+w,y,boss?['#8f3355','#f1686d','#9c3451']:['#b76542','#eea766','#ae5b43']),20*s);
-    a.ellipse(p.x,y+12*s,w/2,23*s,boss?'#ff9c85':'#ffce8d');a.ellipse(p.x,y+9*s,w*.39,15*s,boss?'#b44a5c':'#d18850');
+    a.rect(x,y+10*s,w,h-10*s,a.gradient(x,y,x+w,y,boss?bossColors:['#b76542','#eea766','#ae5b43']),20*s);
+    a.ellipse(p.x,y+12*s,w/2,23*s,boss?bossColors[1]:'#ffce8d');a.ellipse(p.x,y+9*s,w*.39,15*s,boss?bossColors[0]:'#d18850');
     for(const dy of [h*.26,h*.79]){
       a.rect(x-5*s,y+dy,w+10*s,14*s,boss?'#452a4c':'#4c647a',4*s);
       a.rect(x-4*s,y+dy,w+8*s,4*s,boss?'#ffce8a':'#c4d9db',2*s);
@@ -174,12 +180,15 @@ export class BattleRenderer {
     a.text(Math.ceil(entity.hp),p.x,y+h*.52,Math.max(18,(boss?78:62)*s)*(1+impact*.13),'#fff1c4');
     a.rect(x+w*.1,y+h*.87,w*.8,7*s,'#263951',3*s);a.rect(x+w*.1,y+h*.87,w*.8*Math.max(0,entity.hp/entity.maxHp),7*s,'#ffdf74',3*s);
     if(boss){
-      a.poly([[p.x-72*s,y],[p.x-92*s,y-47*s],[p.x-37*s,y-24*s],[p.x,y-66*s],[p.x+38*s,y-24*s],[p.x+91*s,y-47*s],[p.x+72*s,y]],'#ffe486','#ad6046',2);
+      if(bossStyle===0){a.block(p.x-83*s,y-50*s,166*s,45*s,16*s,'#234664','#a2f8e7','#14324d');a.star(p.x,y-28*s,17*s,'#ffe89a');}
+      else if(bossStyle===1){for(const side of[-1,1]){a.line([[p.x+side*70*s,y],[p.x+side*100*s,y-65*s]],'#ffd48f',12*s);a.ellipse(p.x+side*100*s,y-65*s,27*s,27*s,'#ffe5a2');a.ellipse(p.x+side*100*s,y-65*s,11*s,11*s,'#65375a');}}
+      else a.poly([[p.x-72*s,y],[p.x-92*s,y-47*s],[p.x-37*s,y-24*s],[p.x,y-66*s],[p.x+38*s,y-24*s],[p.x+91*s,y-47*s],[p.x+72*s,y]],'#ffe486','#ad6046',2);
       const warning=this.game.state.attack?.phase==='warning';
       for(const side of[-1,1]){
         const armY=y+h*.33-(warning?Math.sin(this.time/90)*12*s+38*s:0);
         a.block(p.x+side*(w*.5+17*s)-24*s,armY,47*s,h*.49,12*s,'#79354c','#cb6d71','#512c49');
-        a.block(p.x+side*(w*.5+17*s)-32*s,armY+h*.39,64*s,52*s,12*s,entity.rage?'#ff8d63':'#c27983','#ffe1a1','#673246');
+        const fist=bossStyle===2?92:64;
+        a.block(p.x+side*(w*.5+17*s)-fist/2*s,armY+h*.39,fist*s,52*s,12*s,entity.rage?'#ff8d63':bossColors[1],'#ffe1a1','#673246');
         a.rect(p.x+side*65*s-29*s,y+h*.17,58*s,20*s,entity.rage?'#ffed8d':'#9afff3',4*s);
         a.rect(p.x+side*65*s-5*s,y+h*.17,10*s,20*s,'#4a2849',1);
       }
@@ -220,7 +229,7 @@ export class BattleRenderer {
       c.drawImage(this.troopSprites[phase],p.x-64*scale,p.y-bob-176*scale,128*scale,192*scale);
       if(this.glow>0)a.star(p.x+39*scale,p.y-bob-156*scale,10*scale,'#fff4a5');
       const powered=s.powerMs>0;
-      a.block(p.x+16*p.s,p.y-57*p.s+s.recoilMs/65*4,14*p.s,29*p.s,4*p.s,powered?'#29dce3':'#2e4b66',powered?'#c7fff3':'#b4dfe4','#173550');
+      a.block(p.x+16*p.s,p.y-57*p.s+s.recoilMs/65*4,14*p.s,29*p.s,4*p.s,powered?'#29dce3':CONFIG.campaign.weapons[s.weapon]?.color??'#2e4b66',powered?'#c7fff3':'#b4dfe4','#173550');
       if(s.recoilMs>34&&i<Math.min(5,count)){
         a.star(p.x+23*p.s,p.y-66*p.s,(powered?23:17)*p.s,powered?'#81fff5':'#ffca66');
         a.star(p.x+23*p.s,p.y-66*p.s,11*p.s,'#fffde0');
@@ -232,6 +241,7 @@ export class BattleRenderer {
   }
   effects() {
     const a=this.art,c=a.c;
+    for(const link of this.links){if(link.life<=0)continue;c.save();c.globalAlpha=link.life/140;const f=link.from,t=link.to;const path=[[f.x,f.y],[(f.x+t.x)/2-10,(f.y+t.y)/2-12],[(f.x+t.x)/2+10,(f.y+t.y)/2+12],[t.x,t.y]];a.line(path,'#77caff',8);a.line(path,'#e6ffff',3);c.restore();}
     for(const ring of this.rings){if(ring.life<=0)continue;const t=1-ring.life/500;c.save();c.globalAlpha=(1-t)*.7;c.strokeStyle='#fff4ab';c.lineWidth=7*(1-t)+1;c.beginPath();c.ellipse(ring.x,ring.y,(15+t*(ring.boss?240:100)),(10+t*60),0,0,Math.PI*2);c.stroke();c.restore();}
     for(const p of this.particles){if(p.life<=0)continue;c.save();c.globalAlpha=Math.min(1,p.life/240);c.translate(p.x,p.y);c.rotate(p.angle);a.rect(-p.size/2,-p.size/2,p.size,p.size,p.color,1);a.rect(-p.size/2,-p.size/2,p.size,2,'#fff7',1);c.restore();}
     for(const p of this.debris){if(p.life<=0)continue;c.save();c.globalAlpha=Math.min(1,p.life/260);c.translate(p.x,p.y);c.rotate(this.reduced?0:p.angle);a.block(-p.size/2,-p.size/2,p.size,p.size*.7,p.size*.24,p.color,'#ffeac7','#713b53');c.restore();}
@@ -246,20 +256,19 @@ export class BattleRenderer {
   }
   danger() {
     const attack=this.game.state.attack;if(!attack)return;
-    const a=this.art,c=a.c,left=attack.lane===0?-1.04:.04,right=attack.lane===0?-.04:1.04;
+    const a=this.art,c=a.c,left=attack.lane===2?-.35:attack.lane===0?-1.04:.04,right=attack.lane===2?.35:attack.lane===0?-.04:1.04;
     const corner=(x,z)=>{const p=this.project(x,z);return[p.x,p.y];};
     const warning=attack.phase==='warning';
     a.poly([corner(left,15),corner(right,15),corner(right,-1),corner(left,-1)],warning?'#ff614c55':'#ffc77dbb','#ffc27a',3);
     for(let z=0;z<15;z+=2){const l=this.project(left,z),r=this.project(right,z+.6);a.line([[l.x,l.y],[r.x,r.y]],warning?'#ffe9a776':'#fff1bd',4);}
-    const p=this.project(attack.lane===0?-.55:.55,4,12);
+    const p=this.project(attack.lane===2?0:attack.lane===0?-.55:.55,4,12);
     a.rect(p.x-31,p.y-80,62,62,'#78364cd9',15,'#ffd59b');a.text('!',p.x,p.y-48,47,'#ffefae');
     if(warning){
-      const direction=attack.lane===0?1:-1;
-      a.line([[p.x,p.y+4],[p.x+direction*100,p.y+4],[p.x+direction*82,p.y-10]],'#fff3bd',7);
-      a.rect(p.x-30,p.y-10,60*(attack.remainingMs/CONFIG.battle.bossWarningMs),5,'#ffe693',2);
+      for(const direction of attack.lane===2?[-1,1]:[attack.lane===0?1:-1])a.line([[p.x,p.y+4],[p.x+direction*100,p.y+4],[p.x+direction*82,p.y-10]],'#fff3bd',7);
+      a.rect(p.x-30,p.y-10,60*(attack.remainingMs/this.game.rules.bossWarningMs),5,'#ffe693',2);
     }else{
       c.save();c.globalAlpha=attack.remainingMs/CONFIG.battle.bossSlamMs;
-      const t=1-c.globalAlpha;const front=this.project(attack.lane===0?-.55:.55,2);
+      const t=1-c.globalAlpha;const front=this.project(attack.lane===2?0:attack.lane===0?-.55:.55,2);
       a.ellipse(front.x,front.y,45+t*160,16+t*60,'#fff0ad80');c.restore();
     }
   }
@@ -277,10 +286,10 @@ export class BattleRenderer {
     a.rect(30,125,274,86,'#122d54df',25,'#96e9fb59');a.toy(67,194,.28,{time:0,palette:this.profile.palette});
     a.text(s.squad,184,168,43,'#c8ffed');
     a.rect(417,125,274,86,'#122d54df',25,'#96e9fb59');a.coin(459,168,.9);a.text(this.profile.coins,552,168,this.profile.coins>999999?25:36,'#ffe8a5');
-    a.text('WAVE '+s.wave,360,244,18,'#fff4d4');
+    a.text(this.game.campaign?'하늘 항구  1-'+(s.round+1)+'  ·  '+this.game.round.title:'WAVE '+s.wave,360,244,18,'#fff4d4');
     const boss=this.game.entities.find(entity=>entity.kind==='boss');
-    a.rect(142,274,436,9,'#143b6266',5);a.rect(142,274,436*(boss?boss.hp/boss.maxHp:Math.min(1,s.waveMs/CONFIG.battle.bossAtMs)),9,boss?'#ff8e8d':'#b2f2e2',5);
-    if(boss)a.text(boss.rage?'BOSS • RAGE':'BOSS',360,310,22,boss.rage?'#ffbd87':'#fff1d3');
+    a.rect(142,274,436,9,'#143b6266',5);a.rect(142,274,436*(boss?boss.hp/boss.maxHp:Math.min(1,s.waveMs/this.game.rules.bossAtMs)),9,boss?'#ff8e8d':'#b2f2e2',5);
+    if(boss)a.text(this.game.campaign?this.game.round.boss+(boss.rage?' !':''):boss.rage?'BOSS • RAGE':'BOSS',360,310,22,boss.rage?'#ffbd87':'#fff1d3');
     if(s.bannerMs>0){
       c.save();c.globalAlpha=Math.min(1,s.bannerMs/260);
       const clear=s.banner==='CLEAR!';
@@ -294,7 +303,7 @@ export class BattleRenderer {
     const powered=s.powerMs>0,charge=powered?s.powerMs/CONFIG.battle.powerMs:s.charge/CONFIG.battle.chargeKills;
     a.rect(200,1090,320,55,powered?'#11566bea':'#17314bdf',20,powered?'#8bfff2':'#88cadd66');
     a.poly([[224,1100],[213,1118],[224,1118],[217,1134],[239,1111],[226,1111]],powered?'#c8fff5':'#ffd879');
-    a.text(powered?(this.powerIntro>0?'MAX FIRE!':'MAX FIRE'):'BLAST',376,1109,this.powerIntro>0?25:19,powered?'#c8fff5':'#ffe7aa');
+    a.text(powered?(this.powerIntro>0?'MAX FIRE!':'MAX FIRE'):CONFIG.campaign.weapons[s.weapon]?.name??'BLAST',376,1109,this.powerIntro>0?25:19,powered?'#c8fff5':'#ffe7aa');
     a.rect(250,1126,242,7,'#092f49',4);a.rect(250,1126,242*charge,7,powered?'#7effed':'#ffd373',4);
     // The drag cue is an icon; the playfield remains one continuous touch surface.
     a.rect(213,1159,294,71,'#143451b3',36,'#b2eeed4d');
@@ -302,7 +311,55 @@ export class BattleRenderer {
     a.rect(345,1178,20,32,'#f9dfb1',9);a.ellipse(355,1210,20,13,'#f9dfb1');
     a.line([[302,1195],[325,1195]],'#c7f3e7',3);a.line([[388,1195],[412,1195]],'#c7f3e7',3);
   }
+  weaponIcon(id,x,y,rank=1) {
+    const a=this.art,c=a.c,color=CONFIG.campaign.weapons[id].color;
+    c.save();c.translate(x,y);a.ellipse(0,55,75,16,'#071f414d');
+    a.block(-39,-32,78,66,14,'#274f79',color,'#183250');
+    const lanes=id==='spread'?[-35,0,35]:[0];
+    for(const lane of lanes){a.block(lane-9,-80,18,72,6,color,'#f4fff3','#567a9e');const t=(this.time/5+lane+100)%68;a.line([[lane,-89-t],[lane,-105-t]],color,id==='pierce'?9:5);}
+    if(id==='arc')a.line([[-55,-107],[-17,-92],[-27,-127],[21,-113],[39,-143]],'#e9ffff',5);
+    for(let i=0;i<rank;i++)a.star(-10+i*23,10,11,'#ffe7a0');c.restore();
+  }
+  result(canHome) {
+    const a=this.art,c=a.c,s=this.game.state,complete=s.phase==='complete';
+    c.fillStyle=a.gradient(0,0,720,1280,['#112c51','#352e6e','#142744']);c.fillRect(0,0,720,1280);
+    for(let i=0;i<25;i++)a.star((i*173+30)%720,(i*227+this.time*.015)%1280,3+i%4,'#d6d4ff44');
+    a.home(canHome);a.text('하늘 항구',390,65,33,'#fff1be');
+    a.line([[155,189],[565,189]],'#6477b7',7);
+    for(let i=0;i<3;i++){
+      const x=155+i*205,done=i<this.game.progress.cleared;
+      a.ellipse(x,189,32,32,done?'#ffd982':'#274874');
+      if(done)a.star(x,189,19,'#95643d');else a.text(i+1,x,189,25,'#96b8de');
+      a.text('1-'+(i+1),x,244,18,done?'#ffedc4':'#9cb9da');
+    }
+    a.text(complete?'하늘 항구 완료!':'1-'+(s.round+1)+' CLEAR!',360,330,45,'#fff2c2');
+    a.text(complete?'항구 배지를 획득했어':this.game.round.title,360,385,25,'#b9e9e5');
+    a.ellipse(360,582,139,36,'#8270bb');a.ellipse(360,570,139,34,'#bca4ef');
+    if(complete){a.poly([[360,430],[435,469],[422,548],[360,587],[298,548],[285,469]],'#ffd074','#fff2bc',5);a.star(360,507,42,'#fff4ca');}
+    else a.toy(350,568,.92,{time:this.time,palette:this.profile.palette});
+    a.rect(70,623,580,114,'#10213de6',26,'#9fbbe76b');
+    a.coin(126,670,.9);a.text('+'+s.roundCoins,242,671,38,'#ffe8a3');
+    a.text('최다 부대',492,651,18,'#b4cfec');a.text(s.roundMaxSquad,492,688,34,'#baffed');
+    a.text(s.firstReward?'첫 클리어 보너스 +'+s.firstReward+' 포함':'보관 완료',275,712,16,'#a8d9d1');
+    const ready=s.resultMs>=CONFIG.campaign.resultGuardMs;
+    if(complete){
+      a.text('무기와 배지는 다음 출동에도 함께!',360,816,25,'#d7e8ff');
+      a.text('다음 구역 준비 중',360,862,20,'#94adce');
+      c.save();c.globalAlpha=ready?1:.5;a.rect(105,1000,510,112,'#112543',29);a.rect(105,987,510,112,'#55d5c1',29,'#baffec');a.text('다시 출동',360,1043,35,'#143654');c.restore();
+      a.text('집 버튼으로 돌아가도 이어서 보관돼',360,1185,20,'#b4c8e0');return;
+    }
+    a.text('다음 출동의 무기를 골라!',360,782,25,'#d5e7fa');
+    this.game.offers.forEach((offer,i)=>{
+      const x=36+i*342,w=306,color=CONFIG.campaign.weapons[offer.id].color;
+      c.save();c.globalAlpha=ready?1:.55;a.rect(x,836,w,332,'#071b34',25);a.rect(x,824,w,332,'#294871',25,color);
+      this.weaponIcon(offer.id,x+w/2,1000,offer.rank);
+      a.text(CONFIG.campaign.weapons[offer.id].name+(offer.rank===2?' +':''),x+w/2,1060,31,color);
+      a.text(offer.rank===2?'위력이 더 강해져':offer.id==='spread'?'넓게 쏘기':offer.id==='pierce'?'뒤까지 뚫기':'옆 적에게 번개',x+w/2,1106,21,'#e2f0ff');c.restore();
+    });
+    a.text('잠깐 쉬어도 선택 화면부터 다시 시작해',360,1220,18,'#a9bfd9');
+  }
   render(canHome) {
+    if(this.game.campaign&&this.game.state.phase!=='combat'){this.result(canHome);return;}
     const a=this.art,c=a.c;this.ocean();c.save();
     if(!this.reduced&&this.kick>0){const scale=1+Math.min(1,this.kick/180)*.018;c.translate(360,760);c.scale(scale,scale);c.translate(-360,-760);}
     if(!this.reduced&&this.game.state.shakeMs>0){const amp=Math.min(7,this.game.state.shakeMs/40);c.translate(Math.sin(this.time*.11)*amp,Math.cos(this.time*.13)*amp*.6);}
@@ -312,7 +369,7 @@ export class BattleRenderer {
     for(const bullet of this.game.bullets){
       const p=this.project(bullet.x,bullet.z,56),tail=this.project(bullet.x,bullet.z-(bullet.powered?1.7:1.15),56);
       a.line([[tail.x,tail.y],[p.x,p.y]],bullet.powered?'#54ffe833':'#ffbb5838',Math.max(5,19*p.s));
-      a.line([[tail.x,tail.y],[p.x,p.y]],bullet.powered?'#61ffe6':'#ffb43e',Math.max(3,10*p.s));
+      a.line([[tail.x,tail.y],[p.x,p.y]],bullet.powered?'#61ffe6':CONFIG.campaign.weapons[bullet.weapon]?.color??'#ffb43e',Math.max(3,(bullet.weapon==='pierce'?15:10)*p.s));
       a.line([[tail.x,tail.y],[p.x,p.y]],'#fffde0',Math.max(2,4*p.s));a.ellipse(p.x,p.y,3*p.s,6*p.s,'#fff');
     }
     this.squad();this.effects();c.restore();this.hud(canHome);this.lootEffects();

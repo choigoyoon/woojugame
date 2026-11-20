@@ -1,6 +1,6 @@
 import { CONFIG } from './config.js';
 import { Game } from './game.js';
-import { Battle } from './battle.js';
+import { CampaignBattle } from './campaign.js';
 
 // An input callback can precede a RAF callback with an older frame timestamp.
 // Never move this cursor backwards or the same interval would be simulated twice.
@@ -19,7 +19,7 @@ export class FrameClock {
 export class Arcade {
   constructor(profile, random = Math.random) {
     this.profile = profile; this.mode = 'lobby'; this.clock = 0; this.lastInputAt = -Infinity; this.paused = false;
-    this.stairs = new Game(random, { wallet: profile }); this.battle = new Battle(random, profile);
+    this.stairs = new Game(random, { wallet: profile }); this.battle = new CampaignBattle(random, profile);
     this.stairs.setPaused(true); this.battle.setPaused(true);
   }
   interact() { this.lastInputAt = this.clock; }

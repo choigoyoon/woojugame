@@ -114,3 +114,33 @@ test('hit testing uses the full bottom 22 percent after scaling and centering', 
     assert.equal(actionAt(point(360, 1280)), null);
   }
 });
+
+test('fast climbs ascend the scale; turns preserve rhythm, pauses and slow climbs restart it', () => {
+  const game = new Game();
+  for (let n = 0; n < 20; n += 1) {
+    const event = climb(game);
+    assert.equal(event.noteIndex, Math.min(n, 7));
+    game.advance(125);
+    const rhythm = game.state.rhythm;
+    game.act(ACTION.TURN); game.act(ACTION.TURN);
+    assert.equal(game.state.rhythm, rhythm);
+  }
+  game.advance(CONFIG.rhythm.chainWindowMs);
+  assert.equal(climb(game).noteIndex, 0);
+  game.setPaused(true); game.advance(20_000); game.setPaused(false);
+  assert.equal(climb(game).noteIndex, 0);
+});
+
+test('star eyes start at ten; dizziness overrides them and recovery resets the melody', () => {
+  const game = new Game();
+  for (let n = 0; n < 9; n += 1) climb(game);
+  assert.equal(game.expression, 'smile');
+  climb(game);
+  assert.equal(game.expression, 'star');
+  if (game.state.facing === game.nextDirection) game.act(ACTION.TURN);
+  game.act(ACTION.CLIMB);
+  assert.equal(game.expression, 'dizzy');
+  game.advance(CONFIG.rules.stumbleMs);
+  assert.equal(game.expression, 'smile');
+  assert.equal(climb(game).noteIndex, 0);
+});

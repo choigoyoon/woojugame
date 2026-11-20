@@ -1,5 +1,10 @@
 import { CONFIG } from './config.js';
 
+export function noteFrequency(index = 0) {
+  const position = Number.isFinite(index) ? Math.max(0, Math.min(CONFIG.audio.noteHz.length - 1, Math.floor(index))) : 0;
+  return CONFIG.audio.noteHz[position];
+}
+
 export class Audio {
   constructor() { this.context = null; this.master = null; this.voices = new Map(); }
 
@@ -32,7 +37,7 @@ export class Audio {
     this.voices.delete(voice);
   }
 
-  tone(from, to, seconds, type = 'sine', delay = 0) {
+  tone(from, to, seconds, type = 'sine', delay = 0, level = 1) {
     if (!this.context || this.context.state === 'closed') return;
     try {
       while (this.voices.size >= CONFIG.audio.maxVoices) {
@@ -46,7 +51,7 @@ export class Audio {
       oscillator.frequency.setValueAtTime(from, start);
       oscillator.frequency.exponentialRampToValueAtTime(to, start + seconds);
       envelope.gain.setValueAtTime(CONFIG.audio.floorGain, start);
-      envelope.gain.linearRampToValueAtTime(1, start + CONFIG.audio.attackSeconds);
+      envelope.gain.linearRampToValueAtTime(Math.min(1, Math.max(CONFIG.audio.floorGain, level)), start + CONFIG.audio.attackSeconds);
       envelope.gain.exponentialRampToValueAtTime(CONFIG.audio.floorGain, start + seconds);
       oscillator.connect(envelope); envelope.connect(this.master);
       this.voices.set(oscillator, envelope);
@@ -58,12 +63,25 @@ export class Audio {
   play(event) {
     if (!event) return;
     const a = CONFIG.audio;
-    if (event.type === 'turn') this.tone(...a.turnHz, a.turnSeconds, 'triangle');
-    if (event.type === 'stumble') this.tone(...a.stumbleHz, a.stumbleSeconds, 'triangle');
+    if (event.type === 'turn') this.tone(...a.turnHz, a.turnSeconds, 'triangle', 0, 0.42);
+    if (event.type === 'stumble') {
+      this.tone(...a.stumbleHz, a.stumbleSeconds, 'triangle', 0, 0.65);
+      this.tone(280, 200, 0.13, 'sine', 0.1, 0.2);
+    }
+    if (event.type === 'land') {
+      this.tone(...a.landingHz, a.landingSeconds, 'sine', 0, 0.38);
+      this.tone(360, 180, 0.035, 'triangle', 0, 0.13);
+    }
     if (event.type === 'jump') {
-      this.tone(...a.jumpHz, a.jumpSeconds, 'triangle');
-      this.tone(...a.coinHz, a.coinSeconds);
-      if (event.bonus) a.comboHz.forEach((hz, index) => this.tone(hz, hz, a.coinSeconds, 'sine', index * a.comboSpacingSeconds));
+      const note = noteFrequency(event.noteIndex);
+      this.tone(note * 0.82, note, a.jumpSeconds, 'triangle', 0, 0.75);
+      this.tone(note * 2, note * 2, a.coinSeconds, 'sine', 0.015, 0.28);
+      if (event.bonus) {
+        a.comboSemitones.forEach((semitone, index) => {
+          const hz = noteFrequency(0) * 2 * 2 ** (semitone / 12);
+          this.tone(hz, hz, 0.23, 'sine', index * a.comboSpacingSeconds, 0.48);
+        });
+      }
     }
   }
 }

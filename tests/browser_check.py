@@ -16,7 +16,10 @@ OUTPUT = ROOT / "test-results"
 OUTPUT.mkdir(exist_ok=True)
 parser = argparse.ArgumentParser()
 parser.add_argument("--stress-seconds", type=int, default=5)
+parser.add_argument("--stress-hz", type=float, default=8)
 args = parser.parse_args()
+if args.stress_seconds <= 0 or args.stress_hz <= 0:
+    parser.error("stress duration and frequency must be positive")
 
 
 def snapshot(page):
@@ -128,21 +131,29 @@ with sync_playwright() as playwright:
     assert snapshot(page)["step"] == before["step"] and snapshot(page)["coins"] == before["coins"]
     report["checks"].append("stumble preserves position/coins; pagehide freezes timers/frames; pageshow recovers")
 
-    # Real touch input paced at 8 presses/sec, with no domain-state mutation.
+    # Trusted touch input at the requested cadence, with no domain-state mutation.
     load()
+    # The viewport is fixed during stress. Avoid a redundant layout round-trip per tap
+    # so test-driver overhead does not reduce the requested input rate.
+    coordinates = {action: center(page, action) for action in ["turn", "climb"]}
     start = time.monotonic()
     input_count = 0
     climb_count = 0
     next_log = 30
+    peaks = {"particles": 0, "voices": 0, "tileSprings": 0, "ripples": 0}
     first_frame = snapshot(page)["frames"]
     while time.monotonic() - start < args.stress_seconds:
         current = snapshot(page)
+        peaks["particles"] = max(peaks["particles"], current["particles"])
+        peaks["voices"] = max(peaks["voices"], current["voices"])
+        peaks["tileSprings"] = max(peaks["tileSprings"], current["visual"]["tileSprings"])
+        peaks["ripples"] = max(peaks["ripples"], len(current["visual"]["ripples"]))
         action = "climb" if current["facing"] == current["nextDirection"] else "turn"
-        tap(page, action)
+        page.touchscreen.tap(*coordinates[action])
         input_count += 1
         if action == "climb":
             climb_count += 1
-        target = start + input_count / 8
+        target = start + input_count / args.stress_hz
         remaining = target - time.monotonic()
         if remaining > 0:
             page.wait_for_timeout(remaining * 1000)
@@ -155,16 +166,19 @@ with sync_playwright() as playwright:
     assert state["coins"] == climb_count + (climb_count // 10) * 5
     assert state["metrics"] == {"received": input_count, "accepted": input_count, "blocked": 0}, state["metrics"]
     assert state["stepObjects"] <= 16 and state["particles"] <= 96 and state["voices"] <= 12
+    assert peaks["particles"] <= 96 and peaks["voices"] <= 12
+    assert peaks["tileSprings"] <= 16 and peaks["ripples"] <= 12
     assert state["activeTouches"] == 0 and not any(state["features"].values())
     assert all(value is None for value in state["future"].values())
     assert page.evaluate("visualViewport.scale") == 1
     assert not errors, errors
     assert not [url for url in requests if url.startswith(("http:", "https:"))], requests
     report["stress"] = {"seconds": round(elapsed, 2), "inputs": input_count, "steps": climb_count,
+                        "targetHz": args.stress_hz, "inputsPerSecond": round(input_count / elapsed, 2),
                         "coins": state["coins"], "stepObjects": state["stepObjects"],
                         "averageFps": round((state["frames"] - first_frame) / elapsed, 1),
-                        "errors": errors, "networkRequests": requests}
-    report["checks"].append("8 touch inputs/sec; exact rewards; bounded pools; no zoom or future features")
+                        "poolPeaks": peaks, "errors": errors, "networkRequests": requests}
+    report["checks"].append("paced trusted touch (measured rate in stress report); exact rewards; bounded pools; no zoom or future features")
     page.screenshot(path=str(OUTPUT / "phase1-playing.png"))
     (OUTPUT / "browser-report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2))
     print(json.dumps(report, ensure_ascii=False, indent=2), flush=True)

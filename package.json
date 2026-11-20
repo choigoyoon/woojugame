@@ -7,7 +7,8 @@
     "dev": "node scripts/serve.mjs",
     "build": "node scripts/build.mjs",
     "test": "node --test",
-    "test:browser": "npm run build && python3 tests/browser_check.py"
+    "test:browser": "npm run build && python3 tests/browser_check.py",
+    "test:visual": "npm run build && python3 tests/visual_check.py"
   },
   "engines": { "node": ">=20" }
 }

@@ -24,15 +24,15 @@ function advance(now) {
   lastTime = now;
   if (game.state.paused) return;
   game.advance(delta);
-  renderer.update(delta);
+  audio.play(renderer.update(delta, input));
 }
 
 const input = new Input(element, {
   turn: document.querySelector('#turn'), climb: document.querySelector('#climb'),
-}, (action) => {
+}, (action, point) => {
   advance(performance.now());
   const event = game.act(action);
-  renderer.handle(event, action);
+  renderer.handle(event, action, point);
   audio.play(event);
   score.value = `계단 ${game.state.step}, 코인 ${game.state.coins}, 콤보 ${game.state.combo}`;
 }, () => { if (!game.state.paused) audio.unlock(); });
@@ -48,13 +48,13 @@ function resize() {
   element.style.height = `${gameHeight}px`;
   renderer.resize(gameWidth, gameHeight);
   input.reset();
-  renderer.render(input);
+  renderer.render();
 }
 
 function frame(now) {
   frameId = null;
   advance(now);
-  renderer.render(input);
+  renderer.render();
   frames += 1;
   if (!game.state.paused) frameId = requestAnimationFrame(frame);
 }
@@ -69,7 +69,7 @@ function syncVisibility() {
     audio.pause();
     if (frameId !== null) cancelAnimationFrame(frameId);
     frameId = null;
-    renderer.render(input);
+    renderer.render();
   } else {
     lastTime = performance.now();
     audio.resume();
@@ -87,7 +87,7 @@ window.addEventListener('pagehide', () => { pageAway = true; syncVisibility(); }
 window.addEventListener('pageshow', () => { pageAway = false; syncVisibility(); });
 
 resize();
-renderer.render(input);
+renderer.render();
 const readyMs = performance.now();
 frameId = requestAnimationFrame(frame);
 syncVisibility();
@@ -99,6 +99,7 @@ if (new URLSearchParams(location.search).has('debug')) {
       ...game.snapshot(), frames, readyMs, activeTouches: input.active.size,
       particles: renderer.particles.filter((particle) => particle.life > 0).length,
       audioState: audio.context?.state ?? 'locked', voices: audio.voices.size,
+      visual: renderer.snapshot(),
       features: { ...CONFIG.features },
     }) }),
   });

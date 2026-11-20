@@ -20,18 +20,21 @@ export class Input {
     this.abort = new AbortController();
     const options = { passive: false, signal: this.abort.signal };
     const listen = (target, type, callback) => target.addEventListener(type, callback, options);
-    const press = (id, action) => {
+    const press = (id, action, point) => {
       if (!action || this.active.has(id)) return;
       this.active.set(id, action);
       // Synchronous dispatch preserves every changedTouch and its browser event order,
       // including several presses between two requestAnimationFrame callbacks.
       unlockAudio();
-      onAction(action);
+      onAction(action, point);
     };
-    const pointAction = (point) => actionAt(toGamePoint(point.clientX, point.clientY, element.getBoundingClientRect()));
+    const gamePoint = (point) => toGamePoint(point.clientX, point.clientY, element.getBoundingClientRect());
     listen(element, 'touchstart', (event) => {
       event.preventDefault();
-      for (const touch of event.changedTouches) press(`touch:${touch.identifier}`, pointAction(touch));
+      for (const touch of event.changedTouches) {
+        const point = gamePoint(touch);
+        press(`touch:${touch.identifier}`, actionAt(point), point);
+      }
     });
     listen(document, 'touchend', (event) => {
       for (const touch of event.changedTouches) this.active.delete(`touch:${touch.identifier}`);
@@ -44,7 +47,8 @@ export class Input {
       // Touch uses touchstart exclusively. Ignore its compatibility pointer/mouse events.
       if (event.pointerType === 'touch' || event.button !== 0) return;
       event.preventDefault();
-      press(`pointer:${event.pointerId}`, pointAction(event));
+      const point = gamePoint(event);
+      press(`pointer:${event.pointerId}`, actionAt(point), point);
       element.setPointerCapture?.(event.pointerId);
     });
     for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {

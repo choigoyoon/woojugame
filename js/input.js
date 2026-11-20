@@ -28,7 +28,11 @@ export class Input {
     const release=(id)=>{const record=this.active.get(id);this.active.delete(id);if(record)handlers.release?.(record);};
     on(element,'touchstart',(event)=>{event.preventDefault();for(const touch of event.changedTouches)press('touch:'+touch.identifier,point(touch),targetAction(touch.target));});
     on(element,'touchmove',(event)=>{event.preventDefault();for(const touch of event.changedTouches){const record=this.active.get('touch:'+touch.identifier);if(record){record.point=point(touch);handlers.move?.(record);}}});
-    for(const type of ['touchend','touchcancel'])on(document,type,(event)=>{for(const touch of event.changedTouches)release('touch:'+touch.identifier);});
+    for(const type of ['touchend','touchcancel'])on(document,type,(event)=>{
+      for(const touch of event.changedTouches)release('touch:'+touch.identifier);
+      // The full contact list is authoritative, including OS cancellation with an empty changed list.
+      if(event.touches)for(const id of this.active.keys())if(id.startsWith('touch:')&&!Array.from(event.touches).some(touch=>id==='touch:'+touch.identifier))release(id);
+    });
     on(element,'pointerdown',(event)=>{if(event.pointerType==='touch'||event.button!==0)return;event.preventDefault();press('pointer:'+event.pointerId,point(event),targetAction(event.target));element.setPointerCapture?.(event.pointerId);});
     on(element,'pointermove',(event)=>{if(event.pointerType==='touch')return;const record=this.active.get('pointer:'+event.pointerId);if(record){record.point=point(event);handlers.move?.(record);}});
     for(const type of ['pointerup','pointercancel','lostpointercapture'])on(document,type,(event)=>release('pointer:'+event.pointerId));

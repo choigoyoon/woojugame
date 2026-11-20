@@ -41,6 +41,7 @@ export class Renderer {
     this.art = new Art(this.ctx);
     this.game = game;
     this.ratio = 1;
+    this.layers = new Map();
     this.cameraY = 0;
     this.pose = { x: game.current.x, y: game.current.y, lift: 0 };
     this.jump = null;this.hop={};
@@ -194,25 +195,9 @@ export class Renderer {
     };
   }
 
-  polygon(points, fill, stroke = null, width = 2) {
-    const c = this.ctx;
-    c.beginPath();
-    points.forEach(([x, y], index) => index ? c.lineTo(x, y) : c.moveTo(x, y));
-    c.closePath(); c.fillStyle = fill; c.fill();
-    if (stroke) { c.strokeStyle = stroke; c.lineWidth = width; c.lineJoin = 'round'; c.stroke(); }
-  }
-
-  rect(x, y, width, height, fill, radius = 0, stroke = null) {
-    const c = this.ctx;
-    c.beginPath(); c.roundRect(x, y, width, height, radius);
-    c.fillStyle = fill; c.fill();
-    if (stroke) { c.strokeStyle = stroke; c.lineWidth = 2; c.stroke(); }
-  }
-
-  ellipse(x, y, rx, ry, fill) {
-    const c = this.ctx;
-    c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, TAU); c.fillStyle = fill; c.fill();
-  }
+  polygon(points,fill,stroke=null,width=2){this.art.poly(points,fill,stroke,width);}
+  rect(x,y,w,h,fill,r=0,stroke=null){this.art.rect(x,y,w,h,fill,r,stroke);}
+  ellipse(x,y,rx,ry,fill){this.art.ellipse(x,y,rx,ry,fill);}
 
   text(value, x, y, size, fill = '#fff', align = 'left', weight = 800) {
     const c = this.ctx;
@@ -230,11 +215,7 @@ export class Renderer {
   }
 
   box(x, y, w, h, d, colors) {
-    // Beveled front, lit top and darker right side make each limb a separate solid.
-    this.polygon([[x, y], [x + d, y - d * 0.7], [x + w + d, y - d * 0.7], [x + w, y]], colors[1], '#223752', 1.5);
-    this.polygon([[x + w, y], [x + w + d, y - d * 0.7], [x + w + d, y + h - d * 0.7], [x + w, y + h]], colors[2], '#223752', 1.5);
-    this.rect(x, y, w, h, colors[0], 4, '#223752');
-    this.rect(x + 3, y + 3, w - 6, 3, '#ffffff4a', 1);
+    this.art.block(x,y,w,h,d,...colors);
   }
 
   coin(x, y, scale = 1) {
@@ -256,14 +237,30 @@ export class Renderer {
   screenY(y) { return CONFIG.motion.anchorY + y - this.cameraY; }
 
   background() {
+    if(typeof OffscreenCanvas!=='function'){this.paintBackground();return;}
+    // Slow parallax moves less than half a logical pixel per sample. Composite at full RAF rate.
+    const changed=!this.backdrop||this.backdrop.width!==this.canvas.width||this.backdrop.height!==this.canvas.height;
+    if(changed){this.backdrop=new OffscreenCanvas(this.canvas.width,this.canvas.height);this.backdropAt=-Infinity;}
+    if(this.time-this.backdropAt>=1000/20){
+      const previous=this.ctx,art=this.art;this.ctx=this.backdrop.getContext('2d',{alpha:false});this.art=new Art(this.ctx);
+      this.ctx.setTransform(this.canvas.width/720,0,0,this.canvas.height/1280,0,0);
+      try{this.paintBackground();}finally{this.ctx=previous;this.art=art;}
+      this.backdropAt=this.time;
+    }
+    this.ctx.globalCompositeOperation='copy';this.ctx.drawImage(this.backdrop,0,0,720,1280);this.ctx.globalCompositeOperation='source-over';
+  }
+
+  paintBackground() {
     const c = this.ctx;
     const sky = skyForStep(-this.cameraY / CONFIG.stairs.stepY);
     const gradient = c.createLinearGradient(0, 0, 0, CONFIG.view.height);
     sky.colors.forEach((color, i) => gradient.addColorStop(i / 2, color));
     c.fillStyle = gradient; c.fillRect(0, 0, 720, 1280);
-    const glow = c.createRadialGradient(570, 340, 0, 570, 340, 420);
+    this.cachedLayer('glow:'+(sky.night>0.5),0,0,[0,0,720,1000],()=>{
+    const c=this.ctx;const glow = c.createRadialGradient(570, 340, 0, 570, 340, 420);
     glow.addColorStop(0, sky.night > 0.5 ? '#d190ff24' : '#fffab54d'); glow.addColorStop(1, '#ffffff00');
     c.fillStyle = glow; c.fillRect(0, 0, 720, 1000);
+    });
     c.save(); c.globalAlpha = 1 - sky.night;
     this.ellipse(574, 320, 69, 69, '#fff4bb29'); this.ellipse(574, 320, 48, 48, '#fff8d4');
     c.restore();
@@ -290,11 +287,13 @@ export class Renderer {
       const y = ((cloud.y - this.cameraY * cloud.depth + 150) % 1250) - 150;
       c.save(); c.translate(x, y); c.scale(cloud.scale, cloud.scale);
       c.globalAlpha = (1 - sky.night * 0.91) * (0.25 + cloud.depth);
+      this.cachedLayer('cloud',0,0,[-112,-40,224,90],()=>{
       this.rect(-99, 3, 202, 41, '#9fc4e8', 20);
       this.rect(-106, -5, 202, 36, '#f6ffff', 18);
       this.rect(-69, -33, 74, 53, '#fff', 19);
       this.rect(-8, -23, 69, 45, '#effcff', 16);
       this.rect(-53, -29, 48, 6, '#ffffffb0', 3);
+      });
       c.restore();
     }
     for (let i = 0; i < 4; i += 1) {
@@ -316,6 +315,33 @@ export class Renderer {
     const current = step.id === state.step;
     const palette = current ? ['#ffe888', '#e5aa47', '#ad7135'] : step.id % 4 === 0
       ? ['#c7bdff', '#9376dc', '#6559b0'] : ['#a9f6e6', '#4ebebc', '#318f9f'];
+    this.cachedLayer('tile:'+palette[0]+':'+next,x,y,[-110,-50,220,155],()=>this.platformBody(0,0,palette,next));
+    if (step.id > state.step && step.id <= state.step + 6) {
+      const bob = this.reducedMotion ? 0 : Math.sin(this.time / 330 + step.id) * 4;
+      this.ellipse(x, y - 2, 16, 5, '#26325514');
+      this.coin(x, y - 53 + bob, next ? 0.9 : 0.66);
+    }
+  }
+
+  // Bake immutable lighting into a small atlas; keep motion, contact bounce and coins live.
+  cachedLayer(key,x,y,bounds,paint) {
+    const [left,top,w,h]=bounds;
+    if(typeof OffscreenCanvas!=='function'){this.ctx.save();this.ctx.translate(x,y);paint();this.ctx.restore();return;}
+    // Match the backing pixel density: repeated 2x downsampling was the raster bottleneck.
+    const scale=this.ratio;
+    if(this.layerRatio!==scale){this.layers.clear();this.layerRatio=scale;}
+    let surface=this.layers.get(key);
+    if(!surface){
+      surface=new OffscreenCanvas(Math.ceil(w*scale),Math.ceil(h*scale));const previous=this.ctx,art=this.art;
+      this.ctx=surface.getContext('2d');this.art=new Art(this.ctx);this.ctx.scale(scale,scale);this.ctx.translate(-left,-top);
+      try{paint();}finally{this.ctx=previous;this.art=art;}
+      this.layers.set(key,surface);
+    }
+    this.ctx.drawImage(surface,x+left,y+top,surface.width/scale,surface.height/scale);
+  }
+
+  platformBody(x,y,palette,next) {
+    this.ellipse(x+10,y+83,82,17,'#1a2d5830');
     if (next) {
       this.ctx.save(); this.ctx.globalAlpha = 0.34;
       this.polygon([[x - 102, y], [x, y - 40], [x + 102, y], [x, y + 40]], '#fffdd5');
@@ -330,11 +356,6 @@ export class Renderer {
       this.ellipse(x + dx, y + dy + 1, 11, 4, '#23455230');
       this.rect(x + dx - 11, y + dy - 5, 22, 5, palette[1]);
       this.ellipse(x + dx, y + dy - 5, 11, 4, '#ffffff83');
-    }
-    if (step.id > state.step && step.id <= state.step + 6) {
-      const bob = this.reducedMotion ? 0 : Math.sin(this.time / 330 + step.id) * 4;
-      this.ellipse(x, y - 2, 16, 5, '#26325514');
-      this.coin(x, y - 53 + bob, next ? 0.9 : 0.66);
     }
   }
 
@@ -464,20 +485,10 @@ export class Renderer {
 
   hud() {
     const c = this.ctx; const { state } = this.game;
-    const shade = c.createLinearGradient(0, 0, 0, 228);
-    shade.addColorStop(0, '#142957db'); shade.addColorStop(1, '#14295700');
-    c.fillStyle = shade; c.fillRect(0, 0, 720, 228);
-    this.text('블록 계단 점프', 139, 48, 28, '#ecffff');
-    for (const [x, width] of [[28, 312], [356, 336]]) {
-      this.rect(x, 91, width, 104, '#11275045', 25);
-      this.rect(x, 85, width, 104, '#1835578c', 25, '#c2f5ff4a');
-      this.rect(x + 20, 88, width - 40, 3, '#ffffff26', 2);
-    }
-    this.rect(54, 145, 12, 16, '#9aefef', 3); this.rect(70, 130, 12, 31, '#9aefef', 3); this.rect(86, 114, 12, 47, '#c8ffff', 3);
-    this.text(state.step, 126, 140, state.step > 99999 ? 34 : 48, '#fff');
-    this.coin(397, 139, 1.1);
+    this.cachedLayer('hud',0,0,[0,0,720,228],()=>this.hudBackground());
+    this.text(state.step, 126, 152, state.step > 99999 ? 34 : 48, '#fff');
     const coins = this.game.wallet?.coins ?? state.coins;
-    this.text(coins, 436, 140, coins > 999999 ? 26 : coins > 99999 ? 34 : 48, '#fff4b2');
+    this.text(coins, 436, 152, coins > 999999 ? 26 : coins > 99999 ? 34 : 48, '#fff4b2');
     if (state.combo > 1) {
       c.save(); c.translate(360, 235);
       const elapsed = CONFIG.motion.auraMs - this.aura;
@@ -489,6 +500,21 @@ export class Renderer {
       for (let i = 0; i < 10; i += 1) this.rect(-49 + i * 10, 21, 7, 4, i < (state.combo % 10 || 10) ? '#ffe484' : '#ffffff26', 2);
       c.restore();
     }
+  }
+
+  hudBackground() {
+    const c=this.ctx;
+    const shade = c.createLinearGradient(0, 0, 0, 228);
+    shade.addColorStop(0, '#142957db'); shade.addColorStop(1, '#14295700');
+    c.fillStyle = shade; c.fillRect(0, 0, 720, 228);
+    this.text('블록 계단 점프', 139, 48, 28, '#ecffff');
+    for (const [x, width] of [[28, 312], [356, 336]]) {
+      this.rect(x, 118, width, 80, '#11275045', 25);
+      this.rect(x, 112, width, 80, '#1835578c', 25, '#c2f5ff4a');
+      this.rect(x + 20, 115, width - 40, 3, '#ffffff26', 2);
+    }
+    this.rect(54, 157, 12, 16, '#9aefef', 3); this.rect(70, 142, 12, 31, '#9aefef', 3); this.rect(86, 126, 12, 47, '#c8ffff', 3);
+    this.coin(397,151,1.1);
   }
 
   controls() {
@@ -503,14 +529,12 @@ export class Renderer {
       const depth = clamp(this.buttons[action].value, -3, 18) * (this.reducedMotion ? 0.35 : 1);
       const y = top + 25 + depth;
       const colors = blocked ? ['#a6b7d1', '#788aa7', '#4a607f'] : i === 0 ? ['#b4a0ff', '#8f68ea', '#503c91'] : ['#ffdf84', '#ffb54c', '#a46232'];
-      this.rect(x - 4, top + 38, 320, 218, '#0b1b35', 100, '#92b5e329');
-      this.rect(x, top + 36, 312, 199, colors[2], 96);
-      const fill = c.createLinearGradient(0, y, 0, y + 190);
-      fill.addColorStop(0, colors[0]); fill.addColorStop(0.55, colors[1]); fill.addColorStop(1, colors[1]);
-      this.rect(x, y, 312, 190, fill, 94, '#fff5e570');
+      this.cachedLayer('button-base:'+colors[2],x,top+36,[-6,0,324,222],()=>{
+        this.rect(-4,2,320,218,'#0b1b35',100,'#92b5e329');
+        this.rect(0,0,312,199,colors[2],96);
+      });
+      this.cachedLayer('button-face:'+action+':'+colors[0],x,y,[-2,-2,316,194],()=>this.buttonFace(action,colors));
       c.save(); c.beginPath(); c.roundRect(x + 4, y + 4, 304, 182, 90); c.clip();
-      this.ellipse(x + 156, y + 7, 130, 41, '#ffffff24');
-      this.rect(x + 69, y + 12, 174, 5, '#ffffff4f', 3);
       for (const ripple of this.ripples) {
         if (ripple.action !== action || ripple.life <= 0) continue;
         const age = 1 - ripple.life / CONFIG.motion.rippleMs;
@@ -521,7 +545,18 @@ export class Renderer {
         this.ellipse(ripple.x, ripple.y + depth, radius, radius, '#ffffff0c');
       }
       c.restore();
-      c.save(); c.translate(x + 156, y + 94);
+
+    }
+    this.rect(302, 1254, 116, 5, '#7593b04a', 3);
+  }
+
+  buttonFace(action,colors) {
+    const c=this.ctx,fill=c.createLinearGradient(0,0,0,190);
+    fill.addColorStop(0,colors[0]);fill.addColorStop(.55,colors[1]);fill.addColorStop(1,colors[1]);
+    this.rect(0,0,312,190,fill,94,'#fff5e570');
+    c.save();c.beginPath();c.roundRect(4,4,304,182,90);c.clip();
+    this.ellipse(156,7,130,41,'#ffffff24');this.rect(69,12,174,5,'#ffffff4f',3);c.restore();
+      c.save(); c.translate(156,94);
       if (action === ACTION.TURN) {
         this.arrow(-7, -15, -1, 1.3, '#5c43947a'); this.arrow(7, 26, 1, 1.3, '#5c43947a');
         this.arrow(-7, -20, -1, 1.3, '#fff7ff'); this.arrow(7, 21, 1, 1.3, '#fff7ff');
@@ -534,8 +569,6 @@ export class Renderer {
         this.arrow(-4, 0, 1, 1.32, '#a3713b'); this.arrow(0, 0, 1, 1.32, '#fffdf0'); c.restore();
       }
       c.restore();
-    }
-    this.rect(302, 1254, 116, 5, '#7593b04a', 3);
   }
 
   brakeOverlay() {

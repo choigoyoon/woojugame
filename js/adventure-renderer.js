@@ -17,7 +17,7 @@ export class AdventureRenderer {
     for(let i=0;i<count;i++){const p=this.particles[this.cursor++%this.particles.length],a=i*2.4;Object.assign(p,{x,y,vx:Math.cos(a)*(big?260:130),vy:-120-Math.abs(Math.sin(a))*260,life:700,angle:a,color:['#fff3ad','#ffacb7','#8cffe5','#c3b5ff'][i%4]});}
   }
   effects(){const a=this.art,c=a.c;for(const p of this.particles){if(p.life<=0)continue;c.save();c.globalAlpha=Math.min(1,p.life/200);c.translate(p.x,p.y);c.rotate(p.angle);a.rect(-4,-4,9,9,p.color,2);c.restore();}}
-  header(title,canHome){const a=this.art;a.rect(0,0,720,130,'#10264ce8');a.home(canHome);a.text(title,340,65,30,'#fff0c7');a.rect(528,32,170,67,'#091a38',22,'#a2c9f44d');a.coin(557,64,.6);a.text(this.profile.coins,584,66,23,'#ffe6a6','left');}
+  header(title,canHome){const a=this.art;a.rect(0,0,720,130,'#10264ce8');a.home(canHome);a.text(title,340,65,30,'#fff0c7');a.rect(528,32,170,67,'#091a38',22,'#a2c9f44d');a.coin(557,64,.6);a.counter(this.profile.coins,584,66,99,23,'#ffe6a6','left');}
   runnerView(canHome,pressed=false){
     const a=this.art,c=a.c,s=this.runner.state,t=this.reduced?0:this.time,d=s.distance;
     c.fillStyle=a.gradient(0,0,0,1280,['#3769b5','#75d5dc','#f5ecb6']);c.fillRect(0,0,720,1280);
@@ -33,7 +33,7 @@ export class AdventureRenderer {
       if(item.kind==='word'){
         const text=SENTENCES[item.sentence][item.slot],icon=item.slot===0?SYMBOLS[SENTENCES[item.sentence][3]]:item.slot===1?SYMBOLS[SENTENCES[item.sentence][4]]:'✦';
         a.line([[item.x,item.y-67],[item.x,item.y-12]],'#e5ffef99',3);a.ellipse(item.x,item.y-73,31,37,['#efadc6','#9ce4d4','#bec1ff'][item.slot]);
-        a.block(item.x-80,item.y-4,160,62,10,'#e8ba66','#fff3ad','#9c7045');a.text(text,item.x,item.y+27,27,'#4a3760');a.text(icon,item.x,item.y-75,30,'#fff');
+        a.block(item.x-80,item.y-4,160,62,10,'#e8ba66','#fff3ad','#9c7045');a.label(text,item.x,item.y+27,29,'#fff9e8','#40345d');a.text(icon,item.x,item.y-75,30,'#fff');
       }else if(item.kind==='coin')a.coin(item.x,item.y+Math.sin(t/180+item.x)*5,.65);
       else{a.block(item.x-28,815,56,55,12,'#b96881','#efacac','#683e62');a.rect(item.x-18,830,12,8,'#fff3a5',2);a.rect(item.x+6,830,12,8,'#fff3a5',2);}
     }
@@ -43,7 +43,7 @@ export class AdventureRenderer {
     c.globalAlpha=s.invulnerableMs&&Math.floor(t/90)%2?.45:1;a.toy(0,0,scale,{time:t,run:true,gold:s.goldMs>0,palette:this.profile.palette});c.restore();
     this.effects();this.header('슈퍼 블록 런',canHome);
     const labels=['누가','무엇을','어쨌다'];
-    for(let i=0;i<3;i++){const x=24+i*232,filled=i<s.slot;a.rect(x,150,208,141,filled?'#f6de91':'#183a61e6',22,filled?'#fff7be':'#add5e466');a.text(labels[i],x+104,177,18,filled?'#89704c':'#b5d9e4');a.text(filled?this.runner.sentence[i]:i===s.slot?'?':'···',x+104,230,27,filled?'#3e4261':'#e3f9ff');if(i<2)a.text('›',x+220,217,29,'#fff2b8');}
+    for(let i=0;i<3;i++){const x=24+i*232,filled=i<s.slot;a.rect(x,150,208,141,filled?'#f6de91':'#183a61e6',22,filled?'#fff7be':'#add5e466');a.text(labels[i],x+104,177,18,filled?'#89704c':'#b5d9e4');a.label(filled?this.runner.sentence[i]:i===s.slot?'?':'···',x+104,230,27,filled?'#fff9e5':'#e3f9ff','#263a60');if(i<2)a.text('›',x+220,217,29,'#fff2b8');}
     if(s.messageMs)a.text(s.message,360,455,s.message==='GOLD RUSH!'?51:34,'#fff6bc');
     if(s.goldMs){a.rect(130,322,460,14,'#254478',8);a.rect(130,322,460*s.goldMs/CONFIG.runner.goldMs,14,'#ffe79a',8);}
     a.rect(66,1058,588,165,'#0d3451',46);a.rect(66,1043+(pressed?13:0),588,165,'#ffda7b',46,'#fff2be');
@@ -99,8 +99,8 @@ export class AdventureRenderer {
     if(['briefing','success'].includes(s.phase)){
       a.rect(127,1060,466,130,'#263152',35);a.rect(127,1046,466,130,s.phase==='success'?'#ffd579':'#8ce6ce',35,'#efffdc');a.text(s.phase==='success'?'다음 심부름':'출동!',360,1110,40,'#264660');
     }else{
-      a.text(this.plaza.ready?'반짝이는 원으로!':'손가락으로 어디서나 이동',360,1118,22,'#eaf3ff');
-      const j=this.joystick;if(j){a.ellipse(j.x,j.y,CONFIG.plaza.joystickRadius,CONFIG.plaza.joystickRadius,'#12304e66');a.ellipse(j.x,j.y,CONFIG.plaza.joystickRadius,CONFIG.plaza.joystickRadius,'#b8f1f322');a.ellipse(j.knobX,j.knobY,34,34,'#cbfff0cc');}
+      if(!this.joystick)a.text(this.plaza.ready?'반짝이는 원으로!':'손가락으로 어디서나 이동',360,1118,22,'#eaf3ff');
+      const j=this.joystick;if(j){a.ellipse(j.x,j.y,CONFIG.plaza.joystickRadius,CONFIG.plaza.joystickRadius,'#12304e66');a.ellipse(j.x,j.y,CONFIG.plaza.joystickRadius,CONFIG.plaza.joystickRadius,'#b8f1f322');a.ellipse(j.knobX+2,j.knobY+9,39,15,'#102d5966');a.ellipse(j.knobX,j.knobY+4,35,35,'#4d9fba');a.ellipse(j.knobX,j.knobY-3,34,34,'#c5f9e8');a.ellipse(j.knobX-8,j.knobY-14,14,7,'#ffffff77');}
     }
   }
 }

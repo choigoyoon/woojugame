@@ -59,7 +59,7 @@ export class Lobby {
     if(profileView){this.profileView();return;}
     this.background();const a=this.art,c=a.c;
     a.text('우주 블록',36,62,43,'#edfbff','left',950);a.text('오락실',36,116,48,'#bbabff','left',950);
-    a.rect(455,47,226,76,'#0a163b',28,'#9c9ce959');a.coin(492,84,.8);a.text(this.profile.coins,529,85,29,'#fff0ac','left');
+    a.rect(455,47,226,76,'#0a163b',28,'#9c9ce959');a.coin(492,84,.8);a.counter(this.profile.coins,529,85,132,29,'#fff0ac','left');
     a.rect(37,191,646,148,'#0b153a',30,'#bd9aff51');a.rect(37,180,646,148,a.gradient(37,180,683,328,['#3b3977','#263c65']),30,'#b9b9ff6b');
     a.ellipse(124,296,60,17,'#0c1d3e');a.toy(120,292,.66,{time:this.time,palette:this.profile.palette});
     a.text('내 아바타',210,230,32,'#fff5db','left');a.text('MY COLLECTION',211,271,17,'#a7c9eb','left',650);

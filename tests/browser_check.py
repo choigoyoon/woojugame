@@ -179,7 +179,7 @@ with ArcadeBrowser(controlled=False) as h:
     s=h.state();assert s['activeInputs']==0 and s['dragId'] is None
     simulated=(s['battle']['elapsedMs']-first_simulated)/1000
     assert abs(simulated-elapsed)<max(.5,elapsed*.02),(simulated,elapsed)
-    assert peaks['entities']<=12 and peaks['bullets']<=100 and peaks['particles']<=160 and peaks['voices']<=12 and peaks['visibleSquad']<=24
+    assert peaks['entities']<=12 and peaks['bullets']<=100 and peaks['particles']<=160 and peaks['voices']<=20 and peaks['visibleSquad']<=24
     assert s['battleVisual']['spriteFrames']==16
     assert s['profile']['coins']==s['battle']['coins']
     assert h.page.evaluate('visualViewport.scale')==1

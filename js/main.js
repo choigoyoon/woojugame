@@ -12,12 +12,15 @@ import { AdventureRenderer } from './adventure-renderer.js';
 import { Center } from './center.js';
 import { Haptics } from './engine.js';
 import { setupPWA } from './pwa.js';
+import { Juice } from './juice.js';
+import { materialStats } from './material.js';
 
 const canvas=document.querySelector('#scene'),element=document.querySelector('#game'),viewport=document.querySelector('#viewport'),score=document.querySelector('#score');
 const profile=new Profile(),arcade=new Arcade(profile),audio=new Audio(profile),haptics=new Haptics(profile);
 const renderer=new Renderer(canvas,arcade.stairs),ctx=renderer.ctx;
 const battleView=new BattleRenderer(ctx,arcade.battle,profile),puzzleView=new PuzzleRenderer(ctx,arcade.stairs,profile),lobby=new Lobby(ctx,profile);
 const adventureView=new AdventureRenderer(ctx,arcade.runner,arcade.plaza,profile),center=new Center(ctx,profile);
+const juice=new Juice(canvas,profile);
 const controls=new Map();
 const timer=new FrameClock(performance.now());
 let frames=0,frameId=null,pageAway=false,dragId=null,uiKey='';
@@ -58,9 +61,17 @@ button('change-pin','change-pin','보호자 PIN 변경',80,969,560,112);
 document.documentElement.style.setProperty('--safe-min',CONFIG.view.safeMinPx+'px');
 document.documentElement.style.setProperty('--controls-height',CONFIG.view.controlFraction*100+'%');
 
+function juiceEvent(e){
+  if(!e)return;let x=e.x??360,y=e.y??650;
+  if(arcade.mode==='stairs'){x=e.x??renderer.pose.x;y=renderer.screenY(e.y??renderer.pose.y)-110;}
+  if(arcade.mode==='battle'){const p=battleView.project(e.x??arcade.battle.state.x,e.z??CONFIG.battle.playerZ,85);x=p.x;y=p.y;}
+  if(arcade.mode==='runner'){x=e.x??CONFIG.runner.playerX;y=e.y??(790-arcade.runner.state.y);}
+  if(arcade.mode==='plaza'){const p=adventureView.iso(e.x??arcade.plaza.state.x,e.z??arcade.plaza.state.z);x=p.x;y=p.y-45;}
+  juice.impact(e,x,y);
+}
 function event(event){
   if(!event)return;
-  audio.play(event);haptics.play(event);
+  audio.play(event);haptics.play(event);juiceEvent(event);
   if(arcade.mode==='stairs')renderer.handle(event);
   if(arcade.mode==='battle')battleView.handle(event);
   if(['runner','plaza'].includes(arcade.mode))adventureView.handle(event,arcade.mode);
@@ -71,17 +82,18 @@ function events(){
   if(['runner','plaza'].includes(arcade.mode))for(const e of arcade[arcade.mode].takeEvents())event(e);
 }
 function speakPuzzle(){const p=arcade.stairs.state.puzzle;if(p&&!p.solved){const s=SCENARIOS.find(s=>s.id===p.id);audio.speak(s.speech,s.id);}}
-function changed(){input.reset();dragId=null;adventureView.joystick=null;center.close();if(['profile','parents'].includes(arcade.mode))center.open(arcade.mode);audio.stopEffects();uiKey='';audio.play({type:'select'});events();if(arcade.mode==='stairs'&&arcade.stairs.state.mode===MODE.PUZZLE)speakPuzzle();if(arcade.mode==='plaza'&&arcade.plaza.state.phase==='briefing')audio.speak(arcade.plaza.speech);syncUI();render();}
+function changed(){juice.reset(arcade.mode);audio.setMode(arcade.mode);input.reset();dragId=null;adventureView.joystick=null;center.close();if(['profile','parents'].includes(arcade.mode))center.open(arcade.mode);audio.stopEffects();uiKey='';audio.play({type:'select'});events();if(arcade.mode==='stairs'&&arcade.stairs.state.mode===MODE.PUZZLE)speakPuzzle();if(arcade.mode==='plaza'&&arcade.plaza.state.phase==='briefing')audio.speak(arcade.plaza.speech);syncUI();render();}
 function advance(now){
   const delta=timer.tick(now);if(arcade.paused)return;
   if(arcade.mode==='battle')arcade.battle.setAxis(input.axis());
   if(arcade.mode==='plaza'&&dragId===null){const x=input.axis(),y=(input.isPressed('down')?1:0)-(input.isPressed('up')?1:0);if(x||y)arcade.interact();arcade.plaza.move(x+y,y-x);}
-  arcade.advance(delta);events();
+  juice.update(delta);arcade.advance(delta);events();
+  const playing=arcade.mode==='stairs'||arcade.mode==='runner'||arcade.mode==='battle'&&arcade.battle.state.phase==='combat'||arcade.mode==='plaza'&&arcade.plaza.state.phase==='active';audio.update(delta,playing);
   if(arcade.mode==='stairs'){
-    audio.play(renderer.update(delta,input));
+    const landing=renderer.update(delta,input);audio.play(landing);if(landing)juiceEvent(landing);juice.trail(delta,renderer.pose.x,renderer.screenY(renderer.pose.y)-renderer.pose.lift,1.3,!!renderer.jump);
     if(arcade.stairs.state.mode===MODE.PUZZLE)puzzleView.update(delta);
-  }else if(arcade.mode==='battle')battleView.update(delta);
-  else if(['runner','plaza'].includes(arcade.mode))adventureView.update(delta);
+  }else if(arcade.mode==='battle'){battleView.update(delta);const p=battleView.project(arcade.battle.state.x,CONFIG.battle.playerZ);juice.trail(delta,p.x,p.y,.5,arcade.battle.state.powerMs>0);}
+  else if(['runner','plaza'].includes(arcade.mode)){adventureView.update(delta);const s=arcade[arcade.mode].state,p=arcade.mode==='runner'?{x:CONFIG.runner.playerX-26,y:870-s.y}:adventureView.iso(s.x,s.z);juice.trail(delta,p.x,p.y,arcade.mode==='runner'?(s.goldMs?1.38:.86):.72,arcade.mode==='runner'?(s.y>0||s.goldMs>0):!!(s.vx||s.vz));}
   else if(['profile','parents'].includes(arcade.mode))center.update(delta);else lobby.update(delta);
 }
 const input=new Input(element,{
@@ -116,7 +128,7 @@ const input=new Input(element,{
         if(index!==null){record.gameplay=true;arcade.interact();event(arcade.stairs.choose(index));}
       }else{
         const mapped=['turn','left'].includes(action)?ACTION.TURN:['climb','right','up'].includes(action)?ACTION.CLIMB:record.point?actionAt(record.point):null;
-        if(mapped){record.action=mapped;record.gameplay=true;arcade.interact();const e=arcade.stairs.act(mapped);renderer.handle(e,mapped,record.point);audio.play(e);haptics.play(e);events();}
+        if(mapped){record.action=mapped;record.gameplay=true;arcade.interact();const e=arcade.stairs.act(mapped);renderer.handle(e,mapped,record.point);audio.play(e);haptics.play(e);juiceEvent(e);events();}
       }
     }else if(arcade.mode==='battle'){
       if(arcade.battle.state.phase!=='combat'){
@@ -162,18 +174,20 @@ function syncUI(){
   }
   const enabled=['profile','parents'].includes(arcade.mode)||arcade.canHome(input.hasGameplayInput());
   const home=controls.get('home');if(home.getAttribute('aria-disabled')!==String(!enabled))home.setAttribute('aria-disabled',String(!enabled));
-  for(const id of ['weapon-0','weapon-1','replay'])controls.get(id).setAttribute('aria-disabled',String(arcade.battle.state.resultMs<CONFIG.campaign.resultGuardMs));
-  score.value='코인 '+profile.coins;
+  for(const id of ['weapon-0','weapon-1','replay']){const node=controls.get(id),disabled=String(arcade.battle.state.resultMs<CONFIG.campaign.resultGuardMs);if(node.getAttribute('aria-disabled')!==disabled)node.setAttribute('aria-disabled',disabled);}
+  const value='코인 '+profile.coins;if(score.value!==value)score.value=value;
 }
 function render(){
   ctx.setTransform(canvas.width/720,0,0,canvas.height/1280,0,0);
   const canHome=arcade.canHome(input.hasGameplayInput());
+  if(!arcade.paused&&juice.frozen())return;
   if(arcade.mode==='stairs'){
     if(arcade.stairs.state.mode===MODE.PUZZLE)puzzleView.render(canHome);else renderer.render(canHome);
   }else if(arcade.mode==='battle')battleView.render(canHome);
   else if(arcade.mode==='runner')adventureView.runnerView(canHome,input.isPressed('jump')||input.isPressed('up'));
   else if(arcade.mode==='plaza')adventureView.plazaView(canHome);
   else if(['profile','parents'].includes(arcade.mode))center.render();else lobby.render();
+  juice.render();
   if(arcade.paused){lobby.art.rect(0,0,720,1280,'#11234790');lobby.art.rect(300,570,120,120,'#14284ce6',28);lobby.art.rect(333,602,17,53,'#fff3cf',3);lobby.art.rect(372,602,17,53,'#fff3cf',3);}
 }
 function frame(now){frameId=null;advance(now);syncUI();render();frames+=1;if(!arcade.paused)frameId=requestAnimationFrame(frame);}
@@ -184,7 +198,7 @@ function resize(){
 function syncVisibility(){
   const paused=document.hidden||pageAway||!document.hasFocus();if(paused===arcade.paused)return;
   advance(performance.now());arcade.setPaused(paused);input.reset();dragId=null;
-  if(paused){audio.pause();haptics.stop();if(['profile','parents'].includes(arcade.mode))center.open(arcade.mode);profile.save();if(frameId!==null)cancelAnimationFrame(frameId);frameId=null;render();}
+  if(paused){juice.stop();audio.pause();haptics.stop();if(['profile','parents'].includes(arcade.mode))center.open(arcade.mode);profile.save();if(frameId!==null)cancelAnimationFrame(frameId);frameId=null;render();}
   else{timer.reset(performance.now());audio.resume();events();if(arcade.mode==='stairs')speakPuzzle();if(frameId===null)frameId=requestAnimationFrame(frame);}
 }
 new ResizeObserver(resize).observe(viewport);window.visualViewport?.addEventListener('resize',resize);window.addEventListener('resize',resize);
@@ -198,5 +212,5 @@ if(new URLSearchParams(location.search).has('debug'))Object.defineProperty(windo
   battleVisual:{particles:battleView.particles.filter(p=>p.life>0).length,visibleSquad:Math.min(CONFIG.battle.maxVisibleSquad,Math.round(battleView.displaySquad)),spriteFrames:battleView.troopSprites.length,
     impacts:battleView.impacts.filter(p=>p.life>0).length,debris:battleView.debris.filter(p=>p.life>0).length,loot:battleView.loot.filter(p=>p.life>0).length,
     totalImpacts:battleView.totalImpacts,totalBreaks:battleView.totalBreaks,reduced:battleView.reduced},
-  frames,readyMs,activeInputs:input.active.size,dragId,audioState:audio.context?.state??'locked',voices:audio.voices.size,features:{...CONFIG.features}
+  audio:audio.diagnostics(),juice:juice.snapshot(),materials:materialStats(),frames,readyMs,activeInputs:input.active.size,dragId,audioState:audio.context?.state??'locked',voices:audio.voices.size,features:{...CONFIG.features}
 })})});

@@ -85,8 +85,9 @@ export const CONFIG = freeze({
       ['#0b1230', '#29235d', '#73569e'],
     ],
   },
+  polish: { hitStopMs: 50 },
   audio: {
-    volume: 0.11, maxVoices: 12, attackSeconds: 0.006, floorGain: 0.001,
+    volume: 0.3, maxVoices: 20, musicVoices: 24, maxTails: 4, calmAfterMs: 15*60*1000, attackSeconds: 0.006, floorGain: 0.001,
     noteHz: [261.63, 293.66, 329.63, 349.23, 392, 440, 493.88, 523.25],
     jumpSeconds: 0.13, coinSeconds: 0.11, landingHz: [150, 58], landingSeconds: 0.09,
     turnHz: [360, 230], turnSeconds: 0.045, stumbleHz: [210, 80], stumbleSeconds: 0.24,

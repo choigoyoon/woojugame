@@ -1,23 +1,37 @@
 import { AVATAR_PALETTE } from './profile.js';
+import { finish, shade, blockSprite } from './material.js';
 
 export class Art {
-  constructor(ctx) { this.c = ctx; }
+  constructor(ctx) { this.c = ctx; this.layers=new Map(); }
+  cached(key,bounds,paint,revision=0) {
+    if(typeof OffscreenCanvas!=='function'){paint();return;}
+    const [x,y,w,h]=bounds,c=this.c,scale=c.canvas.width/720;
+    if(this.layerScale!==scale){this.layers.clear();this.layerScale=scale;}
+    let entry=this.layers.get(key);
+    if(!entry){if(this.layers.size>=24)this.layers.delete(this.layers.keys().next().value);entry={surface:new OffscreenCanvas(Math.ceil(w*scale),Math.ceil(h*scale)),revision:null};this.layers.set(key,entry);}
+    if(entry.revision!==revision){const ctx=entry.surface.getContext('2d');ctx.setTransform(scale,0,0,scale,-x*scale,-y*scale);ctx.clearRect(x,y,w,h);this.c=ctx;try{paint();}finally{this.c=c;}entry.revision=revision;}
+    c.drawImage(entry.surface,x,y,entry.surface.width/scale,entry.surface.height/scale);
+  }
   poly(points, fill, stroke, width = 2) {
     const c = this.c; c.beginPath(); points.forEach(([x,y],i) => i ? c.lineTo(x,y) : c.moveTo(x,y)); c.closePath();
-    c.fillStyle = fill; c.fill(); if (stroke) { c.strokeStyle = stroke; c.lineWidth = width; c.lineJoin = 'round'; c.stroke(); }
+    const xs=points.map(p=>p[0]),ys=points.map(p=>p[1]);c.fillStyle=finish(c,fill,Math.min(...xs),Math.min(...ys),Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys)); c.fill(); if (stroke) { c.strokeStyle = stroke; c.lineWidth = width; c.lineJoin = 'round'; c.stroke(); }
   }
   rect(x,y,w,h,fill,r = 0,stroke) {
-    const c = this.c; c.beginPath(); c.roundRect(x,y,w,h,r); c.fillStyle = fill; c.fill();
-    if (stroke) { c.strokeStyle = stroke; c.lineWidth = 2; c.stroke(); }
+    const c = this.c; c.beginPath(); c.roundRect(x,y,w,h,r); c.fillStyle = w>=16&&h>=14?finish(c,fill,x,y,w,h):fill; c.fill();
+    if(w>24&&h>28&&/^#[\da-f]{6}$/i.test(fill)){c.save();c.clip();c.strokeStyle='#ffffff33';c.lineWidth=2;c.beginPath();c.roundRect(x+2,y+2,w-4,h-4,Math.max(0,r-2));c.stroke();c.restore();}
+    if(r>=12&&w>70&&h>45){c.save();c.clip();const sheen=c.createLinearGradient(x,y,x,y+h*.65);sheen.addColorStop(0,'#ffffff22');sheen.addColorStop(.15,'#ffffff09');sheen.addColorStop(1,'#ffffff00');c.fillStyle=sheen;c.fillRect(x,y,w,h);c.strokeStyle='#ffffff26';c.lineWidth=2;c.beginPath();c.roundRect(x+2,y+2,w-4,h-5,Math.max(0,r-2));c.stroke();c.restore();}
+    if (stroke) { c.beginPath();c.roundRect(x,y,w,h,r);c.strokeStyle = stroke; c.lineWidth = 2; c.stroke(); }
   }
-  ellipse(x,y,rx,ry,fill) { const c=this.c; c.beginPath(); c.ellipse(x,y,rx,ry,0,0,Math.PI*2); c.fillStyle=fill; c.fill(); }
+  ellipse(x,y,rx,ry,fill) { const c=this.c; c.beginPath(); c.ellipse(x,y,rx,ry,0,0,Math.PI*2); if(/^#[\da-f]{6}$/i.test(fill)&&rx>8){const g=c.createRadialGradient(x-rx*.3,y-ry*.4,0,x,y,Math.max(rx,ry));g.addColorStop(0,shade(fill,.32));g.addColorStop(.55,fill);g.addColorStop(1,shade(fill,-.23));c.fillStyle=g;}else if(/^#[\da-f]{8}$/i.test(fill)&&ry<rx*.55){const g=c.createRadialGradient(x,y,0,x,y,rx);g.addColorStop(0,fill);g.addColorStop(1,fill.slice(0,7)+'00');c.fillStyle=g;}else c.fillStyle=fill;c.fill(); }
   line(points,color,width=3) { const c=this.c; c.beginPath(); points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y)); c.strokeStyle=color; c.lineWidth=width; c.lineCap='round'; c.lineJoin='round'; c.stroke(); }
   text(value,x,y,size=28,color='#fff',align='center',weight=850) { const c=this.c; c.fillStyle=color; c.font=weight+' '+size+'px system-ui,sans-serif'; c.textAlign=align; c.textBaseline='middle'; c.fillText(String(value),x,y); }
+  counter(value,x,y,width,size=30,color='#ffe8a5',align='center'){const c=this.c;c.save();c.font='850 '+size+'px system-ui,sans-serif';const measured=c.measureText(String(value)).width;this.text(value,x,y,Math.min(size,size*width/Math.max(1,measured)),color,align);c.restore();}
+  label(value,x,y,size=28,color='#fff5d5',outline='#173453',align='center'){const c=this.c;c.save();c.font='900 '+size+'px system-ui,sans-serif';c.textAlign=align;c.textBaseline='middle';c.lineJoin='round';c.lineWidth=Math.max(2,size*.12);c.strokeStyle=outline;c.strokeText(String(value),x,y);c.fillStyle=color;c.fillText(String(value),x,y);c.restore();}
   gradient(x,y,x2,y2,colors) { const g=this.c.createLinearGradient(x,y,x2,y2); colors.forEach((color,i)=>g.addColorStop(i/(colors.length-1),color)); return g; }
   block(x,y,w,h,d,front,top,side) {
-    this.poly([[x,y],[x+d,y-d*.6],[x+w+d,y-d*.6],[x+w,y]],top,'#122c4e',1.5);
-    this.poly([[x+w,y],[x+w+d,y-d*.6],[x+w+d,y+h-d*.6],[x+w,y+h]],side,'#122c4e',1.5);
-    this.rect(x,y,w,h,front,3,'#122c4e'); this.rect(x+3,y+3,w-6,3,'#ffffff50',1);
+    const sprite=blockSprite(w,h,d,front,top,side);
+    if(sprite){this.c.drawImage(sprite.surface,x+sprite.ox,y+sprite.oy,sprite.width,sprite.height);return;}
+    this.rect(x,y,w,h,front,3,top);
   }
   star(x,y,r,color='#ffe77d') { this.poly(Array.from({length:10},(_,i)=>{const a=i*Math.PI/5-Math.PI/2;const d=r*(i%2?.44:1);return[x+Math.cos(a)*d,y+Math.sin(a)*d];}),color); }
   coin(x,y,size=1) {

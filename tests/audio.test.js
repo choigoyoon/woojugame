@@ -5,10 +5,12 @@ import { CONFIG } from '../js/config.js';
 
 test('suspended audio remains bounded even when the browser never delivers onended', () => {
   const connected = new Set();
-  const parameter = () => ({ setValueAtTime() {}, linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {} });
+  const parameter = () => ({ setValueAtTime() {}, linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {}, cancelScheduledValues() {} });
   class Node {
     gain = parameter();
     frequency = parameter();
+    Q=parameter();threshold=parameter();knee=parameter();ratio=parameter();attack=parameter();release=parameter();
+    getFloatTimeDomainData(array){array.fill(0);}
     connect() { connected.add(this); }
     disconnect() { connected.delete(this); }
     start() {}
@@ -20,6 +22,10 @@ test('suspended audio remains bounded even when the browser never delivers onend
     destination = {};
     createGain() { return new Node(); }
     createOscillator() { return new Node(); }
+    createBiquadFilter(){return new Node();}
+    createDynamicsCompressor(){return new Node();}
+    createWaveShaper(){return new Node();}
+    createAnalyser(){return new Node();}
     sampleRate = 8000;
     createBuffer(channels,length) { return {getChannelData:()=>new Float32Array(length)}; }
     createBufferSource() { return new Node(); }
@@ -35,10 +41,12 @@ test('suspended audio remains bounded even when the browser never delivers onend
       audio.play({type:'shot',powered:true});audio.play({type:'explode',boss:index%10===0});audio.play({type:'armor-break'});
     }
     assert.equal(audio.voices.size, CONFIG.audio.maxVoices);
-    assert.equal(connected.size, CONFIG.audio.maxVoices * 2 + 1); // Oscillator + envelope, plus master.
+    assert.equal(connected.size, audio.diagnostics().nodes+7); // All source/filter/FM nodes plus the seven reusable bus nodes.
+    assert.ok(audio.tails.size<=CONFIG.audio.maxTails);
     audio.pause();
     assert.equal(audio.voices.size, 0);
-    assert.equal(connected.size, 1); // Only the reusable master remains.
+    assert.equal(connected.size, 7); // Only the reusable bus graph remains.
+    assert.equal(audio.created,audio.ended);
   } finally {
     if (originalWindow === undefined) delete globalThis.window;
     else globalThis.window = originalWindow;
@@ -76,4 +84,11 @@ test('missing Korean/local TTS uses a distinct synthesized cue for each situatio
   } finally {
     if(original===undefined)delete globalThis.speechSynthesis;else globalThis.speechSynthesis=original;
   }
+});
+
+test('fifteen active minutes soften music once; lobby time and mode switches do not accelerate or reset it',()=>{
+  const audio=new Audio();audio.update(900000,false);assert.equal(audio.sequencer.calm,false);
+  audio.update(899999,true);assert.equal(audio.sequencer.calm,false);audio.update(1,true);assert.equal(audio.sequencer.calm,true);
+  audio.setMode('plaza');assert.equal(audio.activeMs,900000);assert.equal(audio.sequencer.calm,true);
+  audio.pause();audio.update(5000,true);assert.equal(audio.activeMs,900000);
 });

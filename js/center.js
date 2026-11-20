@@ -57,7 +57,7 @@ export class Center {
     this.background('아바타 상점');const a=this.art,p=this.part;
     a.ellipse(190,416,130,35,'#8776bd');a.ellipse(190,402,130,29,'#bca6e6');
     a.toy(186,397,1.32,{time:this.time,palette:paletteFor({...this.profile.equipped,[this.slot]:p.id})});
-    a.rect(366,157,307,77,'#0f1b39',24,'#b7c7f555');a.coin(406,195,.75);a.text(this.profile.coins,450,198,32,'#ffdd8b','left');
+    a.rect(366,157,307,77,'#0f1b39',24,'#b7c7f555');a.coin(406,195,.75);a.counter(this.profile.coins,450,198,198,32,'#ffdd8b','left');
     a.text(p.name,511,281,30,'#e8efff');a.text(p.legendary?'LEGENDARY':'COLLECTION',511,325,16,p.legendary?'#ffe29c':'#99cfde');
     a.text(this.profile.status==='memory'?'임시 보관 중':'자동 보관',511,373,18,this.profile.status==='memory'?'#ffb298':'#99dfcc');
     for(const [i,slot]of ['head','body','back'].entries()){a.rect(40+i*224,450,208,62,this.slot===slot?'#b3e7e0':'#2d4367',20);a.text(['머리','몸통','등'][i],144+i*224,482,25,this.slot===slot?'#224559':'#c9dced');}
@@ -66,7 +66,7 @@ export class Center {
       a.rect(x,y+9,306,238,'#0a1833',24);a.rect(x,y,306,238,selected?'#3d567f':'#233a60',24,selected?'#ffdf99':'#88a9cf66');
       a.toy(x+91,y+158,.72,{time:this.time,palette:paletteFor({...this.profile.equipped,[this.slot]:part.id})});
       if(part.legendary)a.star(x+258,y+34,14,'#ffdb86');
-      a.text(part.name,x+202,y+81,20,'#e5efff');a.text(owned?'보유':part.price+' C',x+202,y+122,24,owned?'#b6ffdf':'#ffdc91');
+      a.text(part.name,x+216,y+81,19,'#e5efff');a.text(owned?'보유':part.price+' C',x+216,y+122,23,owned?'#b6ffdf':'#ffdc91');
       a.text(this.profile.data.equipped[this.slot]===part.id?'장착 중':part.legendary?'코인 + 보호자 PIN':'',x+153,y+202,18,'#bacde3');
     });
     const owned=this.profile.data.owned.includes(p.id);a.rect(80,1124,560,94,'#081c36',27);a.rect(80,1114,560,94,this.profile.coins>=p.price||owned?'#8de6cd':'#77919e',27,'#c7fff1');a.text(owned?'장착하기':p.price+' 코인으로 데려오기',360,1160,29,'#193f50');
@@ -86,7 +86,7 @@ export class Center {
     this.background('보호자 센터');const a=this.art,s=this.profile.data.stats;
     a.text('누적 플레이 '+Math.floor(s.playMs/60000)+'분',360,172,27,'#c2ddd9');
     const cards=[['브레이크 성공',s.brakeWins,s.brakes,'#8ce5d0'],['연산 정답률',s.gateWins,s.gates,'#a9c5ff'],['완성한 문장',s.sentences,null,'#ffd997'],['심부름 성공',s.missionWins,s.missions,'#d5b7fb']];
-    cards.forEach(([label,win,total,color],i)=>{const x=36+i%2*342,y=235+Math.floor(i/2)*238;a.rect(x,y,306,211,'#213958',25,color+'88');a.text(label,x+153,y+42,23,'#dce9f4');a.text(total===null?win:total?Math.round(win/total*100)+'%':'—',x+153,y+103,48,color);a.text(total===null?'개':'성공 '+win+' / 시도 '+total,x+153,y+166,18,'#adc7d9');});
+    cards.forEach(([label,win,total,color],i)=>{const x=36+i%2*342,y=235+Math.floor(i/2)*238;a.rect(x,y,306,211,'#213958',25,color+'88');a.text(label,x+153,y+42,23,'#dce9f4');a.counter(total===null?win:total?Math.round(win/total*100)+'%':'—',x+153,y+103,260,48,color);a.text(total===null?'개':'성공 '+win+' / 시도 '+total,x+153,y+166,18,'#adc7d9');});
     a.text('게임 선택 결과의 누적 기록입니다',360,757,20,'#a7c4d8');
     for(const [i,key]of ['sound','haptics'].entries()){const x=36+i*342;a.rect(x,807,306,107,'#334e70',25,'#a1d2da66');a.text((key==='sound'?'소리':'진동')+'  '+(this.profile.data.settings[key]?'ON':'OFF'),x+153,860,29,'#d1f7ed');}
     a.rect(80,969,560,112,'#b8c8f3',30);a.text('보호자 PIN 변경',360,1024,30,'#243756');

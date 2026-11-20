@@ -18,15 +18,17 @@ export class BattleRenderer {
     this.troopSprites=[];this.spriteKey='';this.prepareTroops();
   }
   prepareTroops() {
-    const key=JSON.stringify([this.profile.equipped,this.profile.palette]);
+    const density=Math.max(1,Math.ceil(this.art.c.canvas.width/720*.53*12/(12+CONFIG.battle.playerZ)));
+    const key=JSON.stringify([this.profile.equipped,this.profile.palette,density]);
     if(key===this.spriteKey)return;
     this.spriteKey=key;
     // Draw the same procedural avatar once per gait pose. No downloaded sprites.
+    // Match the largest projected soldier's pixel footprint, including high-DPR tablets.
     // A fixed 16-frame cache replaces hundreds of limb paths on every large-squad frame.
     this.troopSprites=Array.from({length:CONFIG.battle.spriteFrames},(_,i)=>{
-      const surface=typeof OffscreenCanvas==='function'?new OffscreenCanvas(416,448):document.createElement('canvas');
-      surface.width=416;surface.height=448;
-      const context=surface.getContext('2d');context.setTransform(2,0,0,2,0,0);
+      const surface=typeof OffscreenCanvas==='function'?new OffscreenCanvas(208*density,224*density):document.createElement('canvas');
+      surface.width=208*density;surface.height=224*density;
+      const context=surface.getContext('2d');context.setTransform(density,0,0,density,0,0);
       new Art(context).toy(104,210,1,{time:i/CONFIG.battle.spriteFrames*Math.PI*2*95,run:true,back:true,palette:this.profile.palette});
       return surface;
     });
@@ -68,7 +70,7 @@ export class BattleRenderer {
     }
     if(event.type==='explode'){
       if(event.combo>1){this.chain=event.combo;this.chainMs=1200;}
-      for(let i=0;i<Math.min(event.coins,8);i++)Object.assign(this.loot[this.lootCursor++%this.loot.length],{x:point.x,y:point.y,life:1050+i*40,duration:1050+i*40,offset:(i-3)*26});
+
     }
     const count=event.type==='explode'?(event.boss?100:35):['gate-win','power-up'].includes(event.type)?50:event.type==='hit'?3:event.type==='bump'?15:0;
     for(let i=0;i<(this.reduced?Math.min(count,5):count);i++){
@@ -82,6 +84,9 @@ export class BattleRenderer {
     }
   }
   ocean() {
+    this.art.cached('ocean',[0,0,720,1280],()=>this.paintOcean(),this.game.round?.theme+':'+Math.floor(this.time/50));
+  }
+  paintOcean() {
     const a=this.art,c=a.c;
     const theme=this.game.campaign?this.game.round.theme:0;
     c.fillStyle=a.gradient(0,0,0,650,[['#348fd2','#a3ebf1','#d4faf2'],['#6455a1','#ffbba7','#ffdfb0'],['#152e67','#5061b3','#c29fe1']][theme]);c.fillRect(0,0,720,1280);
@@ -105,7 +110,9 @@ export class BattleRenderer {
     for(let i=0;i<29;i++){
       const z=(i*2.7+80-distance%2.7)%80-3,p=this.project(0,z);if(z>70)continue;
       const left=this.project(-1.16,z),right=this.project(1.16,z);
-      a.line([[left.x,left.y],[right.x,right.y]],'#dce8e975',Math.max(1,3*p.s));
+      a.line([[left.x,left.y+2*p.s],[right.x,right.y+2*p.s]],'#213a5238',Math.max(1,3*p.s));
+      a.line([[left.x,left.y],[right.x,right.y]],'#eaf8ef99',Math.max(1,2*p.s));
+      if(p.s>.3)for(const edge of [left,right]){a.ellipse(edge.x,edge.y,4*p.s,2.5*p.s,'#365779');a.ellipse(edge.x-p.s,edge.y-p.s,2*p.s,p.s,'#defffb');}
       const next=this.project(0,z+.7);a.poly([[p.x-3*p.s,p.y],[p.x+3*p.s,p.y],[next.x+3*next.s,next.y],[next.x-3*next.s,next.y]],'#f6f0c1');
     }
     for(const side of [-1,1]){
@@ -146,7 +153,7 @@ export class BattleRenderer {
       a.rect(x-7*s,y,14*s,h,base,4*s);a.rect(x+w-7*s,y,14*s,h,base,4*s);
       a.rect(x-10*s,y-5*s,w+20*s,39*s,base,7*s);a.rect(x-10*s,y-5*s,w+20*s,5*s,bright,2*s);
       a.rect(x+9*s,y+44*s,w-18*s,80*s,blue?'#133c77eb':'#6f284feb',10*s);
-      a.text(gate.options[i].text,p.x,y+85*s,Math.max(18,49*s),'#fff8e7');
+      a.label(gate.options[i].text,p.x,y+85*s,Math.max(18,49*s),'#fff8e7',blue?'#122d62':'#592043');
       c.save();c.globalAlpha=.68;
       a.poly([[p.x-22*s,p.y-56*s],[p.x,p.y-34*s],[p.x+22*s,p.y-56*s],[p.x+22*s,p.y-43*s],[p.x,p.y-21*s],[p.x-22*s,p.y-43*s]],bright);c.restore();
     }
@@ -161,6 +168,7 @@ export class BattleRenderer {
     c.save();c.translate(p.x,p.y);c.rotate(this.reduced?0:Math.sin(impact*9)*impact*.045);c.scale(1+dent,1-dent*.7);c.translate(-p.x,-p.y);
     a.ellipse(p.x,p.y+8*s,w*.61,19*s,'#14304748');
     a.rect(x,y+10*s,w,h-10*s,a.gradient(x,y,x+w,y,boss?bossColors:['#b76542','#eea766','#ae5b43']),20*s);
+    a.rect(x+w*.13,y+31*s,w*.065,h-45*s,'#fff6df35',5*s);a.rect(x+w*.88,y+32*s,w*.035,h-46*s,'#16234330',4*s);
     a.ellipse(p.x,y+12*s,w/2,23*s,boss?bossColors[1]:'#ffce8d');a.ellipse(p.x,y+9*s,w*.39,15*s,boss?bossColors[0]:'#d18850');
     for(const dy of [h*.26,h*.79]){
       a.rect(x-5*s,y+dy,w+10*s,14*s,boss?'#452a4c':'#4c647a',4*s);
@@ -282,15 +290,17 @@ export class BattleRenderer {
   }
   hud(canHome) {
     const a=this.art,c=a.c,s=this.game.state;
-    c.fillStyle=a.gradient(0,0,0,240,['#122b5be8','#122b5b00']);c.fillRect(0,0,720,240);
-    a.home(canHome);a.text('BRIDGE BATTLE',403,62,31,'#fff2c7');
-    a.rect(30,125,274,86,'#122d54df',25,'#96e9fb59');a.toy(67,194,.28,{time:0,palette:this.profile.palette});
-    a.text(s.squad,184,168,43,'#c8ffed');
-    a.rect(417,125,274,86,'#122d54df',25,'#96e9fb59');a.coin(459,168,.9);a.text(this.profile.coins,552,168,this.profile.coins>999999?25:36,'#ffe8a5');
-    a.text(this.game.campaign?'하늘 항구  1-'+(s.round+1)+'  ·  '+this.game.round.title:'WAVE '+s.wave,360,244,18,'#fff4d4');
+    a.cached('hud',[0,0,720,240],()=>{
+      const c=a.c;c.fillStyle=a.gradient(0,0,0,240,['#122b5be8','#122b5b00']);c.fillRect(0,0,720,240);
+      a.text('BRIDGE BATTLE',403,62,31,'#fff2c7');
+      a.rect(30,125,274,86,'#122d54df',25,'#96e9fb59');a.toy(67,194,.28,{time:0,palette:this.profile.palette});
+      a.rect(417,125,274,86,'#122d54df',25,'#96e9fb59');a.coin(459,168,.9);
+    },this.spriteKey);
+    a.home(canHome);a.text(s.squad,184,168,43,'#c8ffed');a.counter(this.profile.coins,566,168,206,36,'#ffe8a5');
+    a.label(this.game.campaign?'하늘 항구  1-'+(s.round+1)+'  ·  '+this.game.round.title:'WAVE '+s.wave,360,244,18,'#fff4d4','#18375b');
     const boss=this.game.entities.find(entity=>entity.kind==='boss');
     a.rect(142,274,436,9,'#143b6266',5);a.rect(142,274,436*(boss?boss.hp/boss.maxHp:Math.min(1,s.waveMs/this.game.rules.bossAtMs)),9,boss?'#ff8e8d':'#b2f2e2',5);
-    if(boss)a.text(this.game.campaign?this.game.round.boss+(boss.rage?' !':''):boss.rage?'BOSS • RAGE':'BOSS',360,310,22,boss.rage?'#ffbd87':'#fff1d3');
+    if(boss)a.label(this.game.campaign?this.game.round.boss+(boss.rage?' !':''):boss.rage?'BOSS • RAGE':'BOSS',360,310,22,boss.rage?'#ffbd87':'#fff1d3','#18375b');
     if(s.bannerMs>0){
       c.save();c.globalAlpha=Math.min(1,s.bannerMs/260);
       const clear=s.banner==='CLEAR!';
@@ -307,10 +317,12 @@ export class BattleRenderer {
     a.text(powered?(this.powerIntro>0?'MAX FIRE!':'MAX FIRE'):CONFIG.campaign.weapons[s.weapon]?.name??'BLAST',376,1109,this.powerIntro>0?25:19,powered?'#c8fff5':'#ffe7aa');
     a.rect(250,1126,242,7,'#092f49',4);a.rect(250,1126,242*charge,7,powered?'#7effed':'#ffd373',4);
     // The drag cue is an icon; the playfield remains one continuous touch surface.
+    a.cached('drag-cue',[210,1156,300,78],()=>{
     a.rect(213,1159,294,71,'#143451b3',36,'#b2eeed4d');
     a.line([[276,1184],[261,1195],[276,1206]],'#d7fbf4',4);a.line([[444,1184],[459,1195],[444,1206]],'#d7fbf4',4);
     a.rect(345,1178,20,32,'#f9dfb1',9);a.ellipse(355,1210,20,13,'#f9dfb1');
     a.line([[302,1195],[325,1195]],'#c7f3e7',3);a.line([[388,1195],[412,1195]],'#c7f3e7',3);
+    });
   }
   weaponIcon(id,x,y,rank=1) {
     const a=this.art,c=a.c,color=CONFIG.campaign.weapons[id].color;

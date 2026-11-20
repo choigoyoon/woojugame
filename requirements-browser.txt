@@ -1,2 +1,4 @@
 # Optional browser verification only; the game has no runtime dependencies.
 playwright==1.62.0
+# Test-only waveform charts; never loaded by the game.
+matplotlib==3.10.8

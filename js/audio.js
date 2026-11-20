@@ -6,7 +6,7 @@ export function noteFrequency(index = 0) {
 }
 
 export class Audio {
-  constructor() { this.context = null; this.master = null; this.voices = new Map(); this.speechToken = 0; this.noiseBuffer=null;this.lastImpact=-Infinity; }
+  constructor(profile=null) { this.profile=profile;this.context = null; this.master = null; this.voices = new Map(); this.speechToken = 0; this.noiseBuffer=null;this.lastImpact=-Infinity; }
 
   unlock() {
     try {
@@ -16,11 +16,18 @@ export class Audio {
         this.context = new Context();
         this.master = this.context.createGain();
         this.master.gain.value = CONFIG.audio.volume;
-        this.master.connect(this.context.destination);
+        if(this.context.createBiquadFilter&&this.context.createDynamicsCompressor){
+          this.filter=this.context.createBiquadFilter();this.filter.type='lowpass';this.filter.frequency.value=6500;this.filter.Q.value=.65;
+          this.compressor=this.context.createDynamicsCompressor();this.compressor.threshold.value=-18;this.compressor.knee.value=16;this.compressor.ratio.value=5;this.compressor.attack.value=.003;this.compressor.release.value=.15;
+          this.master.connect(this.filter);this.filter.connect(this.compressor);this.compressor.connect(this.context.destination);
+        }else this.master.connect(this.context.destination);
+        this.applySettings();
       }
       this.resume();
     } catch { /* Audio is optional; the visual game stays playable. */ }
   }
+
+  applySettings(){if(this.master)this.master.gain.value=this.profile?.data.settings.sound===false?0:CONFIG.audio.volume;if(this.profile?.data.settings.sound===false)this.cancelSpeech();}
 
   resume() {
     if (this.context?.state === 'suspended') this.context.resume().catch(() => {});
@@ -57,6 +64,10 @@ export class Audio {
       oscillator.frequency.exponentialRampToValueAtTime(to, start + seconds);
       envelope.gain.setValueAtTime(CONFIG.audio.floorGain, start);
       envelope.gain.linearRampToValueAtTime(Math.min(1, Math.max(CONFIG.audio.floorGain, level)), start + CONFIG.audio.attackSeconds);
+      // Short ADSR: transient attack, body decay, sustain, soft release.
+      const peak=Math.min(1,Math.max(CONFIG.audio.floorGain,level));
+      envelope.gain.exponentialRampToValueAtTime(Math.max(CONFIG.audio.floorGain,peak*.48),start+seconds*.28);
+      envelope.gain.setValueAtTime(Math.max(CONFIG.audio.floorGain,peak*.38),start+seconds*.6);
       envelope.gain.exponentialRampToValueAtTime(CONFIG.audio.floorGain, start + seconds);
       oscillator.connect(envelope); envelope.connect(this.master);
       this.voices.set(oscillator, envelope);
@@ -83,7 +94,7 @@ export class Audio {
   }
 
   play(event) {
-    if (!event) return;
+    if (!event||this.profile?.data.settings.sound===false) return;
     const a = CONFIG.audio;
     if (event.type === 'shot') {
       this.tone(event.powered?740:340,event.powered?170:72,event.powered?.075:.065,event.powered?'sawtooth':'square',0,event.powered?.18:.16);
@@ -112,7 +123,14 @@ export class Audio {
       this.tone(80, 34, 0.27, 'sine', 0, 0.65);
       if (event.boss) this.play({ type: 'reward' });
     }
-    if (['select', 'wave'].includes(event.type)) this.tone(523, 784, 0.12, 'triangle', 0, 0.45);
+    if (['select','wave'].includes(event.type)){this.tone(523,784,.12,'triangle',0,.4);this.tone(1046,1175,.09,'sine',.025,.17);this.noise(.018,.08);}
+    if(event.type==='word'){this.tone(880,1320,.12,'triangle',0,.4);this.tone(1320,1760,.18,'sine',.04,.25);this.speak(event.word,'friend');}
+    if(event.type==='sentence'){this.play({type:'round-clear',final:true});this.speak(event.speech,'friend');}
+    if(event.type==='mission')this.speak(event.speech,'teacher');
+    if(event.type==='mission-win'){this.play({type:'round-clear',final:true});this.noise(.22,.25);}
+    if(event.type==='pickup'){this.tone(1046,1568,.14,'sine',0,.4);this.tone(2093,2349,.11,'triangle',.035,.2);}
+    if(event.type==='smash'){this.noise(.15,.4);this.tone(150,45,.2,'sine',0,.5);}
+    if(['word-miss','mission-miss'].includes(event.type)){this.tone(350,260,.15,'triangle',0,.3);this.tone(220,180,.16,'sine',.06,.2);}
     if (['gate-miss', 'bump', 'puzzle-miss', 'locked'].includes(event.type)) this.tone(320, 190, 0.13, 'triangle', 0, 0.4);
     if (['reward', 'gate-win', 'puzzle-win', 'brake-win'].includes(event.type)) {
       if (event.type === 'puzzle-win') this.cancelSpeech();
@@ -151,7 +169,7 @@ export class Audio {
   }
 
   speak(text, cue = 'teacher') {
-    this.cancelSpeech();
+    this.cancelSpeech();if(this.profile?.data.settings.sound===false)return false;
     // Every scene has a local synthesized cue, even without a Korean voice or network.
     const notes = cue === 'bell' ? [1047, 784, 1047] : cue === 'rain' ? [1700, 1300, 1900, 1100] : cue === 'friend' ? [392, 523, 659] : [880, 1175];
     notes.forEach((hz,i)=>this.tone(hz,hz*.91,cue==='rain'?.07:.21,'sine',i*.12,cue==='rain'?.12:.32));

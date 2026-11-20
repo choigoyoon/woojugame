@@ -11,6 +11,7 @@ export class BattleRenderer {
     this.debris=Array.from({length:CONFIG.battle.debrisCount},()=>({life:0}));this.debrisCursor=0;
     this.loot=Array.from({length:CONFIG.battle.lootCount},()=>({life:0}));this.lootCursor=0;
     this.kick=0;this.powerIntro=0;this.chain=0;this.chainMs=0;this.totalImpacts=0;this.totalBreaks=0;
+    this.drawList=[];this.drawEntries=Array.from({length:CONFIG.battle.maxEntities+2},()=>({object:null,kind:null}));
     this.links=Array.from({length:12},()=>({life:0}));this.linkCursor=0;
     const motion=window.matchMedia('(prefers-reduced-motion: reduce)');this.reduced=motion.matches;
     motion.addEventListener('change',event=>{this.reduced=event.matches;});
@@ -23,10 +24,10 @@ export class BattleRenderer {
     // Draw the same procedural avatar once per gait pose. No downloaded sprites.
     // A fixed 16-frame cache replaces hundreds of limb paths on every large-squad frame.
     this.troopSprites=Array.from({length:CONFIG.battle.spriteFrames},(_,i)=>{
-      const surface=typeof OffscreenCanvas==='function'?new OffscreenCanvas(256,384):document.createElement('canvas');
-      surface.width=256;surface.height=384;
+      const surface=typeof OffscreenCanvas==='function'?new OffscreenCanvas(416,448):document.createElement('canvas');
+      surface.width=416;surface.height=448;
       const context=surface.getContext('2d');context.setTransform(2,0,0,2,0,0);
-      new Art(context).toy(64,176,1,{time:i/CONFIG.battle.spriteFrames*Math.PI*2*95,run:true,back:true,palette:this.profile.palette});
+      new Art(context).toy(104,210,1,{time:i/CONFIG.battle.spriteFrames*Math.PI*2*95,run:true,back:true,palette:this.profile.palette});
       return surface;
     });
   }
@@ -226,7 +227,7 @@ export class BattleRenderer {
       if(this.glow>0){c.save();c.globalAlpha=this.glow/900*.45;a.ellipse(p.x,p.y,30*p.s,10*p.s,'#ffe893');c.restore();}
       const scale=.53*p.s;
       const phase=this.reduced?0:Math.floor((this.time+i*51)/(Math.PI*2*95)*CONFIG.battle.spriteFrames)%CONFIG.battle.spriteFrames;
-      c.drawImage(this.troopSprites[phase],p.x-64*scale,p.y-bob-176*scale,128*scale,192*scale);
+      c.drawImage(this.troopSprites[phase],p.x-104*scale,p.y-bob-210*scale,208*scale,224*scale);
       if(this.glow>0)a.star(p.x+39*scale,p.y-bob-156*scale,10*scale,'#fff4a5');
       const powered=s.powerMs>0;
       a.block(p.x+16*p.s,p.y-57*p.s+s.recoilMs/65*4,14*p.s,29*p.s,4*p.s,powered?'#29dce3':CONFIG.campaign.weapons[s.weapon]?.color??'#2e4b66',powered?'#c7fff3':'#b4dfe4','#173550');
@@ -364,7 +365,7 @@ export class BattleRenderer {
     if(!this.reduced&&this.kick>0){const scale=1+Math.min(1,this.kick/180)*.018;c.translate(360,760);c.scale(scale,scale);c.translate(-360,-760);}
     if(!this.reduced&&this.game.state.shakeMs>0){const amp=Math.min(7,this.game.state.shakeMs/40);c.translate(Math.sin(this.time*.11)*amp,Math.cos(this.time*.13)*amp*.6);}
     this.deck();this.danger();
-    const objects=[...this.game.gates.map(object=>({object,kind:'gate'})),...this.game.entities.map(object=>({object,kind:object.kind}))].sort((a,b)=>b.object.z-a.object.z);
+    const objects=this.drawList;objects.length=0;let entryIndex=0;for(const object of this.game.gates){const entry=this.drawEntries[entryIndex++];entry.object=object;entry.kind='gate';objects.push(entry);}for(const object of this.game.entities){const entry=this.drawEntries[entryIndex++];entry.object=object;entry.kind=object.kind;objects.push(entry);}objects.sort((a,b)=>b.object.z-a.object.z);
     for(const {object,kind} of objects){if(kind==='gate')this.gate(object);else if(kind==='enemy')this.enemy(object);else if(kind==='crate')this.crate(object);else this.barrel(object);}
     for(const bullet of this.game.bullets){
       const p=this.project(bullet.x,bullet.z,56),tail=this.project(bullet.x,bullet.z-(bullet.powered?1.7:1.15),56);

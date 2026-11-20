@@ -21,7 +21,7 @@ function play(b,until=180000) {
 test('v1 wallet migrates without losing coins or equipped parts; progress copies do not leak',()=>{
   const storage=memory();storage.setItem(CONFIG.arcade.storageKey,JSON.stringify({version:1,coins:817,equipped:BASE_AVATAR,owned:Object.values(BASE_AVATAR)}));
   const p=new Profile(storage),b=new CampaignBattle(()=>.2,p);assert.equal(p.coins,817);assert.deepEqual(p.equipped,BASE_AVATAR);
-  assert.equal(p.data.version,2);assert.equal(b.state.round,0);
+  assert.equal(p.data.version,CONFIG.arcade.storageVersion);assert.equal(b.state.round,0);
   const copy=p.snapshot();copy.progress.battle.cleared=3;assert.equal(p.data.progress.battle.cleared,0);
   assert.equal(new Profile(storage).coins,817);
 });

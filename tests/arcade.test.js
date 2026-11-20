@@ -20,10 +20,10 @@ test('shared wallet survives reload, validates bad data, and exposes copies of e
   const store=memory(),p=new Profile(store);p.credit(71);p.credit(0);p.credit(-5);p.credit(Infinity);
   p.equipped.head='corrupt';const again=new Profile(store);
   assert.equal(again.coins,71);assert.deepEqual(again.equipped,BASE_AVATAR);
-  store.setItem(CONFIG.arcade.storageKey,'broken');const recovered=new Profile(store);assert.equal(recovered.coins,0);assert.equal(recovered.status,'recovered');
-  recovered.credit(7);assert.equal(new Profile(store).coins,7);
+  store.setItem(CONFIG.arcade.storageKey,'broken');const recovered=new Profile(store);assert.equal(recovered.coins,71);assert.equal(recovered.status,'recovered');
+  recovered.credit(7);assert.equal(new Profile(store).coins,78);
   store.setItem(CONFIG.arcade.storageKey,JSON.stringify({version:1,coins:-12,equipped:{head:'unknown'},owned:null}));
-  assert.equal(new Profile(store).coins,0);assert.deepEqual(new Profile(store).equipped,BASE_AVATAR);
+  assert.equal(new Profile(store).coins,78);assert.deepEqual(new Profile(store).equipped,BASE_AVATAR);
 });
 test('storage denial or quota exhaustion never blocks coin rewards',()=>{
   const profile=new Profile({getItem(){throw Error('denied');},setItem(){throw Error('quota');}});
@@ -32,7 +32,7 @@ test('storage denial or quota exhaustion never blocks coin rewards',()=>{
 });
 test('home waits 800ms plus release; inactive modes freeze and both games credit the same wallet',()=>{
   const p=new Profile(memory()),app=new Arcade(p,()=>.5);
-  assert.equal(app.mode,'lobby');assert.equal(app.enter('runner'),false);assert.equal(app.enter('stairs'),true);
+  assert.equal(app.mode,'lobby');assert.equal(app.enter('unknown'),false);assert.equal(app.enter('stairs'),true);
   climb(app.stairs);app.interact();app.advance(799);assert.equal(app.home(),false);
   app.advance(1);assert.equal(app.home(true),false);assert.equal(app.home(),true);
   const time=app.stairs.state.elapsedMs;app.advance(1000);assert.equal(app.stairs.state.elapsedMs,time);

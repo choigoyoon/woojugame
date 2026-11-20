@@ -1,0 +1,19 @@
+{
+  "id": "./",
+  "name": "우주 블록 오락실",
+  "short_name": "우주 오락실",
+  "description": "네 가지 블록 액션과 나만의 우주 아바타",
+  "lang": "ko-KR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "portrait",
+  "background_color": "#121c39",
+  "theme_color": "#121c39",
+  "icons": [
+    {"src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "./icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

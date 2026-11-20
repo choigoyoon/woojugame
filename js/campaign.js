@@ -18,7 +18,7 @@ export function normalizeProgress(saved) {
     records:Array.from({length:3},(_,i)=>{
       const r=b.records?.[i];return r&&finite(r.bestMs,1)&&integer(r.runs,1,1000000)?{bestMs:r.bestMs,runs:r.runs}:null;
     }),skill:{level:integer(skill.level,0,maxLevel)?skill.level:0,samples:Array.isArray(skill.samples)?skill.samples.filter(v=>typeof v==='boolean').slice(-CONFIG.campaign.sampleCount):[]},
-    checkpoint:b.checkpoint??null},stairs:{cleared:integer(saved?.stairs?.cleared,0,100000)?saved.stairs.cleared:0},runner:{cleared:0},plaza:{cleared:0}};
+    checkpoint:b.checkpoint??null},stairs:{cleared:integer(saved?.stairs?.cleared,0,100000)?saved.stairs.cleared:0},runner:{cleared:integer(saved?.runner?.cleared,0,100000)?saved.runner.cleared:0,checkpoint:saved?.runner?.checkpoint??null},plaza:{cleared:integer(saved?.plaza?.cleared,0,100000)?saved.plaza.cleared:0,checkpoint:saved?.plaza?.checkpoint??null}};
 }
 
 export function nextDifficulty(level,samples) {
@@ -45,11 +45,11 @@ export function validCheckpoint(cp,template,progress) {
   const s=cp.state;
   if(!s||!['combat','result','complete'].includes(s.phase)||s.round!==cp.round||s.weapon!==progress.weapon||s.rank!==progress.rank||Object.keys(s).some(key=>!Object.hasOwn(template,key)))return false;
   for(const [key,value]of Object.entries(template)){
-    if(typeof value==='number'&&!finite(s[key],['x','targetX'].includes(key)?-1:0))return false;
+    if(typeof value==='number'&&!finite(s[key],['x','targetX','axis'].includes(key)?-1:0))return false;
     if(typeof value==='boolean'&&typeof s[key]!=='boolean')return false;
     if(typeof value==='string'&&(typeof s[key]!=='string'||s[key].length>100))return false;
   }
-  if(!integer(s.squad,1,CONFIG.battle.maxSquad)||!finite(s.x,-.8,.8)||!finite(s.targetX,-.8,.8)||!integer(s.mathLevel,0,2))return false;
+  if(!finite(s.axis,-1,1)||!finite(s.substepMs,0,CONFIG.engine.stepMs)||!integer(s.squad,1,CONFIG.battle.maxSquad)||!finite(s.x,-.8,.8)||!finite(s.targetX,-.8,.8)||!integer(s.mathLevel,0,2))return false;
   if(s.phase==='combat'&&progress.round>progress.cleared)return false;
   if(s.phase!=='combat'&&progress.cleared<progress.round+1)return false;
   if(s.attack&&(!keys(s.attack,['lane','phase','remainingMs'])||!integer(s.attack.lane,0,2)||!['warning','slam'].includes(s.attack.phase)||!finite(s.attack.remainingMs,0,2000)))return false;
@@ -86,10 +86,10 @@ export class CampaignBattle extends Battle {
   constructor(random=Math.random,wallet=null) {
     super(random,null);
     this.wallet=wallet;this.progress=normalizeProgress(wallet?.data?.progress).battle;
-    const checkpoint=this.progress.checkpoint;delete this.progress.checkpoint;
+    const checkpoint=this.progress.checkpoint;if(checkpoint?.state&&checkpoint.state.substepMs===undefined)checkpoint.state.substepMs=0;if(checkpoint?.state&&checkpoint.state.axis===undefined)checkpoint.state.axis=0;delete this.progress.checkpoint;
     this.seed=Math.floor(random()*0x100000000)>>>0;
     this.random=()=>{this.seed=(Math.imul(this.seed,1664525)+1013904223)>>>0;return this.seed/0x100000000;};
-    this.pendingCoins=0;this.saveClock=0;this.dirty=false;this.recovered=false;this.campaign=true;
+    this.pendingStats={};this.pendingCoins=0;this.saveClock=0;this.dirty=false;this.recovered=false;this.campaign=true;
     this.resetRound();
     if(checkpoint){
       if(validCheckpoint(checkpoint,this.state,this.progress)){
@@ -127,7 +127,7 @@ export class CampaignBattle extends Battle {
     const lane=this.state.x<0?0:1;if(lane!==this.state.lane){this.state.lane=lane;this.state.laneSince=this.state.elapsedMs;}
     super.passGate(gate);const s=this.state,good=s.gateResult.good;
     s.roundGates+=1;s.roundCorrect+=good?1:0;s.missStreak=good?0:s.missStreak+1;
-    if(s.lastSteerAt>0&&s.lastSteerAt>=(gate.spawnedAt??0)&&s.elapsedMs-s.laneSince>=CONFIG.campaign.stableChoiceMs){this.progress.skill.samples.push(good);this.progress.skill.samples=this.progress.skill.samples.slice(-CONFIG.campaign.sampleCount);}
+    if(s.lastSteerAt>0&&s.lastSteerAt>=(gate.spawnedAt??0)&&s.elapsedMs-s.laneSince>=CONFIG.campaign.stableChoiceMs){this.pendingStats.gates=(this.pendingStats.gates??0)+1;if(good)this.pendingStats.gateWins=(this.pendingStats.gateWins??0)+1;this.progress.skill.samples.push(good);this.progress.skill.samples=this.progress.skill.samples.slice(-CONFIG.campaign.sampleCount);}
     this.dirty=true;
   }
   firepower(powered=this.state.powerMs>0) {
@@ -159,7 +159,7 @@ export class CampaignBattle extends Battle {
     if(this.progress.round===1)return this.state.bossAttacks%2;
     return super.nextAttackLane();
   }
-  attackHits(attack){return attack.lane===2?Math.abs(this.state.x)<CONFIG.campaign.bossSafeX:super.attackHits(attack);}
+  attackHits(attack){return attack.lane===2?Math.abs(this.state.x)<CONFIG.campaign.bossSafeX*CONFIG.engine.hurtScale:super.attackHits(attack);}
   finishWave() {
     if(this.state.phase!=='combat')return;
     const s=this.state,index=this.progress.round,first=this.progress.cleared<index+1;
@@ -191,7 +191,7 @@ export class CampaignBattle extends Battle {
     const lane=s.x<0?0:1;if(lane!==s.lane){s.lane=lane;s.laneSince=s.elapsedMs;}
     s.roundMaxSquad=Math.max(s.roundMaxSquad,s.squad);
     if(!this.bossSpawned&&s.waveMs>=this.nextSupply){this.spawn('crate',this.random()<.5?-.55:.55,25,CONFIG.battle.supplyHp);this.nextSupply+=CONFIG.campaign.extraSupplyMs;}
-    this.saveClock+=ms;if(this.dirty||this.saveClock>=CONFIG.campaign.saveMs)this.saveRun();
+    this.saveClock+=ms;
   }
   checkpoint() {
     return {version:CONFIG.campaign.checkpointVersion,round:this.progress.round,seed:this.seed,state:clone(this.state),
@@ -200,8 +200,10 @@ export class CampaignBattle extends Battle {
   }
   saveRun() {
     if(!this.campaign)return;
-    this.wallet?.commitBattle(this.progress,this.checkpoint(),this.pendingCoins);
+    this.wallet?.commitBattle(this.progress,this.checkpoint(),this.pendingCoins,this.pendingStats);
+    this.pendingStats={};
     this.pendingCoins=0;this.saveClock=0;this.dirty=false;
   }
+  advance(ms){super.advance(ms);if(this.dirty||this.saveClock>=CONFIG.campaign.saveMs)this.saveRun();}
   snapshot(){return{...super.snapshot(),campaign:true,cleared:this.progress.cleared,offers:clone(this.offers),recovered:this.recovered};}
 }

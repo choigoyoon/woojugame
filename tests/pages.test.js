@@ -18,7 +18,7 @@ test('entry assets and every ES module resolve beneath the GitHub Pages project 
     const relative = asset.pathname.slice(page.pathname.length);
     const content = await readFile(new URL(relative, root), 'utf8');
     visited.add(asset.href);
-    for (const match of content.matchAll(/^import .*?from ['"]([^'"]+)['"]/gm)) {
+    for (const match of content.matchAll(/(?:^import .*?from |import\()['"]([^'"]+)['"]/gm)) {
       pending.push(new URL(match[1], asset));
     }
   }

@@ -12,7 +12,7 @@ with ArcadeBrowser() as h:
             if b['phase']!='combat':break
             if b['waveMs']>5000:capture(str(round_index+1)+'-route')
             if round_index==0 and b['waveMs']>31000 and not reloaded_combat:
-                h.home();saved=h.state();h.page.reload();h.advance(64)
+                h.home();saved=h.state();h.reload();h.advance(64)
                 restored=h.state();assert restored['profile']['coins']==saved['profile']['coins']
                 assert restored['battle']['waveMs']==saved['battle']['waveMs'] and not restored['battle']['recovered']
                 assert restored['battle']['entities']==saved['battle']['entities']
@@ -43,7 +43,7 @@ with ArcadeBrowser() as h:
                 q=button.bounding_box();assert q['y']>=47.9 and q['y']+q['height']<=height-47.9
                 assert q['x']>=-.1 and q['x']+q['width']<=width+.1
         h.page.set_viewport_size({'width':412,'height':915});h.advance(32)
-        h.home();h.page.reload();h.advance(64);assert not h.state()['battle']['recovered']
+        h.home();h.reload();h.advance(64);assert not h.state()['battle']['recovered']
         assert h.state()['profile']['coins']==coins and h.state()['battle']['cleared']==round_index+1
         h.tap('mode-battle');h.advance(1000)
         if round_index<2:

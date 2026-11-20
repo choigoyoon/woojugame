@@ -9,14 +9,14 @@ const port = Number(portIndex >= 0 ? process.argv[portIndex + 1] : process.env.P
 const baseIndex = process.argv.indexOf('--base');
 const base = baseIndex >= 0 ? process.argv[baseIndex + 1] : '/';
 if (!/^\/(?:[\w-]+\/)*$/.test(base)) throw new Error('Base must be a path such as /woojugame/');
-const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css' };
+const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json':'application/manifest+json', '.png':'image/png' };
 const server = createServer(async (request, response) => {
   try {
     const pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
     if (!pathname.startsWith(base)) { response.writeHead(404); response.end('Not found'); return; }
     const relative = pathname.slice(base.length) || 'index.html';
     // Serve only game assets; repository documents and .git stay private.
-    if (relative !== 'index.html' && !/^(js\/[\w-]+\.js|css\/[\w-]+\.css)$/.test(relative)) {
+    if (!['index.html','manifest.json','sw.js'].includes(relative) && !/^(js\/[\w-]+\.js|css\/[\w-]+\.css|icons\/[\w-]+\.png)$/.test(relative)) {
       response.writeHead(404); response.end('Not found'); return;
     }
     const path = resolve(root, relative);

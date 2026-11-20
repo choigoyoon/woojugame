@@ -13,8 +13,13 @@ export const MODE = Object.freeze({
 });
 
 export const CONFIG = freeze({
-  features: { brake: true, puzzle: true, battle: true, shop: false, persistence: true, cooldown: false, pwa: false },
-  arcade: { homeIdleMs: 800, maxFrameMs: 100, storageKey: 'uju-arcade-profile', storageVersion: 2, maxCoins: 999999999 },
+  features: { brake: true, puzzle: true, battle: true, shop: true, runner: true, plaza: true, persistence: true, cooldown: false, pwa: true },
+  arcade: { homeIdleMs: 800, maxFrameMs: 50, storageKey: 'uju-arcade-profile', storageVersion: 3, maxCoins: 999999999 },
+  engine: { stepMs: 5, bufferMs: 100, hurtScale: .85, collectScale: 1.2 },
+  runner: { speed: 210, maxSpeed: 270, gravity: 1850, heldGravity: 1050, jumpVelocity: 690, cutVelocity: 260, holdMs: 220, coyoteMs: 100, groundY: 870, playerX: 180, playerWidth: 54, playerHeight: 135, goldMs: 5000, wordCoins: 5, sentenceCoins: 30, itemLimit: 24, spawnMs: 1650 },
+  plaza: { speed: 2.65, radius: .27, itemRadius: .22, hazardRadius: .35, joystickRadius: 85, reward: 50, introMs: 1600, resultMs: 800, itemLimit: 24, hazardLimit: 3 },
+  shop: { normalPrices: { visor:100,cat:220,mint:150,armor:300,cape:150,jet:300 }, legendaryPrice:500 },
+  parent: { maxAttempts: 5, lockMs: 30000, sessionMs: 5 * 60 * 1000 },
   campaign: {
     checkpointVersion: 1, saveMs: 1000, resultGuardMs: 800, stableChoiceMs: 900, sampleCount: 10,
     gateEveryMs: 22000, gateFirstMs:5000, gateReserveMs:16000, assistedGateSpeed:.75,
@@ -38,7 +43,7 @@ export const CONFIG = freeze({
   puzzle: { everySteps: 50, brakeExclusionSteps: 3, chestCoins: 50, celebrationMs: 1800, wrongMs: 450 },
   battle: {
     initialSquad: 5, maxVisibleSquad: 24, spriteFrames: 16, maxSquad: 999999, penalty: 3, penaltyFraction: 0.15,
-    speed: 4.8, steerSpeed: 3.8, maxX: 0.8, playerZ: 1.8,
+    speed: 4.8, keyboardSteerSpeed: 2.2, steerSpeed: 3.8, maxX: 0.8, playerZ: 1.8,
     shotMs: 125, bulletSpeed: 42, maxBullets: 100, maxEntities: 12,
     maxPellets: 5, maxDamage: 24, particles: 160, particleMs: 850,
     gateZ: 38, gateTimes: [1000, 10000], enemyEveryMs: 3800, bossAtMs: 19000,
@@ -87,7 +92,7 @@ export const CONFIG = freeze({
     turnHz: [360, 230], turnSeconds: 0.045, stumbleHz: [210, 80], stumbleSeconds: 0.24,
     comboSemitones: [0, 4, 7, 12], comboSpacingSeconds: 0.06,
   },
-  // Contracts reserved for the next release.
+  // Legacy shared contracts; cooldown remains a separate product decision.
   future: {
     shop: { idleMs: 800, longPressMs: 2000, pin: '0808', normalPriceMin: 100, normalPriceMax: 300, legendaryPrice: 500, legendaryCount: 3 },
     cooldown: { afterMs: 15 * 60 * 1000 },

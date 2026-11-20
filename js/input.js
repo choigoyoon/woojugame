@@ -39,7 +39,10 @@ export class Input {
       if(['Space','Enter'].includes(event.code))action=targetAction(event.target)||'up';
       if(['ArrowLeft','KeyA'].includes(event.code))action='left';
       if(['ArrowRight','KeyD'].includes(event.code))action='right';
-      if(['ArrowUp','KeyX'].includes(event.code))action='up';
+      if(['ArrowUp','KeyW','KeyX'].includes(event.code))action='up';
+      if(['ArrowDown','KeyS'].includes(event.code))action='down';
+      if(/^(Digit|Numpad)[0-9]$/.test(event.code))action='digit-'+event.code.at(-1);
+      if(event.code==='Backspace')action='erase';
       if(event.code==='KeyZ')action='turn';
       if(event.code==='Escape')action='home';
       if(action){event.preventDefault();press('key:'+event.code,null,action);}

@@ -22,14 +22,15 @@ test('dev command serves all entry-point assets with module MIME types and keeps
     const base = `http://127.0.0.1:${port}`;
     const index = await fetch(base);
     assert.equal(index.status, 200);
-    assert.match(await index.text(), /type="module" src="\.\/js\/main.js"/);
+    assert.match(await index.text(), /type="module" src="\.\/js\/boot.js"/);
     for (const module of ['main', 'config', 'game', 'input', 'renderer', 'audio']) {
       const response = await fetch(`${base}/js/${module}.js`);
       assert.equal(response.status, 200, module);
       assert.match(response.headers.get('content-type'), /text\/javascript/);
     }
     assert.equal((await fetch(`${base}/css/style.css`)).status, 200);
-    for (const path of ['/README.md', '/.git/config', '/manifest.json', '/sw.js']) {
+    for(const path of ['/manifest.json','/sw.js','/icons/icon-192.png'])assert.equal((await fetch(base+path)).status,200,path);
+    for (const path of ['/README.md', '/.git/config', '/tests/production.test.js']) {
       assert.equal((await fetch(base + path)).status, 404, path);
     }
   } finally {

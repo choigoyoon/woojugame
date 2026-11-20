@@ -3,8 +3,8 @@ import { Art } from './art.js';
 export const CARTRIDGES = Object.freeze([
   { id:'stairs', title:'블록 계단 점프', tag:'JUMP!', x:36,y:374, colors:['#1c9cc0','#12627c'], accent:'#84ffdb' },
   { id:'battle', title:'다리 배틀 런', tag:'BATTLE!', x:378,y:374, colors:['#7955d7','#3a347e'], accent:'#ffc96d' },
-  { id:'runner', title:'슈퍼 블록 런', tag:'COMING NEXT', x:36,y:778, colors:['#427f85','#254951'], accent:'#acd7c4', locked:true },
-  { id:'plaza', title:'블록 광장 심부름', tag:'COMING NEXT', x:378,y:778, colors:['#8a648e','#49375f'], accent:'#dec6f1', locked:true },
+  { id:'runner', title:'슈퍼 블록 런', tag:'RUN!', x:36,y:778, colors:['#427f85','#254951'], accent:'#acd7c4' },
+  { id:'plaza', title:'블록 광장 심부름', tag:'DELIVERY!', x:378,y:778, colors:['#8a648e','#49375f'], accent:'#dec6f1' },
 ]);
 
 export class Lobby {
@@ -63,7 +63,7 @@ export class Lobby {
     a.rect(37,191,646,148,'#0b153a',30,'#bd9aff51');a.rect(37,180,646,148,a.gradient(37,180,683,328,['#3b3977','#263c65']),30,'#b9b9ff6b');
     a.ellipse(124,296,60,17,'#0c1d3e');a.toy(120,292,.66,{time:this.time,palette:this.profile.palette});
     a.text('내 아바타',210,230,32,'#fff5db','left');a.text('MY COLLECTION',211,271,17,'#a7c9eb','left',650);
-    a.bag(597,246,.9);a.text('SOON',598,301,13,'#d8d7ff');
+    a.bag(597,246,.9);a.text('SHOP',598,301,13,'#d8d7ff');
     for(const card of CARTRIDGES){
       const offset=this.pressed===card.id&&this.pressMs>0?Math.sin(this.pressMs/450*Math.PI)*7:0;
       const y=card.y+offset,x=card.x,w=306,h=364;
@@ -82,7 +82,7 @@ export class Lobby {
         for(let i=0;i<3;i++){const px=x+104+i*49;a.ellipse(px,y+325,12,12,i<progress.cleared?'#ffdc85':'#263b68');if(i<progress.cleared)a.star(px,y+325,8,'#8b5f45');else a.text(i+1,px,y+325,13,'#b5ccea');}
       }else {a.poly([[x+w/2-7,y+315],[x+w/2+10,y+325],[x+w/2-7,y+335]],card.accent);}
     }
-    a.text('UJU • BLOCK ARCADE',360,1222,17,'#7e91b8', 'center',700);
+    a.text('UJU • BLOCK ARCADE',36,1222,17,'#7e91b8','left',700);a.rect(538,1190,145,65,'#293e65',18,'#9fb8dc55');a.text('보호자',610,1223,23,'#c1d5e8');
   }
   profileView(){
     this.background();const a=this.art;

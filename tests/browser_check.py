@@ -20,8 +20,8 @@ with ArcadeBrowser() as h:
     p=h.page
     report['browser']=h.browser.version
     assert h.state()['screen']=='lobby'
-    h.tap('mode-runner');assert h.state()['screen']=='lobby'
-    h.tap('mode-plaza');assert h.state()['screen']=='lobby'
+    h.tap('mode-runner');assert h.state()['screen']=='runner';h.home()
+    h.tap('mode-plaza');assert h.state()['screen']=='plaza';h.home()
     h.capture('01-lobby')
     h.tap('avatar');assert h.state()['screen']=='profile';h.capture('02-profile');h.tap('home')
     for mode in ['lobby','stairs','battle']:
@@ -39,7 +39,7 @@ with ArcadeBrowser() as h:
             report['viewports'].append({'screen':mode,'width':width,'height':height,'passed':True})
         p.set_viewport_size({'width':412,'height':915});h.advance(80)
         if mode!='lobby':h.home()
-    report['checks'].append('three screens × six viewports, centered 9:16, safe areas, full controls, locked future cartridges')
+    report['checks'].append('three screens × six viewports, centered 9:16, safe areas, full controls, all four cartridges unlocked')
 
     h.tap('mode-stairs');initial_coins=h.state()['profile']['coins'];h.tap('climb');h.advance(72);h.capture('03-stair-jump')
     assert h.state()['stairs']['step']==1 and h.state()['profile']['coins']==initial_coins+1
@@ -136,7 +136,7 @@ with ArcadeBrowser() as h:
     h.home();h.capture('16-shared-coins')
     report['checks'].append('warning/hold/success/auto-climb, picture retry, bridge assembly and one-time chest reward')
 
-    saved=h.state()['profile'];saved_battle=h.state()['battle'];p.reload();h.advance(100)
+    saved=h.state()['profile'];saved_battle=h.state()['battle'];h.reload();h.advance(100)
     assert h.state()['screen']=='lobby' and h.state()['profile']['coins']==saved['coins']
     assert h.state()['profile']['equipped']==saved['equipped'] and h.state()['profile']['status']=='saved'
     assert h.state()['stairs']['step']==0 and h.state()['battle']['round']==saved_battle['round']
@@ -145,7 +145,7 @@ with ArcadeBrowser() as h:
     assert not h.errors,h.errors
     assert not h.failures,h.failures
     assert all(url.startswith(h.base) for url in h.requests if url.startswith(('http:','https:'))),h.requests
-    modules={url.split('/')[-1] for url in h.requests if url.endswith('.js')};assert len(modules)==len(list((ROOT/'js').glob('*.js'))),modules
+    modules={url.split('/')[-1] for url in h.requests if '/js/' in url and url.endswith('.js')};assert len(modules)==len(list((ROOT/'js').glob('*.js'))),modules
     report['sourceModules']=sorted(modules)
     # The separate single-file build must also boot and enter both released modes.
     p.goto('about:blank?debug');p.set_content((ROOT/'dist/index.html').read_text());h.advance(100)

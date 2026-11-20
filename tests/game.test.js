@@ -18,8 +18,8 @@ test('core stair action starts ready; only released arcade features are enabled'
   assert.equal(game.state.step, 0);
   assert.equal(CONFIG.features.brake, true);
   assert.equal(CONFIG.features.puzzle, true);
-  assert.equal(CONFIG.features.shop, false);
-  assert.equal(CONFIG.features.pwa, false);
+  assert.equal(CONFIG.features.shop, true);
+  assert.equal(CONFIG.features.pwa, true);
   assert.ok(Object.values(game.state.future).every((value) => value === null));
 });
 

@@ -4,16 +4,21 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#121c39">
-  <meta name="description" content="블록 계단 점프와 3D 다리 배틀 런을 즐기는 우주 블록 오락실">
+  <meta name="description" content="네 가지 블록 액션과 나만의 아바타를 즐기는 우주 블록 오락실">
   <title>우주 블록 오락실</title>
-  <link rel="icon" href="data:,">
+  <link rel="icon" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="manifest" href="./manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="stylesheet" href="./css/style.css">
-  <script type="module" src="./js/main.js"></script>
+  <script type="module" src="./js/boot.js"></script>
 </head>
 <body>
   <main id="viewport">
     <div id="game" aria-label="우주 블록 오락실">
       <canvas id="scene" width="720" height="1280" role="img" aria-label="네 개의 입체 게임 카트리지"></canvas>
+      <div id="loading" role="status">우주 오락실을 여는 중…</div>
       <output id="score" class="sr-only" aria-live="off">코인 0</output>
     </div>
   </main>

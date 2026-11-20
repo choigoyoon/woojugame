@@ -58,3 +58,10 @@ canvas { display: block; width: 100%; height: 100%; }
 [hidden] { display: none !important; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { #game { scroll-behavior: auto; } }
+
+#app-update { position:fixed;z-index:100;inset:auto 12px max(12px,env(safe-area-inset-bottom)) 12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;background:#183455;color:#e9f5ff;padding:12px;border:1px solid #8bcfc7;border-radius:18px;font-size:14px;box-shadow:0 5px 30px #0008; }
+#app-update button { border:0;border-radius:12px;background:#b6efdc;color:#173b4e;padding:12px;font:inherit;cursor:pointer; }
+#app-update button:last-child { background:#314a6b;color:#d1e2f6; }
+
+#loading { position:absolute;inset:0;display:flex;gap:20px;align-items:center;justify-content:center;flex-direction:column;background:#142744;color:#fff0bd;font-weight:800;font-size:clamp(16px,4vw,28px);z-index:20;text-align:center;padding:24px; }
+#loading button { border:0;border-radius:16px;padding:15px 24px;font:inherit;background:#b0ecdc;color:#163b51; }

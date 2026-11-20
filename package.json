@@ -1,15 +1,21 @@
 {
   "name": "uju-block-arcade",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "node scripts/serve.mjs",
-    "build": "node scripts/build.mjs",
+    "build": "node scripts/pwa.mjs && node scripts/build.mjs",
     "test": "node --test",
     "test:browser": "npm run build && python3 tests/browser_check.py",
     "test:visual": "npm run build && python3 tests/visual_check.py",
-    "test:campaign": "npm run build && python3 tests/campaign_browser_check.py"
+    "test:campaign": "npm run build && python3 tests/campaign_browser_check.py",
+    "pwa": "node scripts/pwa.mjs",
+    "icons": "python3 scripts/icons.py",
+    "test:production": "npm run build && python3 tests/production_browser_check.py",
+    "test:pwa": "npm run pwa && python3 tests/pwa_check.py"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  }
 }

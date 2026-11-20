@@ -26,14 +26,18 @@ class ArcadeBrowser:
         self.page.on('response', lambda response:self.failures.append((response.url,response.status)) if response.status>=400 else None)
         self.controlled = controlled
         epoch = datetime(2026,11,20,tzinfo=timezone.utc)
-        if controlled:self.page.clock.install(time=epoch)
+        if controlled:
+            self.page.clock.install(time=epoch)
+            self.page.clock.pause_at(epoch+timedelta(seconds=1))
         self.page.goto(self.base+'?debug')
+        self.page.evaluate('window.__ujuReady')
         self.page.wait_for_function('window.__uju !== undefined')
         self.page.bring_to_front()
-        if controlled:self.page.clock.pause_at(epoch+timedelta(seconds=1))
         self.advance(32)
         self.cdp = self.context.new_cdp_session(self.page)
 
+    def reload(self):
+        self.page.reload();self.page.evaluate('window.__ujuReady')
     def state(self):return self.page.evaluate('window.__uju.snapshot()')
     def advance(self,ms):
         if self.controlled:self.page.clock.run_for(int(ms))

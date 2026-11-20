@@ -1,4 +1,5 @@
 import { CONFIG } from './config.js';
+import { Pool } from './engine.js';
 
 const limit = (value, min, max) => Math.max(min, Math.min(max, value));
 const integer = (random, min, max) => min + Math.floor(random() * (max - min + 1));
@@ -24,25 +25,33 @@ export function makeGate(random = Math.random, opening = false) {
 export class Battle {
   constructor(random = Math.random, wallet = null) {
     this.random = random; this.wallet = wallet; this.events = [];
-    this.state = { paused: false, elapsedMs: 0, waveMs: 0, wave: 1, squad: CONFIG.battle.initialSquad,
+    this.entityPool=new Pool(CONFIG.battle.maxEntities);this.bulletPool=new Pool(CONFIG.battle.maxBullets);this.gatePool=new Pool(2);this.candidates=[];
+    this.state = { paused: false, axis: 0, substepMs: 0, elapsedMs: 0, waveMs: 0, wave: 1, squad: CONFIG.battle.initialSquad,
       x: 0, targetX: 0, coins: 0, kills: 0, bosses: 0, gatesPassed: 0, shots: 0,
       shotClock: 0, recoilMs: 0, shakeMs: 0, banner: '', bannerMs: 0, clearingMs: 0, distance: 0, gateResult: null,
       charge: 0, powerMs: 0, powerStarts: 0, combo: 0, comboMs: 0, attack: null, bossAttacks: 0, dodges: 0, bossHits: 0 };
     this.entities = []; this.gates = []; this.bullets = []; this.nextId = 1;
     this.startWave();
   }
+  get entities(){return this.entityPool.active;}
+  set entities(values){this.entityPool.restore(values);}
+  get bullets(){return this.bulletPool.active;}
+  set bullets(values){this.bulletPool.restore(values);}
+  get gates(){return this.gatePool.active;}
+  set gates(values){this.gatePool.restore(values);}
   emit(event) { if (this.events.length < 128) this.events.push(event); }
   get rules() { return CONFIG.battle; }
   createGate() { return makeGate(this.random,this.state.wave===1&&this.gateIndex===0); }
   finishWave() { this.state.wave+=1;this.startWave();this.emit({type:'wave'}); }
   nextAttackLane() { return this.state.x<0?0:1; }
-  attackHits(attack) { return (this.state.x<0?0:1)===attack.lane; }
+  attackHits(attack) { return Math.abs(this.state.x-(attack.lane===0?-.4:.4))<.4*CONFIG.engine.hurtScale; }
   takeEvents() { return this.events.splice(0); }
   reward(amount) { this.state.coins += amount; this.wallet?.credit(amount); }
   setPaused(paused) {
     if(this.state.paused&&!paused&&this.state.attack?.phase==='warning')this.state.attack.remainingMs=this.rules.bossWarningMs;
-    this.state.paused = Boolean(paused);
+    this.state.paused = Boolean(paused);if(paused)this.state.axis=0;
   }
+  setAxis(axis){this.state.axis=Number.isFinite(axis)?limit(axis,-1,1):0;}
   steer(x) { if (Number.isFinite(x) && !this.state.paused) this.state.targetX = limit(x, -CONFIG.battle.maxX, CONFIG.battle.maxX); }
   startWave() {
     this.state.waveMs = 0; this.gateIndex = 0; this.nextEnemy = this.rules.enemyEveryMs;
@@ -54,7 +63,7 @@ export class Battle {
   }
   spawn(kind, x, z, hp, options = {}) {
     if (this.entities.length >= CONFIG.battle.maxEntities) return;
-    this.entities.push({ id: this.nextId++, kind, x, baseX:x, z, hp, maxHp: hp, hitMs: 0, dead: false,
+    this.entityPool.acquire({ id: this.nextId++, kind, x, baseX:x, z, hp, maxHp: hp, hitMs: 0, dead: false,
       crack: 0, rage: false, radius: kind === 'boss' ? 1.25 : 0.28, ...options });
   }
   firepower(powered = this.state.powerMs > 0) {
@@ -79,7 +88,7 @@ export class Battle {
     const s = this.state; const b = CONFIG.battle;
     const {pellets,damage} = this.firepower();
     for (let i = 0; i < pellets && this.bullets.length < b.maxBullets; i += 1) {
-      this.bullets.push({ x: s.x + (i - (pellets - 1) / 2) * 0.10, z: b.playerZ + 0.3, damage, powered:s.powerMs>0, id: this.nextId++ });
+      this.bulletPool.acquire({ x: s.x + (i - (pellets - 1) / 2) * 0.10, z: b.playerZ + 0.3, damage, powered:s.powerMs>0, id: this.nextId++ });
     }
     s.shots += pellets; s.recoilMs = 65;
     this.emit({ type: 'shot', power: pellets, powered:s.powerMs>0 });
@@ -87,7 +96,7 @@ export class Battle {
   passGate(gate) {
     if (gate.passed) return;
     gate.passed = true;
-    const s = this.state; const index = s.x < 0 ? 0 : 1;
+    const s = this.state; const index = Math.abs(s.x)<=.4*(CONFIG.engine.collectScale-1)?gate.correct:s.x < 0 ? 0 : 1;
     const selected = gate.options[index]; const good = index === gate.correct;
     const previous = s.squad;
     if (good) {
@@ -150,6 +159,7 @@ export class Battle {
     s.bannerMs = Math.max(0, s.bannerMs - ms);
     s.powerMs=Math.max(0,s.powerMs-ms);s.comboMs=Math.max(0,s.comboMs-ms);
     if(!s.comboMs)s.combo=0;
+    if(s.axis)s.targetX=limit(s.targetX+s.axis*CONFIG.battle.keyboardSteerSpeed*dt,-b.maxX,b.maxX);
     const movement = limit(s.targetX - s.x, -b.steerSpeed * dt, b.steerSpeed * dt);
     s.x += movement;
     if (s.clearingMs > 0) {
@@ -159,7 +169,7 @@ export class Battle {
     }
     s.waveMs += ms; s.distance += b.speed * dt;
     if (this.gateIndex < b.gateTimes.length && s.waveMs >= b.gateTimes[this.gateIndex]) {
-      this.gates.push({ ...this.createGate(), z: b.gateZ, passed: false, id: this.nextId++ });
+      this.gatePool.acquire({ ...this.createGate(), z: b.gateZ, passed: false, id: this.nextId++ });
       this.gateIndex += 1;
     }
     if (s.waveMs >= this.nextEnemy && s.waveMs < b.bossAtMs - 2500) {
@@ -180,7 +190,7 @@ export class Battle {
       gate.z -= b.speed * dt*(gate.speedMultiplier??1);
       if (gate.z <= b.playerZ) this.passGate(gate);
     }
-    this.gates = this.gates.filter((gate) => !gate.passed);
+    this.gatePool.prune(gate => !gate.passed);
     s.shotClock -= ms;
     while (s.shotClock <= 0) { this.shoot(); s.shotClock += this.firepower().interval; }
     for (const entity of this.entities) {
@@ -192,29 +202,30 @@ export class Battle {
     // Sweep relative motion: a projectile cannot tunnel through a moving target.
     for (const bullet of this.bullets) {
       const previousZ = bullet.z; bullet.z += b.bulletSpeed * dt;
-      const candidates = this.entities.filter((entity) => !entity.dead && !bullet.hitIds?.includes(entity.id) && Math.abs(entity.x - bullet.x) <= entity.radius
-        && previousZ <= entity.previousZ + 0.45 && bullet.z >= entity.z - 0.45).sort((a, c) => a.z - c.z);
+      const candidates=this.candidates;candidates.length=0;
+      for(const entity of this.entities)if(!entity.dead&&!bullet.hitIds?.includes(entity.id)&&Math.abs(entity.x-bullet.x)<=entity.radius*CONFIG.engine.collectScale&&previousZ<=entity.previousZ+.45&&bullet.z>=entity.z-.45)candidates.push(entity);
+      candidates.sort((a,c)=>a.z-c.z);
       for(const target of candidates){
         this.hit(target,bullet.damage);(bullet.hitIds??=[]).push(target.id);bullet.remaining=(bullet.remaining??1)-1;
         if(bullet.remaining<=0){bullet.spent=true;break;}
       }
     }
-    this.bullets = this.bullets.filter((bullet) => !bullet.spent && bullet.z < b.farZ);
+    this.bulletPool.prune(bullet => !bullet.spent && bullet.z < b.farZ);
     for (const entity of this.entities) {
       if (entity.dead || entity.z > b.playerZ - 0.3) continue;
-      if (Math.abs(entity.x - s.x) < 0.42) {
+      if (Math.abs(entity.x - s.x) < 0.42*CONFIG.engine.hurtScale) {
         s.squad = Math.max(1, s.squad - 1); s.shakeMs = 100;
         this.emit({ type: 'bump', x: s.x, z: b.playerZ });
       }
       entity.dead = true;
     }
-    this.entities = this.entities.filter((entity) => !entity.dead);
+    this.entityPool.prune(entity => !entity.dead);
     this.updateBoss(ms);
   }
   advance(deltaMs) {
     if (this.state.paused || !Number.isFinite(deltaMs) || deltaMs <= 0) return;
-    let left = Math.min(deltaMs, CONFIG.battle.maxFrameMs);
-    while (left > 0) { const dt = Math.min(left, CONFIG.battle.fixedStepMs); this.tick(dt); left -= dt; }
+    this.state.substepMs+=Math.min(deltaMs,CONFIG.battle.maxFrameMs);
+    while(this.state.substepMs+1e-8>=CONFIG.engine.stepMs){this.state.substepMs=Math.max(0,this.state.substepMs-CONFIG.engine.stepMs);this.tick(CONFIG.engine.stepMs);}
   }
   snapshot() {
     return { ...this.state, attack:this.state.attack?{...this.state.attack}:null, gateResult: this.state.gateResult ? { ...this.state.gateResult } : null,

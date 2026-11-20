@@ -43,14 +43,14 @@ export class Renderer {
     this.ratio = 1;
     this.cameraY = 0;
     this.pose = { x: game.current.x, y: game.current.y, lift: 0 };
-    this.jump = null;
+    this.jump = null;this.hop={};
     this.shake = 0;
     this.time = 0;
     this.aura = 0;
     this.blink = 0;
     this.nextBlink = CONFIG.motion.blinkMinMs;
     this.body = spring();
-    this.tiles = new Map();
+    this.tiles = new Map();this.tilePool=Array.from({length:CONFIG.stairs.ahead+CONFIG.stairs.behind+8},()=>({value:0,velocity:0,id:-1}));
     this.press = { turn: 0, climb: 0 };
     this.buttons = { turn: spring(), climb: spring() };
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -89,14 +89,14 @@ export class Renderer {
     if (event.type === 'jump') {
       // Retarget from the visible pose, without delaying or queuing domain inputs.
       if (Math.abs(this.pose.y - event.y) > CONFIG.stairs.stepY * CONFIG.motion.maxVisualGap) {
-        this.pose = { x: event.from.x, y: event.from.y, lift: 0 };
+        Object.assign(this.pose,{ x:event.from.x,y:event.from.y,lift:0 });
         this.cameraY = event.from.y;
       }
-      this.jump = {
+      this.jump = Object.assign(this.hop,{
         fromX: this.pose.x, fromY: this.pose.y, fromLift: Math.min(this.pose.lift, CONFIG.motion.hopHeight),
         x: event.x, y: event.y, step: event.step, direction: event.direction, elapsed: 0,
         duration: event.intervalMs > 0 ? clamp(event.intervalMs * CONFIG.motion.hopCadenceRatio, CONFIG.motion.minHopMs, CONFIG.motion.hopMs) : CONFIG.motion.hopMs,
-      };
+      });
       this.body.value *= 0.3; this.body.velocity = 0;
       this.burst(this.pose.x, this.pose.y, CONFIG.motion.particlesPerJump, false);
       if (event.bonus) {
@@ -146,9 +146,9 @@ export class Renderer {
     }
     advanceSpring(this.body, 0, dt, m.landingFrequency, m.landingDamping);
     for (const [id, body] of this.tiles) {
-      if (!this.game.steps.some((step) => step.id === id)) { this.tiles.delete(id); continue; }
+      if (!this.game.steps.some((step) => step.id === id)) { body.id=-1;this.tiles.delete(id); continue; }
       advanceSpring(body, 0, dt, m.platformFrequency, m.platformDamping);
-      if (Math.abs(body.value) + Math.abs(body.velocity) < 0.01) this.tiles.delete(id);
+      if (Math.abs(body.value) + Math.abs(body.velocity) < 0.01){body.id=-1;this.tiles.delete(id);}
     }
     let landing = null;
     if (this.jump) {
@@ -161,7 +161,8 @@ export class Renderer {
       if (t === 1) {
         this.jump = null;
         this.body.velocity = m.landingImpulse;
-        this.tiles.set(jump.step, { value: 0, velocity: m.platformImpulse });
+        const tile=this.tiles.get(jump.step)??this.tilePool.find(tile=>tile.id===-1);
+        if(tile){Object.assign(tile,{id:jump.step,value:0,velocity:m.platformImpulse});this.tiles.set(jump.step,tile);}
         this.burst(jump.x, jump.y, m.particlesPerLanding, false);
         this.shake = m.shakeMs * 0.45;
         landing = { type: 'land', step: jump.step };
@@ -428,6 +429,7 @@ export class Renderer {
     if (state.mode === MODE.STUMBLE && !this.reducedMotion) c.rotate(Math.sin(this.time / 70) * 0.12);
     else c.rotate(flight * (this.jump?.direction ?? 0) * 0.07);
     c.scale(1 + crouch * 0.13 - flight * 0.05, 1 - crouch * 0.15 + flight * 0.1);
+    this.art.gear(palette.parts,this.time,'back',1.37);
     const far = -state.facing; const near = state.facing;
     this.limb('arm', far, stride, crouch, flight);
     this.limb('leg', far, stride, crouch, flight);
@@ -449,6 +451,7 @@ export class Renderer {
     this.rect(34, -202, 11, 26, '#248eab', 4, '#25607a');
     this.rect(-39, -205, 81, 7, '#52e0de', 3);
     this.face(this.game.expression);
+    this.art.gear(palette.parts,this.time,'front',1.37);
     this.limb('arm', near, stride, crouch, flight);
     if (state.mode === MODE.STUMBLE) {
       for (let i = 0; i < 3; i += 1) {

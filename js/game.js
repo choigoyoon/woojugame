@@ -1,11 +1,12 @@
 import { ACTION, CONFIG, MODE } from './config.js';
 import { SCENARIOS } from './scenarios.js';
+import { InputBuffer } from './engine.js';
 
 /** Stair rules and rewards, independent of Canvas/DOM. */
 export class Game {
   constructor(random = Math.random, { wallet = null, events = true } = {}) {
     this.random = random; this.wallet = wallet; this.eventsEnabled = events;
-    this.events = [];
+    this.events = [];this.buffer=new InputBuffer();
     this.state = {
       mode: MODE.PLAYING, paused: false, step: 0, coins: 0, combo: 0,
       facing: CONFIG.stairs.initialFacing, elapsedMs: 0, stumbleRemainingMs: 0,
@@ -70,16 +71,16 @@ export class Game {
     // Consume transitions at exact boundaries, including the five automatic hops.
     while (left > 0) {
       if (s.mode === MODE.STUMBLE) {
-        const used = Math.min(left, s.stumbleRemainingMs); left -= used; s.stumbleRemainingMs -= used;
+        const used = Math.min(left, s.stumbleRemainingMs); left -= used; s.stumbleRemainingMs -= used;if(s.stumbleRemainingMs<1e-7)s.stumbleRemainingMs=0;
         if (!s.stumbleRemainingMs) s.mode = MODE.PLAYING; else break;
       } else if ([MODE.BRAKE_WARNING, MODE.BRAKE_HOLD, MODE.AUTO_CLIMB].includes(s.mode)) {
-        const used = Math.min(left, s.brakeRemainingMs); left -= used; s.brakeRemainingMs -= used;
+        const used = Math.min(left, s.brakeRemainingMs); left -= used; s.brakeRemainingMs -= used;if(s.brakeRemainingMs<1e-7)s.brakeRemainingMs=0;
         if (s.brakeRemainingMs > 0) break;
         if (s.mode === MODE.BRAKE_WARNING) {
           s.mode = MODE.BRAKE_HOLD; s.brakeRemainingMs = CONFIG.brake.holdMs;
           this.events.push({ type: 'brake-hold' });
         } else if (s.mode === MODE.BRAKE_HOLD) {
-          this.reward(CONFIG.brake.coins); s.mode = MODE.AUTO_CLIMB;
+          this.wallet?.addStats({brakes:1,brakeWins:1},false);this.reward(CONFIG.brake.coins); s.mode = MODE.AUTO_CLIMB;
           s.autoRemaining = CONFIG.brake.autoSteps; s.brakeRemainingMs = CONFIG.brake.autoStepMs;
           this.events.push({ type: 'brake-win', coins: CONFIG.brake.coins });
         } else if (s.autoRemaining > 0) {
@@ -104,20 +105,26 @@ export class Game {
         break;
       } else break;
     }
+    this.flushBuffer();
+  }
+  flushBuffer(){
+    if(this.state.mode!==MODE.PLAYING)return;
+    let action;while((action=this.buffer.take(this.state.elapsedMs))!==null){const event=this.act(action);if(event)this.events.push(event);}
   }
   setPaused(paused) {
     const wasPaused = this.state.paused;
     this.state.paused = Boolean(paused);
-    if (paused) { this.state.lastClimbAt = null; this.state.rhythm = 0; }
+    if (paused) { this.buffer.clear();this.state.lastClimbAt = null; this.state.rhythm = 0; }
     if (wasPaused && !paused && [MODE.BRAKE_HOLD, MODE.BRAKE_WARNING].includes(this.state.mode)) {
       this.state.mode = MODE.BRAKE_WARNING; this.state.brakeRemainingMs = CONFIG.brake.warningMs;
       this.events.push({ type: 'brake-warning' });
     }
   }
   stumble(brake = false) {
-    const s = this.state;
+    const s = this.state;const brakeFailure=brake&&s.mode===MODE.BRAKE_HOLD;
     s.mode = MODE.STUMBLE; s.stumbleRemainingMs = CONFIG.rules.stumbleMs;
     s.combo = 0; s.rhythm = 0; s.lastClimbAt = null;
+    if(brakeFailure)this.wallet?.addStats({brakes:1});
     if (brake) this.scheduleBrake();
     return { type: 'stumble', x: this.current.x, y: this.current.y };
   }
@@ -144,6 +151,7 @@ export class Game {
     if (![ACTION.TURN, ACTION.CLIMB].includes(action)) return null;
     this.metrics.received += 1;
     if (s.paused || ![MODE.PLAYING, MODE.BRAKE_WARNING, MODE.BRAKE_HOLD].includes(s.mode)) {
+      if(!s.paused&&s.mode===MODE.STUMBLE&&s.stumbleRemainingMs<=CONFIG.engine.bufferMs)this.buffer.push(action,s.elapsedMs);
       this.metrics.blocked += 1; return null;
     }
     this.metrics.accepted += 1; s.lastActionAt = s.elapsedMs;

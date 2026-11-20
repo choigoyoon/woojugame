@@ -1,6 +1,8 @@
 import { CONFIG } from './config.js';
 import { Game } from './game.js';
 import { CampaignBattle } from './campaign.js';
+import { Runner } from './runner.js';
+import { Plaza } from './plaza.js';
 
 // An input callback can precede a RAF callback with an older frame timestamp.
 // Never move this cursor backwards or the same interval would be simulated twice.
@@ -20,28 +22,32 @@ export class Arcade {
   constructor(profile, random = Math.random) {
     this.profile = profile; this.mode = 'lobby'; this.clock = 0; this.lastInputAt = -Infinity; this.paused = false;
     this.stairs = new Game(random, { wallet: profile }); this.battle = new CampaignBattle(random, profile);
+    this.runner=new Runner(profile);this.plaza=new Plaza(profile);this.playFraction=0;this.saveClock=0;
     this.stairs.setPaused(true); this.battle.setPaused(true);
   }
   interact() { this.lastInputAt = this.clock; }
   canHome(held = false) { return !held && this.clock - this.lastInputAt >= CONFIG.arcade.homeIdleMs; }
   enter(mode) {
-    if (this.mode !== 'lobby' || !['stairs', 'battle', 'profile'].includes(mode)) return false;
+    if (this.mode !== 'lobby' || !['stairs','battle','runner','plaza','profile','parents'].includes(mode)) return false;
     this.mode = mode; this.interact();
     this.syncPaused(); return true;
   }
   home(held = false) {
-    if (this.mode === 'lobby' || (this.mode !== 'profile' && !this.canHome(held))) return false;
+    if (this.mode === 'lobby' || (!['profile','parents'].includes(this.mode) && !this.canHome(held))) return false;
     this.mode = 'lobby'; this.syncPaused(); this.profile.save(); return true;
   }
   setPaused(paused) { this.paused = Boolean(paused); this.syncPaused(); }
   syncPaused() {
     this.stairs.setPaused(this.paused || this.mode !== 'stairs');
     this.battle.setPaused(this.paused || this.mode !== 'battle');
+    this.runner.setPaused(this.paused||this.mode!=='runner');this.plaza.setPaused(this.paused||this.mode!=='plaza');
   }
   advance(ms) {
     if (this.paused || !Number.isFinite(ms) || ms < 0) return;
     this.clock += ms;
+    if(this.mode==='stairs'||this.mode==='runner'||this.mode==='battle'&&this.battle.state.phase==='combat'||this.mode==='plaza'&&this.plaza.state.phase==='active'){this.playFraction+=ms;const whole=Math.floor(this.playFraction);this.playFraction-=whole;this.profile.addStats({playMs:whole},false);this.saveClock+=ms;if(this.saveClock>=1000){this.profile.save();this.saveClock=0;}}
     if (this.mode === 'stairs') this.stairs.advance(ms);
     if (this.mode === 'battle') this.battle.advance(ms);
+    if(this.mode==='runner')this.runner.advance(ms);if(this.mode==='plaza')this.plaza.advance(ms);
   }
 }

@@ -1,54 +1,91 @@
 import { CONFIG } from './config.js';
 import { normalizeProgress } from './campaign.js';
+import { PARTS, BASE_AVATAR, AVATAR_PALETTE, paletteFor } from './catalog.js';
 
-export const BASE_AVATAR = Object.freeze({ head: 'pilot', body: 'coral', back: 'none' });
-export const AVATAR_PALETTE = Object.freeze({ helmet: '#39cbd6', helmetTop: '#a2fff1', helmetSide: '#248eab', shirt: '#ff7c64', shirtTop: '#ffa58a', shirtSide: '#bd505b' });
+export { BASE_AVATAR, AVATAR_PALETTE };
+const clone = value => JSON.parse(JSON.stringify(value));
+const count = n => Number.isSafeInteger(n) && n >= 0 ? Math.min(n, CONFIG.arcade.maxCoins) : 0;
+const emptyStats = () => ({ playMs:0, brakes:0, brakeWins:0, gates:0, gateWins:0, sentences:0, missions:0, missionWins:0 });
+const parentDefaults = () => ({ salt:'',hash:'',attempts:0,lockedUntil:0 });
 
 export class Profile {
   constructor(storage) {
-    this.storage = storage;
-    this.status = 'saved';
-    this.data = { version: CONFIG.arcade.storageVersion, coins: 0, equipped: { ...BASE_AVATAR }, owned: Object.values(BASE_AVATAR),progress:normalizeProgress() };
+    this.status='saved'; this.storage=storage; this._palette=null;
+    this.data={version:CONFIG.arcade.storageVersion,coins:0,equipped:{...BASE_AVATAR},owned:Object.values(BASE_AVATAR),progress:normalizeProgress(),stats:emptyStats(),settings:{haptics:true,sound:true},parent:parentDefaults()};
     try {
-      if (storage === undefined) this.storage = globalThis.localStorage;
-      const raw = this.storage?.getItem(CONFIG.arcade.storageKey);
-      if (raw) {
-        if(raw.length>CONFIG.campaign.maxSaveBytes)throw new Error('Oversized profile');
-        const saved = JSON.parse(raw);
-        if (![1,CONFIG.arcade.storageVersion].includes(saved?.version)) throw new Error('Unknown profile version');
-        if (Number.isSafeInteger(saved.coins) && saved.coins >= 0) this.data.coins = Math.min(saved.coins, CONFIG.arcade.maxCoins);
-        // Only released parts can be equipped; expand this catalog with the shop release.
-        for (const [slot, base] of Object.entries(BASE_AVATAR)) {
-          if (saved.equipped?.[slot] === base && Array.isArray(saved.owned) && saved.owned.includes(base)) this.data.equipped[slot] = base;
-        }
-        this.data.progress=normalizeProgress(saved.progress);
-      }
-      if (!this.storage) this.status = 'memory';
-    } catch { this.status = this.storage ? 'recovered' : 'memory'; }
+      if(storage===undefined)this.storage=globalThis.localStorage;
+      if(!this.storage){this.status='memory';return;}
+      const primary=this.storage.getItem(CONFIG.arcade.storageKey), backup=this.storage.getItem(CONFIG.arcade.storageKey+'.backup');
+      if(primary){try{this.read(primary);}catch{if(backup){this.read(backup);this.status='recovered';}else throw Error('No backup');}}
+      else if(backup){this.read(backup);this.status='recovered';}
+    }catch{this.status=this.storage?'recovered':'memory';}
   }
-  get coins() { return this.data.coins; }
-  get equipped() { return { ...this.data.equipped }; }
-  get palette() { return AVATAR_PALETTE; }
-  credit(amount) {
-    if (!Number.isSafeInteger(amount) || amount <= 0) return 0;
-    const added = Math.min(amount, CONFIG.arcade.maxCoins - this.data.coins);
-    this.data.coins += added;
-    this.save();
-    return added;
+  read(raw) {
+    if(raw.length>CONFIG.campaign.maxSaveBytes)throw Error('Oversized profile');
+    const saved=JSON.parse(raw);
+    if(!saved||![1,2,CONFIG.arcade.storageVersion].includes(saved.version)||!Number.isSafeInteger(saved.coins)||saved.coins<0)throw Error('Invalid profile');
+    this.data.coins=count(saved.coins);
+    this.data.owned=PARTS.filter(p=>p.price===0||Array.isArray(saved.owned)&&saved.owned.includes(p.id)).map(p=>p.id);
+    for(const slot of Object.keys(BASE_AVATAR)){
+      const part=PARTS.find(p=>p.id===saved.equipped?.[slot]&&p.slot===slot&&this.data.owned.includes(p.id));
+      this.data.equipped[slot]=part?.id??BASE_AVATAR[slot];
+    }
+    this.data.progress=normalizeProgress(saved.progress);
+    for(const key of Object.keys(this.data.stats))this.data.stats[key]=count(saved.stats?.[key]);
+    for(const key of ['haptics','sound'])if(typeof saved.settings?.[key]==='boolean')this.data.settings[key]=saved.settings[key];
+    this.data.stats.brakeWins=Math.min(this.data.stats.brakeWins,this.data.stats.brakes);this.data.stats.gateWins=Math.min(this.data.stats.gateWins,this.data.stats.gates);this.data.stats.missionWins=Math.min(this.data.stats.missionWins,this.data.stats.missions);
+    const p=saved.parent;
+    if(p?.hash&&(!/^[a-f0-9]{64}$/.test(p.hash)||!/^[a-f0-9]{32}$/.test(p.salt)))throw Error('Invalid PIN record');
+    if(p){this.data.parent.attempts=Math.min(5,count(p.attempts));this.data.parent.lockedUntil=Number.isFinite(p.lockedUntil)?Math.max(0,p.lockedUntil):0;}
+    if(p&&/^[a-f0-9]{32}$/.test(p.salt)&&/^[a-f0-9]{64}$/.test(p.hash))this.data.parent={salt:p.salt,hash:p.hash,attempts:Math.min(5,count(p.attempts)),lockedUntil:Number.isFinite(p.lockedUntil)?Math.max(0,p.lockedUntil):0};
   }
-  save() {
-    try {
-      if (!this.storage) throw new Error('Storage unavailable');
-      this.storage.setItem(CONFIG.arcade.storageKey, JSON.stringify(this.data));
-      this.status = 'saved'; return true;
-    } catch { this.status = 'memory'; return false; }
+  get coins(){return this.data.coins;}
+  get equipped(){return {...this.data.equipped};}
+  get palette(){return this._palette??=paletteFor(this.data.equipped);}
+  credit(amount){if(!Number.isSafeInteger(amount)||amount<=0)return 0;const added=Math.min(amount,CONFIG.arcade.maxCoins-this.coins);this.data.coins+=added;this.save();return added;}
+  addStats(changes,save=true){for(const [key,value]of Object.entries(changes))if(Object.hasOwn(this.data.stats,key)&&Number.isSafeInteger(value)&&value>=0)this.data.stats[key]=count(this.data.stats[key]+value);if(save)this.save();}
+  save(){
+    if(!this.storage){this.status='memory';return false;}
+    const serialized=JSON.stringify(this.data);
+    try{this.storage.setItem(CONFIG.arcade.storageKey,serialized);this.status='saved';}
+    catch{this.status='memory';return false;}
+    // The primary is authoritative. A failed redundant write cannot roll back a successful purchase.
+    try{this.storage.setItem(CONFIG.arcade.storageKey+'.backup',serialized);}catch{/* Primary remains valid. */}
+    return true;
   }
-  commitBattle(progress,checkpoint,coins=0) {
-    if(!Number.isSafeInteger(coins)||coins<0)return false;
-    // One document commits the receipt and its matching world state atomically.
-    this.data.coins=Math.min(CONFIG.arcade.maxCoins,this.data.coins+coins);
-    this.data.progress.battle=JSON.parse(JSON.stringify({...progress,checkpoint}));
-    return this.save();
+  commitBattle(progress,checkpoint,coins=0,stats={}){return this.commitMode('battle',{...progress,checkpoint},coins,stats);}
+  commitMode(mode,progress,coins=0,stats={}){
+    if(!['battle','runner','plaza','stairs'].includes(mode)||!Number.isSafeInteger(coins)||coins<0)return false;
+    this.data.coins=Math.min(CONFIG.arcade.maxCoins,this.coins+coins);
+    this.data.progress[mode]=clone(progress);this.addStats(stats,false);return this.save();
   }
-  snapshot() { return { ...JSON.parse(JSON.stringify(this.data)), status: this.status }; }
+  equip(id){const part=PARTS.find(p=>p.id===id);if(!part||!this.data.owned.includes(id))return false;this.data.equipped[part.slot]=id;this._palette=null;this.save();return true;}
+  buy(id,authorized=false){
+    const part=PARTS.find(p=>p.id===id);if(!part)return 'invalid';
+    if(this.data.owned.includes(id)){this.equip(id);return 'equipped';}
+    if(this.coins<part.price)return 'coins';
+    if(part.legendary&&!authorized)return 'pin';
+    this.data.coins-=part.price;this.data.owned.push(id);this.data.equipped[part.slot]=id;this._palette=null;this.save();return 'bought';
+  }
+  setting(key){if(!['haptics','sound'].includes(key))return;this.data.settings[key]=!this.data.settings[key];this.save();}
+  async derivePin(pin,salt){
+    const bytes=Uint8Array.from(salt.match(/../g),v=>parseInt(v,16));
+    const key=await globalThis.crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']);
+    const hash=await globalThis.crypto.subtle.deriveBits({name:'PBKDF2',salt:bytes,iterations:60000,hash:'SHA-256'},key,256);
+    return Array.from(new Uint8Array(hash),n=>n.toString(16).padStart(2,'0')).join('');
+  }
+  async setPin(pin){
+    if(!/^\d{4}$/.test(pin))return false;
+    try{const salt=Array.from(globalThis.crypto.getRandomValues(new Uint8Array(16)),n=>n.toString(16).padStart(2,'0')).join('');
+      const hash=await this.derivePin(pin,salt);this.data.parent={salt,hash,attempts:0,lockedUntil:0};this.save();return true;
+    }catch{return false;}
+  }
+  async verifyPin(pin,now=Date.now()){
+    const p=this.data.parent;if(now<p.lockedUntil||!/^\d{4}$/.test(pin))return false;
+    let valid=false;
+    try{valid=p.hash?(await this.derivePin(pin,p.salt))===p.hash:pin===CONFIG.future.shop.pin;}catch{return false;}
+    if(valid){p.attempts=0;p.lockedUntil=0;}else{p.attempts+=1;if(p.attempts>=CONFIG.parent.maxAttempts){p.attempts=0;p.lockedUntil=now+CONFIG.parent.lockMs;}}
+    this.save();return valid;
+  }
+  snapshot(){return{...clone(this.data),status:this.status};}
 }

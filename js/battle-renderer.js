@@ -15,13 +15,13 @@ export class BattleRenderer {
     this.links=Array.from({length:12},()=>({life:0}));this.linkCursor=0;
     const motion=window.matchMedia('(prefers-reduced-motion: reduce)');this.reduced=motion.matches;
     motion.addEventListener('change',event=>{this.reduced=event.matches;});
-    this.troopSprites=[];this.spriteKey='';this.prepareTroops();
+    this.troopSprites=[];this.prepareTroops();
   }
   prepareTroops() {
     const density=Math.max(1,Math.ceil(this.art.c.canvas.width/720*.53*12/(12+CONFIG.battle.playerZ)));
-    const key=JSON.stringify([this.profile.equipped,this.profile.palette,density]);
-    if(key===this.spriteKey)return;
-    this.spriteKey=key;
+    const palette=this.profile.palette;
+    if(palette===this.spritePalette&&density===this.spriteDensity)return;
+    this.spritePalette=palette;this.spriteDensity=density;
     // Draw the same procedural avatar once per gait pose. No downloaded sprites.
     // Match the largest projected soldier's pixel footprint, including high-DPR tablets.
     // A fixed 16-frame cache replaces hundreds of limb paths on every large-squad frame.
@@ -189,15 +189,15 @@ export class BattleRenderer {
     a.text(Math.ceil(entity.hp),p.x,y+h*.52,Math.max(18,(boss?78:62)*s)*(1+impact*.13),'#fff1c4');
     a.rect(x+w*.1,y+h*.87,w*.8,7*s,'#263951',3*s);a.rect(x+w*.1,y+h*.87,w*.8*Math.max(0,entity.hp/entity.maxHp),7*s,'#ffdf74',3*s);
     if(boss){
-      if(bossStyle===0){a.block(p.x-83*s,y-50*s,166*s,45*s,16*s,'#234664','#a2f8e7','#14324d');a.star(p.x,y-28*s,17*s,'#ffe89a');}
+      if(bossStyle===0){a.scaledBlock(p.x-83*s,y-50*s,s,166,45,16,'#234664','#a2f8e7','#14324d');a.star(p.x,y-28*s,17*s,'#ffe89a');}
       else if(bossStyle===1){for(const side of[-1,1]){a.line([[p.x+side*70*s,y],[p.x+side*100*s,y-65*s]],'#ffd48f',12*s);a.ellipse(p.x+side*100*s,y-65*s,27*s,27*s,'#ffe5a2');a.ellipse(p.x+side*100*s,y-65*s,11*s,11*s,'#65375a');}}
       else a.poly([[p.x-72*s,y],[p.x-92*s,y-47*s],[p.x-37*s,y-24*s],[p.x,y-66*s],[p.x+38*s,y-24*s],[p.x+91*s,y-47*s],[p.x+72*s,y]],'#ffe486','#ad6046',2);
       const warning=this.game.state.attack?.phase==='warning';
       for(const side of[-1,1]){
         const armY=y+h*.33-(warning?Math.sin(this.time/90)*12*s+38*s:0);
-        a.block(p.x+side*(w*.5+17*s)-24*s,armY,47*s,h*.49,12*s,'#79354c','#cb6d71','#512c49');
+        a.scaledBlock(p.x+side*(w*.5+17*s)-24*s,armY,s,47,340*.49,12,'#79354c','#cb6d71','#512c49');
         const fist=bossStyle===2?92:64;
-        a.block(p.x+side*(w*.5+17*s)-fist/2*s,armY+h*.39,fist*s,52*s,12*s,entity.rage?'#ff8d63':bossColors[1],'#ffe1a1','#673246');
+        a.scaledBlock(p.x+side*(w*.5+17*s)-fist/2*s,armY+h*.39,s,fist,52,12,entity.rage?'#ff8d63':bossColors[1],'#ffe1a1','#673246');
         a.rect(p.x+side*65*s-29*s,y+h*.17,58*s,20*s,entity.rage?'#ffed8d':'#9afff3',4*s);
         a.rect(p.x+side*65*s-5*s,y+h*.17,10*s,20*s,'#4a2849',1);
       }
@@ -295,7 +295,7 @@ export class BattleRenderer {
       a.text('BRIDGE BATTLE',403,62,31,'#fff2c7');
       a.rect(30,125,274,86,'#122d54df',25,'#96e9fb59');a.toy(67,194,.28,{time:0,palette:this.profile.palette});
       a.rect(417,125,274,86,'#122d54df',25,'#96e9fb59');a.coin(459,168,.9);
-    },this.spriteKey);
+    },this.spritePalette);
     a.home(canHome);a.text(s.squad,184,168,43,'#c8ffed');a.counter(this.profile.coins,566,168,206,36,'#ffe8a5');
     a.label(this.game.campaign?'하늘 항구  1-'+(s.round+1)+'  ·  '+this.game.round.title:'WAVE '+s.wave,360,244,18,'#fff4d4','#18375b');
     const boss=this.game.entities.find(entity=>entity.kind==='boss');

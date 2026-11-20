@@ -1,20 +1,22 @@
 import { AVATAR_PALETTE } from './profile.js';
 import { finish, shade, blockSprite } from './material.js';
 
+const STAR_POINTS=Array.from({length:10},(_,i)=>{const a=i*Math.PI/5-Math.PI/2,d=i%2?.44:1;return[Math.cos(a)*d,Math.sin(a)*d];});
+
 export class Art {
   constructor(ctx) { this.c = ctx; this.layers=new Map(); }
   cached(key,bounds,paint,revision=0) {
-    if(typeof OffscreenCanvas!=='function'){paint();return;}
-    const [x,y,w,h]=bounds,c=this.c,scale=c.canvas.width/720;
+    if(typeof OffscreenCanvas!=='function'&&typeof document==='undefined'){paint();return;}
+    const [x,y,w,h]=bounds,c=this.c,scale=this.cacheDepth?this.layerScale:c.canvas.width/720;
     if(this.layerScale!==scale){this.layers.clear();this.layerScale=scale;}
     let entry=this.layers.get(key);
-    if(!entry){if(this.layers.size>=24)this.layers.delete(this.layers.keys().next().value);entry={surface:new OffscreenCanvas(Math.ceil(w*scale),Math.ceil(h*scale)),revision:null};this.layers.set(key,entry);}
-    if(entry.revision!==revision){const ctx=entry.surface.getContext('2d');ctx.setTransform(scale,0,0,scale,-x*scale,-y*scale);ctx.clearRect(x,y,w,h);this.c=ctx;try{paint();}finally{this.c=c;}entry.revision=revision;}
+    if(!entry){if(this.layers.size>=24)this.layers.delete(this.layers.keys().next().value);const surface=typeof OffscreenCanvas==='function'?new OffscreenCanvas(Math.ceil(w*scale),Math.ceil(h*scale)):document.createElement('canvas');surface.width=Math.ceil(w*scale);surface.height=Math.ceil(h*scale);entry={surface,revision:null};this.layers.set(key,entry);}
+    if(entry.revision!==revision){const ctx=entry.surface.getContext('2d');ctx.setTransform(scale,0,0,scale,-x*scale,-y*scale);ctx.clearRect(x,y,w,h);this.c=ctx;this.cacheDepth=(this.cacheDepth||0)+1;try{paint();}finally{this.c=c;this.cacheDepth--;}entry.revision=revision;}
     c.drawImage(entry.surface,x,y,entry.surface.width/scale,entry.surface.height/scale);
   }
   poly(points, fill, stroke, width = 2) {
     const c = this.c; c.beginPath(); points.forEach(([x,y],i) => i ? c.lineTo(x,y) : c.moveTo(x,y)); c.closePath();
-    const xs=points.map(p=>p[0]),ys=points.map(p=>p[1]);c.fillStyle=finish(c,fill,Math.min(...xs),Math.min(...ys),Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys)); c.fill(); if (stroke) { c.strokeStyle = stroke; c.lineWidth = width; c.lineJoin = 'round'; c.stroke(); }
+    let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;for(const p of points){minX=Math.min(minX,p[0]);maxX=Math.max(maxX,p[0]);minY=Math.min(minY,p[1]);maxY=Math.max(maxY,p[1]);}c.fillStyle=finish(c,fill,minX,minY,maxX-minX,maxY-minY); c.fill(); if (stroke) { c.strokeStyle = stroke; c.lineWidth = width; c.lineJoin = 'round'; c.stroke(); }
   }
   rect(x,y,w,h,fill,r = 0,stroke) {
     const c = this.c; c.beginPath(); c.roundRect(x,y,w,h,r); c.fillStyle = w>=16&&h>=14?finish(c,fill,x,y,w,h):fill; c.fill();
@@ -33,11 +35,16 @@ export class Art {
     if(sprite){this.c.drawImage(sprite.surface,x+sprite.ox,y+sprite.oy,sprite.width,sprite.height);return;}
     this.rect(x,y,w,h,front,3,top);
   }
-  star(x,y,r,color='#ffe77d') { this.poly(Array.from({length:10},(_,i)=>{const a=i*Math.PI/5-Math.PI/2;const d=r*(i%2?.44:1);return[x+Math.cos(a)*d,y+Math.sin(a)*d];}),color); }
+  scaledBlock(x,y,scale,w,h,d,front,top,side){const c=this.c;c.save();c.translate(x,y);c.scale(scale,scale);this.block(0,0,w,h,d,front,top,side);c.restore();}
+  star(x,y,r,color='#ffe77d') {
+    const c=this.c;c.beginPath();let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+    for(let i=0;i<10;i++){const p=STAR_POINTS[i],px=x+p[0]*r,py=y+p[1]*r;i?c.lineTo(px,py):c.moveTo(px,py);minX=Math.min(minX,px);maxX=Math.max(maxX,px);minY=Math.min(minY,py);maxY=Math.max(maxY,py);}
+    c.closePath();c.fillStyle=finish(c,color,minX,minY,maxX-minX,maxY-minY);c.fill();
+  }
   coin(x,y,size=1) {
     const c=this.c;c.save();c.translate(x,y);c.scale(size,size);
-    this.poly([[-16,-11],[0,-21],[18,-11],[18,12],[0,23],[-16,12]],'#b5762b','#ffe49e',2);
-    this.poly([[-17,-12],[-2,-21],[13,-12],[13,8],[-2,18],[-17,8]],'#ffda5c');this.rect(-6,-12,7,21,'#fff7c1',2);c.restore();
+    this.cached('coin',[-20,-24,42,50],()=>{this.poly([[-16,-11],[0,-21],[18,-11],[18,12],[0,23],[-16,12]],'#b5762b','#ffe49e',2);
+    this.poly([[-17,-12],[-2,-21],[13,-12],[13,8],[-2,18],[-17,8]],'#ffda5c');this.rect(-6,-12,7,21,'#fff7c1',2);});c.restore();
   }
   lock(x,y,scale=1) {
     const c=this.c;c.save();c.translate(x,y);c.scale(scale,scale);
@@ -46,8 +53,8 @@ export class Art {
   }
   home(enabled) {
     const c=this.c;c.save();c.globalAlpha=enabled?1:.38;
-    this.rect(24,22,80,78,'#15264de6',23,'#99c7ff66');
-    this.poly([[43,58],[64,39],[85,58]],'#fff0bf');this.rect(48,57,32,25,'#fff0bf',3);this.rect(59,67,10,15,'#243654',2);c.restore();
+    this.cached('home',[22,20,84,82],()=>{this.rect(24,22,80,78,'#15264de6',23,'#99c7ff66');
+    this.poly([[43,58],[64,39],[85,58]],'#fff0bf');this.rect(48,57,32,25,'#fff0bf',3);this.rect(59,67,10,15,'#243654',2);});c.restore();
   }
   bag(x,y,scale=1) {
     const c=this.c;c.save();c.translate(x,y);c.scale(scale,scale);

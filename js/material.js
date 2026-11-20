@@ -1,5 +1,6 @@
 // Procedural resin/plastic finish. Bounded caches; no external texture or per-pixel runtime work.
 const tones=new Map(),blocks=new Map();
+let blockBuilds=0;
 export function shade(hex,amount){
   const key=hex+':'+amount;if(tones.has(key))return tones.get(key);
   if(!/^#[\da-f]{6}$/i.test(hex))return hex;
@@ -9,12 +10,13 @@ export function shade(hex,amount){
 export function finish(c,color,x,y,w,h,side=false){
   if(!/^#[\da-f]{6}$/i.test(color))return color;
   const g=c.createLinearGradient(x,y,x+w*.45,y+h);
-  [[0,.28],[.12,.12],[.42,.02],[.76,-.07],[1,side?-.32:-.2]].forEach(([t,v])=>g.addColorStop(t,shade(color,v)));
+  g.addColorStop(0,shade(color,.28));g.addColorStop(.12,shade(color,.12));g.addColorStop(.42,shade(color,.02));g.addColorStop(.76,shade(color,-.07));g.addColorStop(1,shade(color,side?-.32:-.2));
   return g;
 }
 export function blockSprite(w,h,d,front,top,side){
   if(typeof OffscreenCanvas!=='function'&&typeof document==='undefined')return null;
   const key=[w,h,d,front,top,side].join(':');if(blocks.has(key))return blocks.get(key);
+  blockBuilds++;
   const margin=3,scale=2,width=w+d+margin*2,height=h+d*.6+margin*2;
   const surface=typeof OffscreenCanvas==='function'?new OffscreenCanvas(Math.ceil(width*scale),Math.ceil(height*scale)):document.createElement('canvas');
   surface.width=Math.ceil(width*scale);surface.height=Math.ceil(height*scale);const c=surface.getContext('2d');c.scale(scale,scale);c.translate(margin,margin+d*.6);
@@ -27,4 +29,4 @@ export function blockSprite(w,h,d,front,top,side){
   const out={surface,width,height,ox:-margin,oy:-margin-d*.6};
   if(blocks.size>=256)blocks.delete(blocks.keys().next().value);blocks.set(key,out);return out;
 }
-export function materialStats(){return{blocks:blocks.size,tones:tones.size};}
+export function materialStats(){return{blocks:blocks.size,tones:tones.size,blockBuilds};}

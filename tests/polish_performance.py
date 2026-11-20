@@ -40,7 +40,7 @@ with ArcadeBrowser(controlled=False) as h:
         if held:h.cdp.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]})
         values=h.page.evaluate('''()=>{const p=window.__perf;p.active=false;p.observer.disconnect();return {frames:p.frames,tasks:p.tasks};}''')
         frames=sorted(values['frames']);v={'seconds':round(time.monotonic()-started,2),'frames':len(frames),'fps':round(1000*len(frames)/sum(frames),2),'p95FrameMs':round(frames[int(len(frames)*.95)],2),'p99FrameMs':round(frames[int(len(frames)*.99)],2),'longTasksOver50ms':len(values['tasks']),'maxLongTaskMs':round(max(values['tasks'],default=0),2)}
-        report['modes'][mode]=v;print(mode,v,flush=True)
+        v['renderBudget']=h.state()['performance'];report['modes'][mode]=v;print(mode,v,flush=True)
         assert v['fps']>=57 and v['p95FrameMs']<20 and v['p99FrameMs']<34,v
         h.home()
     assert not h.errors and not h.failures,(h.errors,h.failures)

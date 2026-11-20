@@ -72,9 +72,11 @@ export class Renderer {
 
   resize(width, height, dpr = window.devicePixelRatio || 1) {
     const pixelRatio = Math.min(dpr, CONFIG.view.maxDpr);
-    this.canvas.width = Math.round(width * pixelRatio);
-    this.canvas.height = Math.round(height * pixelRatio);
+    const w=Math.max(1,Math.round(width*pixelRatio)),h=Math.max(1,Math.round(height*pixelRatio));
+    if(this.canvas.width===w&&this.canvas.height===h)return false;
+    this.canvas.width=w;this.canvas.height=h;
     this.ratio = this.canvas.width / CONFIG.view.width;
+    return true;
   }
 
   handle(event, action, point) {

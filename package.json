@@ -17,6 +17,8 @@
     "test:audio": "npm run build && python3 tests/audio_audit.py && python3 tests/audio_plot.py",
     "test:audit": "npm run build && python3 tests/visual_audit.py",
     "test:fuzz": "npm run build && python3 tests/polish_fuzz.py",
+    "test:frame-budget": "npm run build && node --test tests/frame-budget.test.js && python3 tests/frame_budget_browser.py",
+    "test:render-workload": "npm run build && python3 tests/render_workload.py",
     "test:performance": "npm run build && python3 tests/polish_performance.py"
   },
   "engines": {

@@ -85,6 +85,10 @@ export const CONFIG = freeze({
       ['#0b1230', '#29235d', '#73569e'],
     ],
   },
+  performance: {
+    minScale:.75, scaleStep:.125, windowMs:1000, warmupMs:1200, cooldownMs:4000, recoverMs:15000, maxGapMs:250,
+    missedFrameRatio:1.45, stableRatio:1.15, osLimitedCost:.4, busyCost:.75, busyMisses:.08, busyWindows:2, healthyCost:.45, healthyMisses:.025,
+  },
   polish: { hitStopMs: 50 },
   audio: {
     volume: 0.3, maxVoices: 20, musicVoices: 24, maxTails: 4, calmAfterMs: 15*60*1000, attackSeconds: 0.006, floorGain: 0.001,

@@ -38,6 +38,14 @@ npm run dev -- --base /woojugame/
 
 720×1280 중앙 9:16 FIT, 상하 `max(48px, safe-area-inset)`를 모든 화면에 적용한다. 화면 회전·폴드 크기 변경 시 눌린 입력을 해제한다. 화면 잠금·다른 탭·백그라운드에서는 게임과 소리를 멈춘다.
 
+## 안드로이드 프레임 대응
+
+특정 모델명에 분기하지 않고 브라우저의 `requestAnimationFrame` 주기에 맞춰 그린다. 60fps 고정 제한을 두지 않으며, 90·120Hz에서도 게임 속도와 연사·판정 시간은 동일하다. 실제 상한은 화면 주사율·브라우저 정책·절전 설정·발열과 기기 성능에 따른다.
+
+렌더링 부하가 지속되면 내부 픽셀 밀도를 100% → 87.5% → 75%로 낮춘다(DPR 상한 2, 하한 1). 여유가 15초 이상 유지되면 단계적으로 복원한다. 최대 조정 시 픽셀 수는 약 44% 줄어든다. 버튼 크기·터치 좌표·게임 난이도는 바꾸지 않으며, 전환 중 누른 조작도 유지한다. 시작/복귀 직후나 일회성 지연에 과민하게 반응하지 않도록 대기·히스테리시스를 적용한다.
+
+`?debug`로 실행하면 개발자 도구의 `__uju.snapshot().performance`에서 실제 RAF 평균, 관측 주기, JS 작업 시간, 누락 비율, 해상도 배율을 볼 수 있다. 관측 주기는 기기 패널 사양을 식별하는 값이 아니다. 검증과 한계는 [프레임 최적화 기록](docs/FRAME_RATE_VALIDATION.md)에 정리한다.
+
 ## 판정과 시간
 
 - 실제 프레임 시간은 최대 50ms. 배틀·러너·광장 물리는 고정 5ms 틱과 나머지 시간 누적으로 처리한다. 기기 주사율에 따라 이동·발사·타이머 속도를 바꾸지 않는다. 계단 타이머는 정확한 이벤트 경계를 소비한다.
@@ -100,10 +108,12 @@ npm run test:audit
 npm run test:fuzz
 # 다른 무거운 테스트와 동시에 실행하지 않는다
 npm run test:performance
+npm run test:render-workload
+npm run test:frame-budget
 ```
 
 `CHROMIUM_PATH`로 기존 Chromium 경로를 지정할 수 있다. 결과와 캡처는 Git에서 제외된 `test-results/arcade/`에 남긴다.
 
-최신 결과: [0.5 화면·오디오·성능 감사](docs/POLISH_VALIDATION.md). 이전 결과: [0.4 통합 검증](docs/PRODUCTION_VALIDATION.md), [하늘 항구](docs/HARBOR_VALIDATION.md), [초기 오락실](docs/ARCADE_VALIDATION.md), [계단 Phase 1](docs/PHASE1_VALIDATION.md).
+최신 결과: [안드로이드 프레임 최적화](docs/FRAME_RATE_VALIDATION.md). 이전 결과: [0.5 화면·오디오·성능 감사](docs/POLISH_VALIDATION.md). 이전 결과: [0.4 통합 검증](docs/PRODUCTION_VALIDATION.md), [하늘 항구](docs/HARBOR_VALIDATION.md), [초기 오락실](docs/ARCADE_VALIDATION.md), [계단 Phase 1](docs/PHASE1_VALIDATION.md).
 
 브라우저 터치/해상도 에뮬레이션과 설치 가능성 검사는 실제 Android 홈 화면 설치·진동·한국어 TTS·발열·배터리·8세 유저 관찰을 대신하지 않는다. 자동 테스트와 수동 미검증 항목을 검증 기록에서 구분한다.

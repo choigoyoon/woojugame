@@ -104,7 +104,7 @@ export class Art {
       if(layer!=='body'&&parts.head==='crown'){this.poly([[-35,-162],[-39,-192],[-20,-179],[0,-201],[20,-179],[37,-192],[33,-162]],'#ffd064','#fff0b7',3);this.ellipse(0,-174,5,6,'#ff6d80');}
     }c.restore();
   }
-  toy(x,y,scale=1,{time=0,run=false,back=false,gold=false,palette=AVATAR_PALETTE,glow=0,jump=0,pitch=0,squash=0,turn=0}={}) {
+  toy(x,y,scale=1,{time=0,run=false,back=false,gold=false,palette=AVATAR_PALETTE,glow=0,jump=0,pitch=0,squash=0,turn=0,hurt=false,helmetOff=false,flash=0}={}) {
     const c=this.c,t=MOTION?.matches?0:time;
     if(MOTION?.matches){run=false;jump=0;pitch=0;squash=0;turn=0;}
     const phase=t/CONFIG.motion.avatarStrideMs;
@@ -116,7 +116,7 @@ export class Art {
     c.save();c.translate(x,y);c.scale(scale,scale);
     this.ellipse(4,1,Math.max(18,39-jump*10-lift*.4),Math.max(5,12-jump*3-lift*.15),'#07183145');
     c.translate(run?stride*2.2:0,-lift);c.rotate(lean);c.scale(squashX,stretch);
-    const shirt=gold?'#ffd667':palette.shirt,helmet=gold?'#fff09c':palette.helmet;
+    const shirt=flash>.2?'#fff6cf':gold?'#ffd667':palette.shirt,helmet=flash>.2?'#fff9df':gold?'#fff09c':palette.helmet;
     this.gear(palette.parts,t,'back',1,gold,{run,jump,stride});
     for(const side of [-1,1]) {
       const legPhase=phase+(side>0?0:Math.PI);
@@ -135,7 +135,7 @@ export class Art {
     for(const side of [-1,1]) {
       const armPhase=phase+(side>0?Math.PI:0)-.32;
       const armSwing=run?Math.sin(armPhase)*.66:side*(.11+breath*.045);
-      const shoulderAngle=armSwing-jump*(side>0?.92:.42)-squash*side*.22;
+      const shoulderAngle=armSwing-jump*(side>0?.92:.42)-squash*side*.22-(hurt?side*.45:0);
       const elbowAngle=(run?-Math.abs(Math.sin(armPhase-.35))*.52-.16:-side*(.14+breath*.03))-jump*.38;
       c.save();c.translate(side*36,-96);c.rotate(shoulderAngle);
       this.block(-10,0,21,24,5,shirt,palette.shirtTop,palette.shirtSide);
@@ -150,25 +150,39 @@ export class Art {
     this.block(-28,-103,56,57,8,shirt,palette.shirtTop,palette.shirtSide);
     this.rect(-26,-51,52,8,'#223b5c',2);this.rect(-5,-45,10,12,'#223b5c',2);this.rect(-6,-52,14,9,'#ffda7b',2);
     if(back){this.rect(-18,-96,36,38,'#264b6d',6,'#9deded');this.stud(-8,-78,5,5,2.5,'#4593b2','#aef8ff');this.stud(8,-78,5,5,2.5,'#4593b2','#aef8ff');}
-    else {this.rect(-12,-92,26,30,'#fff2ce',6,'#ffd584');this.star(1,-78,9,'#eeb441');}
+    else {
+      this.rect(-12,-92,26,30,'#fff2ce',6,'#ffd584');this.star(1,-78,9,'#eeb441');
+      if(helmetOff)this.line([[-18,-96],[-6,-74],[-14,-62]],'#4b2a3d',3);
+    }
     // LEGO minifigure neck ring + head follow-through and top stud
     this.rect(-13,-109,26,7,'#e3b171',3);
-    c.save();c.translate(run?stride*1.6:0,-113);c.rotate((run?-lean*.58+Math.sin(phase-.45)*.055:Math.sin(t/1550)*.045)-jump*.12);c.translate(0,113);
-    this.block(-27,-151,54,44,8,'#ffcf6e','#fff0b5','#c99449');
-    this.stud(0,-167,12,4.2,6,helmet,palette.helmetTop);
-    this.block(-32,-163,65,19,9,helmet,palette.helmetTop,palette.helmetSide);
-    this.rect(-27,-158,49,5,'#c7fff0',2);this.rect(-33,-144,9,22,palette.helmetSide,3);
-    if(back){this.rect(-22,-139,46,22,palette.helmet,3);this.rect(-16,-134,34,4,'#b2fff18c',2);}
+    c.save();c.translate(run?stride*1.6:0,-113);c.rotate((run?-lean*.58+Math.sin(phase-.45)*.055:Math.sin(t/1550)*.045)-jump*.12+(hurt?Math.sin(t/45)*.14:0));c.translate(0,113);
+    this.block(-27,-151,54,44,8,flash>.2?'#fff8d6':'#ffcf6e','#fff0b5','#c99449');
+    if(helmetOff){
+      // Helmet popped off from damage! Expose bare yellow LEGO head stud & scuff mark
+      this.stud(0,-156,11.5,4,5.5,'#e5a63d','#fff3b8');
+      this.line([[6,-145],[16,-139],[11,-134]],'#8c4b3e',2.5);
+    }else{
+      this.stud(0,-167,12,4.2,6,helmet,palette.helmetTop);
+      this.block(-32,-163,65,19,9,helmet,palette.helmetTop,palette.helmetSide);
+      this.rect(-27,-158,49,5,'#c7fff0',2);this.rect(-33,-144,9,22,palette.helmetSide,3);
+    }
+    if(back){if(!helmetOff){this.rect(-22,-139,46,22,palette.helmet,3);this.rect(-16,-134,34,4,'#b2fff18c',2);}}
     else {
       const look=run?0:Math.sin(t/2200)*1.4;
-      if(t>0&&t%4100<135){this.line([[-14,-130],[-7,-129]],'#263754',3);this.line([[9,-129],[16,-130]],'#263754',3);}
+      if(hurt||helmetOff){
+        // Hit / damaged expression: >< eyes and open stunned mouth!
+        this.line([[-17,-135],[-8,-130],[-17,-125]],'#3d233a',3);
+        this.line([[17,-135],[8,-130],[17,-125]],'#3d233a',3);
+        this.ellipse(0,-116,6,5,'#5e2838');
+      }else if(t>0&&t%4100<135){this.line([[-14,-130],[-7,-129]],'#263754',3);this.line([[9,-129],[16,-130]],'#263754',3);}
       else if(glow>0||jump>.4){this.star(-11,-131,6,'#50406b');this.star(12,-131,6,'#50406b');}
       else{this.rect(-14+look,-135,6,10,'#263754',3);this.rect(9+look,-135,6,10,'#263754',3);this.ellipse(-12+look,-133,1,1,'#fff5db');this.ellipse(11+look,-133,1,1,'#fff5db');}
       this.ellipse(-20,-121,4,2,'#ebaa825e');this.ellipse(21,-121,4,2,'#ebaa825e');
-      this.line([[-9,-117],[0,-113],[10,-118]],'#70484b',3);
+      if(!hurt&&!helmetOff)this.line([[-9,-117],[0,-113],[10,-118]],'#70484b',3);
     }
     // Head equipment follows the head; chest equipment stays on the body.
-    this.gear(palette.parts,t,'head',1,gold);c.restore();
+    if(!helmetOff)this.gear(palette.parts,t,'head',1,gold);c.restore();
     this.gear(palette.parts,t,'body',1,gold);
     if(glow>0){c.globalAlpha=Math.min(1,glow);this.star(39,-156,10,'#fff4a5');}
     c.restore();

@@ -129,22 +129,57 @@ export function train(a,x,y,scale=1,{time=0,cars=0,held=false,beacon=false,coach
   c.restore();
 }
 
-export function lockToy(a,x,y,s,time,hit=0){
-  const c=a.c;c.save();c.translate(x,y);c.scale(s,s);
+export function lockToy(a,x,y,s,time,hit=0,hp=1,maxHp=1){
+  const c=a.c,ratio=Math.max(0,Math.min(1,hp/Math.max(1,maxHp))),dent=Math.sin(hit*Math.PI)*.22;
+  c.save();c.translate(x,y);c.scale(s*(1+dent),s*(1-dent*.7));
+  if(hit>0)c.rotate(Math.sin(hit*12)*.18);
   a.ellipse(0,11,42,19,'#173b5744');
-  a.poly([[-25,-39],[25,-39],[42,-15],[25,14],[-25,14],[-42,-15]],'#d98648','#ffe8a6',4);
-  for(const [sx,sy]of[[-20,-30],[20,-30],[-20,3],[20,3]])a.stud?.(sx,sy,5.5,5.5,2.5,'#b86830','#fff1b8');
-  a.ellipse(0,-14,26,26,a.gradient(-20,-40,20,10,['#fff6b5','#edb64f','#bc7943']));
-  a.line([[-14,-14],[14,-14]],'#795044',7);a.line([[0,-28],[0,0]],'#795044',7);
+  const plateColor=hit>.25?'#fff4c2':ratio<.35?'#e84a5f':ratio<.7?'#e37239':'#d98648';
+  const rimColor=ratio<.35?'#ffb8c0':'#ffe8a6';
+  a.poly([[-25,-39],[25,-39],[42,-15],[25,14],[-25,14],[-42,-15]],plateColor,rimColor,4);
+  // Corner LEGO studs pop off one by one as the lock bolt takes damage!
+  const remainingStuds=Math.ceil(ratio*4);
+  [[-20,-30],[20,-30],[-20,3],[20,3]].forEach(([sx,sy],idx)=>{
+    if(idx<remainingStuds)a.stud?.(sx,sy,5.5,5.5,2.5,ratio<.35?'#a8283b':'#b86830','#fff1b8');
+    else a.ellipse(sx,sy,4.5,3,'#2a1829');
+  });
+  if(ratio<.7)a.line([[-28,-22],[-8,-14],[-19,6]],'#4a1c2d',3);
+  if(ratio<.35)a.line([[26,-26],[9,-11],[22,8]],'#ffe694',3);
+  a.ellipse(0,-14,26,26,a.gradient(-20,-40,20,10,hit>.2?['#ffffff','#fff3a8','#ffae52']:['#fff6b5','#edb64f','#bc7943']));
+  // The bolt cross visibly unscrews/rotates as HP drops and spins on hit!
+  c.save();c.translate(0,-14);c.rotate((1-ratio)*2.4+hit*1.2);
+  a.line([[-14,0],[14,0]],'#59312a',7);a.line([[0,-14],[0,14]],'#59312a',7);
+  c.restore();
+  // Live HP bar & number on the bolt so every shot visibly loosens it
+  a.rect(-30,20,60,9,'#182c46',4);a.rect(-30,20,60*ratio,9,ratio<.35?'#ff5e6c':'#7effd8',4);
+  if(maxHp>1)a.text(Math.ceil(hp),0,-14,18,'#fff9dc');
   const pulse=(Math.sin(time/180)+1)/2;c.globalAlpha=.25+pulse*.35;
-  c.beginPath();c.arc(0,-14,37+pulse*7,0,Math.PI*2);c.strokeStyle='#ffedac';c.lineWidth=4;c.stroke();
-  if(hit){c.globalAlpha=hit;a.star(0,-14,47,'#fff7c9');}c.restore();
+  c.beginPath();c.arc(0,-14,37+pulse*7,0,Math.PI*2);c.strokeStyle=ratio<.35?'#ff7588':'#ffedac';c.lineWidth=4;c.stroke();
+  if(hit){c.globalAlpha=hit;a.star(0,-14,52,'#fff7c9');}c.restore();
 }
 
-export function cargoToy(a,x,y,s){
-  const c=a.c;c.save();c.translate(x,y);c.scale(s,s);
-  a.ellipse(0,9,86,18,'#17355640');a.block(-72,-136,144,130,20,'#358fa1','#b2f0d8','#225a7d');
-  for(const sx of[-44,0,44])a.stud?.(sx,-144,11,4.5,5,'#e8b84b','#fff5be');
-  a.rect(-12,-136,24,130,'#fbd67e',3);a.rect(-72,-70,144,21,'#fbd67e',3);
-  a.ellipse(0,-65,34,34,'#245a7e');a.star(0,-65,24,'#fff1a5');c.restore();
+export function cargoToy(a,x,y,s,entity=null){
+  const c=a.c,hit=(entity?.hitMs??0)/100,dent=Math.sin(hit*Math.PI)*.18;
+  const hp=entity?.hp??1,maxHp=entity?.maxHp??1,ratio=Math.max(0,Math.min(1,hp/Math.max(1,maxHp)));
+  c.save();c.translate(x,y);c.scale(s*(1+dent),s*(1-dent*.75));
+  if(hit>0)c.rotate(Math.sin(hit*10)*.08);
+  a.ellipse(0,9,86,18,'#17355640');
+  a.block(-72,-136,144,130,20,hit>.25?'#8cf8ef':ratio<.45?'#296e85':'#358fa1','#b2f0d8','#225a7d');
+  // Top studs pop off as the cargo box is shot open!
+  const studsLeft=Math.ceil(ratio*3);
+  [-44,0,44].forEach((sx,idx)=>{
+    if(idx<studsLeft)a.stud?.(sx,-144,11,4.5,5,'#e8b84b','#fff5be');
+    else a.ellipse(sx,-141,8,3.5,'#193b52');
+  });
+  // Gold ribbons snap off stage-by-stage as HP drops
+  if(ratio>.35)a.rect(-12,-136,24,130,'#fbd67e',3);
+  else a.line([[-18,-120],[6,-75],[-14,-22]],'#ffe891',4);
+  if(ratio>.65)a.rect(-72,-70,144,21,'#fbd67e',3);
+  else a.line([[-58,-82],[-15,-58],[34,-76],[62,-52]],'#16324a',5);
+  a.ellipse(0,-65,34,34,hit>.2?'#fff6b8':'#245a7e');a.star(0,-65,24+(1-ratio)*10,'#fff1a5');
+  if(entity){
+    a.text(Math.ceil(hp),0,-65,28,'#13314f');
+    a.rect(-56,-18,112,9,'#162d47',4);a.rect(-56,-18,112*ratio,9,'#ffe27a',4);
+  }
+  c.restore();
 }

@@ -66,6 +66,11 @@ export class BattleRenderer {
       let p=this.impacts.find(p=>p.id===event.id&&p.life>230);
       if(p){p.damage+=event.damage;p.x=point.x;p.y=point.y;}
       else{p=this.impacts[this.impactCursor++%this.impacts.length];Object.assign(p,{id:event.id,x:point.x,y:point.y,damage:event.damage,life:360,boss:event.kind==='boss',chain:event.chain});}
+      // Every hit chips off actual 3D LEGO brick/stud debris so targets visibly react!
+      if(!this.reduced){
+        const chip=this.debris[this.debrisCursor++%this.debris.length],ang=Math.random()*Math.PI*2;
+        Object.assign(chip,{x:point.x,y:point.y,vx:Math.cos(ang)*145,vy:-120-Math.random()*110,size:11+Math.random()*8,angle:ang,spin:(Math.random()-.5)*11,life:520,color:event.kind==='enemy'?'#ee6679':event.kind==='boss'?'#ffd86b':'#78f2e6'});
+      }
     }
     if(['explode','armor-break','boss-slam'].includes(event.type)){
       this.totalBreaks+=1;this.kick=event.boss?240:event.type==='explode'?120:55;
@@ -191,43 +196,75 @@ export class BattleRenderer {
   crane(entity) {
     const a=this.art,c=a.c,p=this.project(0,entity.z),s=p.s,m=this.game.harbor.state,round=this.game.state.round??0;
     const warning=this.game.state.attack?.phase==='warning',lift=warning?18+Math.sin(this.time/90)*5:0;
+    const impact=(entity.hitMs??0)/CONFIG.battle.hitMs,dent=this.reduced?0:Math.sin(impact*Math.PI)*.14;
+    const ratio=Math.max(0,Math.min(1,entity.hp/Math.max(1,entity.maxHp)));
+    const stage=ratio<.34?3:ratio<.67?2:ratio<.92?1:0;
     const palettes=[['#c77c57','#ffe0a0','#8b4e57','#ffc37b'],['#b84867','#ffc2d4','#6e2948','#79f2ff'],['#6a459c','#e0c7ff','#3e2666','#ffd86b']];
     const [hull,hullTop,hullSide,clawColor]=palettes[round]??palettes[0];
-    c.save();c.translate(p.x,p.y);c.scale(s,s);
+    c.save();c.translate(p.x,p.y);
+    if(!this.reduced&&impact>0)c.rotate(Math.sin(impact*10)*impact*.05);
+    c.scale(s*(1+dent),s*(1-dent*.72));
     a.ellipse(0,8,250,35,'#18324740');
+    // Progressive smoke & sparks rising from damaged crane hull
+    if(stage>=1){
+      for(let i=0;i<stage+1;i++){
+        const f=((this.time/650)+i*.33)%1,sx=(i%2?82:-82)+(i-1)*24;
+        a.ellipse(sx,-385-lift-f*75,16+f*22,12+f*15,stage>=3?`rgba(255,110,95,${(1-f)*.55})`:`rgba(55,68,92,${(1-f)*.5})`);
+      }
+    }
     for(const side of[-1,1]){
       const broken=m.locksBroken>=(side<0?1:2);
-      a.line([[side*104,-302-lift],[side*220,-232-lift],[side*187,-62]],'#334964',37);
-      a.line([[side*104-5,-308-lift],[side*215,-237-lift],[side*182,-68]],broken?'#6d7f94':clawColor,22);
-      a.ellipse(side*218,-236-lift,24,24,broken?'#55687d':'#e5915c');a.ellipse(side*218,-239-lift,13,13,'#ffe7a4');
-      a.line([[side*187,-61],[side*156,-32],[side*134,-63]],broken?'#7a8ca0':'#e6ab72',19);
+      const jitter=!this.reduced&&(broken||stage>=2)?Math.sin(this.time/55+side)*6:0;
+      a.line([[side*104,-302-lift],[side*220+jitter,-232-lift],[side*187+jitter,-62]],'#334964',37);
+      a.line([[side*104-5,-308-lift],[side*215+jitter,-237-lift],[side*182+jitter,-68]],broken?'#6d7f94':clawColor,22);
+      a.ellipse(side*218+jitter,-236-lift,24,24,broken?'#55687d':'#e5915c');a.ellipse(side*218+jitter,-239-lift,13,13,broken?'#93a5b8':'#ffe7a4');
+      a.line([[side*187+jitter,-61],[side*156+jitter,-32],[side*134,-63]],broken?'#7a8ca0':'#e6ab72',19);
     }
-    a.block(-142,-382-lift,284,127,27,hull,hullTop,hullSide);
-    for(const sx of[-96,-32,32,96])a.stud(sx,-392-lift,16,5.5,7,hull,hullTop);
+    a.block(-142,-382-lift,284,127,27,impact>.3?'#fff2c2':hull,hullTop,hullSide);
+    // Roof LEGO studs pop off one by one as HP drops!
+    const studsLeft=Math.ceil(ratio*4);
+    [-96,-32,32,96].forEach((sx,idx)=>{
+      if(idx<studsLeft)a.stud(sx,-392-lift,16,5.5,7,hull,hullTop);
+      else{a.ellipse(sx,-386-lift,13,4.5,'#231829');if(idx===studsLeft&&!this.reduced)a.star(sx,-392-lift,10,'#ffe680');}
+    });
     if(round===0){
-      a.block(-48,-422-lift,96,34,12,'#e09a48','#fff1b5','#945b36');
-      a.ellipse(0,-428-lift,14,14,warning?'#ff5964':'#ffe37e');
+      if(stage<3)a.block(-48,-422-lift,96,34,12,'#e09a48','#fff1b5','#945b36');
+      a.ellipse(0,-428-lift,14,14,warning||stage>=2?'#ff3b4e':'#ffe37e');
     }else if(round===1){
-      for(const side of[-1,1]){a.block(side*84-26,-426-lift,52,38,12,'#34789e','#a8f7ff','#1e4968');a.ellipse(side*84,-407-lift,11,11,'#7effef');}
+      for(const side of[-1,1])if(side<0||stage<2){a.block(side*84-26,-426-lift,52,38,12,'#34789e','#a8f7ff','#1e4968');a.ellipse(side*84,-407-lift,11,11,'#7effef');}
     }else{
-      a.poly([[-68,-382-lift],[-86,-432-lift],[-32,-408-lift],[0,-448-lift],[32,-408-lift],[86,-432-lift],[68,-382-lift]],'#ffd86b','#fff5c0',4);
-      a.star(0,-412-lift,16,'#ff647c');
+      a.poly([[-68,-382-lift],[-86,-432-lift],[-32,-408-lift],[0,-448-lift],[32,-408-lift],[86,-432-lift],[68,-382-lift]],stage>=2?'#ff756b':'#ffd86b','#fff5c0',4);
+      a.star(0,-412-lift,16+stage*3,'#ff647c');
     }
-    a.rect(-119,-357-lift,238,77,'#203e5c',19,'#fff0bb');
-    for(const side of[-1,1]){a.rect(side*66-26,-339-lift,52,23,m.weakMs?'#a5ffe6':warning?'#ff7888':'#ffbd83',8);a.rect(side*66-5,-339-lift,10,23,'#254054',2);}
-    a.rect(-18,-301-lift,36,9,'#a2e8df',4);
-    for(let i=0;i<5;i++)a.poly([[-111+i*49,-258-lift],[-91+i*49,-258-lift],[-105+i*49,-240-lift],[-125+i*49,-240-lift]],'#593f50');
-    if(entity.crack>0){
-      a.line([[-95,-365-lift],[-62,-332-lift],[-78,-305-lift]],'#ffe291',4);
-      if(entity.crack>1)a.line([[92,-360-lift],[58,-324-lift],[76,-296-lift]],'#ffe291',4);
+    a.rect(-119,-357-lift,238,77,'#203e5c',19,stage>=2?'#ff7b7b':'#fff0bb');
+    for(const side of[-1,1]){
+      const eyeColor=m.weakMs?'#a5ffe6':warning||stage>=2?'#ff4f64':'#ffbd83';
+      if(stage>=2||impact>.2){
+        // Glitching X-eyes when heavily damaged or hit!
+        a.line([[side*66-20,-338-lift],[side*66+20,-318-lift]],eyeColor,6);
+        a.line([[side*66+20,-338-lift],[side*66-20,-318-lift]],eyeColor,6);
+      }else{
+        a.rect(side*66-26,-339-lift,52,23,eyeColor,8);a.rect(side*66-5,-339-lift,10,23,'#254054',2);
+      }
+    }
+    // Exposed glowing reactor core & Live HP counter on the boss hull as armor breaks!
+    a.rect(-56,-314-lift,112,32,stage>=2?'#4d1628':'#14293f',10,stage>=1?'#ff9872':'#7ec8e3');
+    a.text(Math.ceil(entity.hp),0,-298-lift,24*(1+impact*.18),stage>=2?'#ffccd2':'#fff4c2');
+    for(let i=0;i<5;i++)if(i%2===0||stage<2)a.poly([[-111+i*49,-258-lift],[-91+i*49,-258-lift],[-105+i*49,-240-lift],[-125+i*49,-240-lift]],'#593f50');
+    if(stage>=1||entity.crack>0){
+      a.line([[-115,-368-lift],[-62,-332-lift],[-84,-295-lift]],'#ffe291',5);
+      if(stage>=2||entity.crack>1){
+        a.line([[112,-362-lift],[58,-324-lift],[82,-288-lift]],'#ff7b6b',5);
+        a.star(-78,-328-lift,12,'#ffe885');a.star(76,-318-lift,14,'#ff8c6b');
+      }
     }
     const trainY=-52+Math.sin(this.time/350)*5;
     if(round===0)train(a,0,trainY,.82,{time:this.time,held:m.locksBroken<2});
     else wagon(a,0,trainY,1.6,this.time,round===2);
-    if(m.locksBroken<2)for(const side of[-1,1])a.line([[side*86,-252],[side*86,trainY-125]],'#d5eeef',5);
-    a.rect(-145,-468,290,34,'#183450',12,'#e2c38a');
-    a.text(m.locksBroken<2?'레고 연결 볼트  '+(2-m.locksBroken)+'개 남음':m.weakMs?'⚡ 약점 노출! 본체 집중 사격!':'볼트 해제 완료! 본체를 밀어내!',0,-451,20,m.weakMs?'#abffe8':'#ffefbc');
-    if(entity.hitMs){c.globalAlpha=entity.hitMs/CONFIG.battle.hitMs*.25;a.rect(-142,-382-lift,284,127,'#fff0b0',18);}
+    if(m.locksBroken<2)for(const side of[-1,1])if(side>0||m.locksBroken===0)a.line([[side*86,-252],[side*86,trainY-125]],'#d5eeef',5);
+    a.rect(-145,-468,290,34,'#183450',12,m.weakMs?'#7effd8':'#e2c38a');
+    a.text(m.locksBroken<2?'레고 연결 볼트  '+(2-m.locksBroken)+'개 남음':m.weakMs?'⚡ 장갑 파손! 본체 집중 사격!':stage>=2?'🔥 보스 장갑 붕괴 직전!':'볼트 해제 완료! 본체를 밀어내!',0,-451,20,m.weakMs?'#abffe8':'#ffefbc');
+    if(entity.hitMs){c.globalAlpha=impact*.35;a.rect(-142,-382-lift,284,127,'#fff8d6',18);}
     c.restore();
   }
   barrel(entity) {
@@ -279,23 +316,36 @@ export class BattleRenderer {
   }
   crate(entity) {
     const a=this.art,c=a.c,p=this.project(entity.x,entity.z),s=p.s;
+    const impact=(entity.hitMs??0)/CONFIG.battle.hitMs,dent=this.reduced?0:Math.sin(impact*Math.PI)*.18;
+    const ratio=Math.max(0,Math.min(1,entity.hp/Math.max(1,entity.maxHp)));
     const bob=this.reduced?0:Math.sin(this.time/140)*5*s;
     a.ellipse(p.x,p.y+5*s,93*s,21*s,'#3df6e93b');
-    c.save();c.translate(p.x,p.y-bob);c.scale(s,s);
-    a.block(-80,-160,160,150,22,'#187cad','#9bfff0','#174675');
-    a.rect(-65,-140,131,116,'#153b69',13,'#64f6ee');
+    c.save();c.translate(p.x,p.y-bob);
+    if(!this.reduced&&impact>0)c.rotate(Math.sin(impact*10)*.07);
+    c.scale(s*(1+dent),s*(1-dent*.75));
+    a.block(-80,-160,160,150,22,impact>.25?'#9bfff0':'#187cad','#9bfff0','#174675');
+    a.rect(-65,-140,131,116,'#153b69',13,ratio<.5?'#ffe685':'#64f6ee');
+    if(ratio<.7)a.line([[-58,-126],[-18,-92],[-42,-54]],'#ffe885',5);
+    if(ratio<.4)a.line([[56,-118],[14,-82],[44,-44]],'#7effe7',5);
     a.poly([[10,-132],[-35,-72],[-5,-72],[-19,-31],[40,-94],[9,-94]],'#ffeb8d','#fffadd',3);
-    a.rect(-78,-16,157,11,'#fff09d',2);
-    if(entity.hitMs>0){c.globalAlpha=entity.hitMs/CONFIG.battle.hitMs*.4;a.rect(-80,-160,160,150,'#fff',8);}
+    a.text(Math.ceil(entity.hp),0,-82,34,'#ffffff');
+    a.rect(-78,-16,157*ratio,11,'#fff09d',2);
+    if(entity.hitMs>0){c.globalAlpha=impact*.45;a.rect(-80,-160,160,150,'#fff',8);}
     c.restore();
   }
   enemy(entity) {
     const a=this.art,p=this.project(entity.x,entity.z);
-    const impact=entity.hitMs/CONFIG.battle.hitMs;
-    const bounce=Math.sin(this.time/100+entity.id)*3*p.s-(this.reduced?0:Math.sin(impact*Math.PI)*18*p.s);
-    a.toy(p.x,p.y+bounce,.58*p.s,{time:this.time,run:!this.reduced,palette:{helmet:'#ee6679',helmetTop:'#ffb4aa',helmetSide:'#ae3e60',shirt:'#704975',shirtTop:'#a77d9b',shirtSide:'#453457'}});
-    a.rect(p.x-28*p.s,p.y-115*p.s,56*p.s,8*p.s,'#25304b',3*p.s);a.rect(p.x-28*p.s,p.y-115*p.s,56*p.s*entity.hp/entity.maxHp,8*p.s,'#ffa794',3*p.s);
-    if(entity.hitMs>0)a.star(p.x,p.y-65*p.s,(18+impact*14)*p.s,'#fff7be');
+    const impact=(entity.hitMs??0)/CONFIG.battle.hitMs;
+    const ratio=Math.max(0,Math.min(1,entity.hp/Math.max(1,entity.maxHp)));
+    const damaged=ratio<.55;
+    const bounce=Math.sin(this.time/100+entity.id)*3*p.s-(this.reduced?0:Math.sin(impact*Math.PI)*22*p.s);
+    a.toy(p.x,p.y+bounce,.58*p.s,{
+      time:this.time,run:!this.reduced,
+      pitch:-impact*.38,squash:impact*.55,hurt:impact>0||damaged,helmetOff:damaged,flash:impact,
+      palette:{helmet:'#ee6679',helmetTop:'#ffb4aa',helmetSide:'#ae3e60',shirt:damaged?'#9e4b6c':'#704975',shirtTop:'#a77d9b',shirtSide:'#453457'}
+    });
+    a.rect(p.x-28*p.s,p.y-115*p.s,56*p.s,8*p.s,'#25304b',3*p.s);a.rect(p.x-28*p.s,p.y-115*p.s,56*p.s*ratio,8*p.s,damaged?'#ff5e6c':'#ffa794',3*p.s);
+    if(entity.hitMs>0)a.star(p.x,p.y-65*p.s,(22+impact*16)*p.s,'#fff7be');
   }
   squad() {
     const a=this.art,c=a.c,s=this.game.state;
@@ -497,7 +547,7 @@ export class BattleRenderer {
     if(!this.reduced&&this.game.state.shakeMs>0){const amp=Math.min(7,this.game.state.shakeMs/40);c.translate(Math.sin(this.time*.11)*amp,Math.cos(this.time*.13)*amp*.6);}
     this.deck();
     const objects=this.drawList;objects.length=0;let entryIndex=0;for(const object of this.game.gates){const entry=this.drawEntries[entryIndex++];entry.object=object;entry.kind='gate';objects.push(entry);}for(const object of this.game.entities){const entry=this.drawEntries[entryIndex++];entry.object=object;entry.kind=object.kind;objects.push(entry);}objects.sort((a,b)=>b.object.z-a.object.z);
-    for(const {object,kind} of objects){if(kind==='gate')this.gate(object);else if(kind==='enemy')this.enemy(object);else if(kind==='crate')this.crate(object);else if(kind==='supply')this.supply(object);else if(kind==='lock'){const p=this.project(object.x,object.z,48);lockToy(a,p.x,p.y,p.s,this.time,object.hitMs/CONFIG.battle.hitMs);}else if(kind==='boss'&&this.game.harbor)this.crane(object);else if(object.cargo){const p=this.project(object.x,object.z);cargoToy(a,p.x,p.y,p.s);}else this.barrel(object);}
+    for(const {object,kind} of objects){if(kind==='gate')this.gate(object);else if(kind==='enemy')this.enemy(object);else if(kind==='crate')this.crate(object);else if(kind==='supply')this.supply(object);else if(kind==='lock'){const p=this.project(object.x,object.z,48);lockToy(a,p.x,p.y,p.s,this.time,object.hitMs/CONFIG.battle.hitMs,object.hp,object.maxHp);}else if(kind==='boss'&&this.game.harbor)this.crane(object);else if(object.cargo){const p=this.project(object.x,object.z);cargoToy(a,p.x,p.y,p.s,object);}else this.barrel(object);}
     for(const bullet of this.game.bullets){
       const p=this.project(bullet.x,bullet.z,56),tail=this.project(bullet.x,bullet.z-(bullet.powered?1.7:1.15),56);
       a.line([[tail.x,tail.y],[p.x,p.y]],bullet.powered?'#54ffe833':'#ffbb5838',Math.max(5,19*p.s));

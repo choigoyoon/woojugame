@@ -7,17 +7,24 @@ import { train, wagon, picoToy, cocoToy, trainParts } from './harbor-art.js';
 export class AdventureRenderer {
   constructor(ctx,runner,plaza,profile){
     this.art=new Art(ctx);this.runner=runner;this.plaza=plaza;this.profile=profile;this.time=0;this.particles=Array.from({length:96},()=>({life:0}));this.cursor=0;this.joystick=null;
+    this.wagonHitMs=0;this.dockPulseMs=0;
     const media=window.matchMedia('(prefers-reduced-motion: reduce)');this.reduced=media.matches;media.addEventListener('change',e=>this.reduced=e.matches);
   }
-  update(ms){this.time+=ms;for(const p of this.particles){if(p.life<=0)continue;p.life=Math.max(0,p.life-ms);p.x+=p.vx*ms/1000;p.y+=p.vy*ms/1000;p.vy+=500*ms/1000;p.angle+=ms*.003;}}
-  handle(e,mode){
-    if(!['word','sentence','pickup','smash','mission-win','land'].includes(e.type))return;
-    let x=e.x??180,y=e.y??800;
-    if(mode==='plaza'){const p=this.iso(e.x??0,e.z??3);x=p.x;y=p.y-40;}
-    const big=['sentence','mission-win'].includes(e.type),count=this.reduced?4:big?48:12;
-    for(let i=0;i<count;i++){const p=this.particles[this.cursor++%this.particles.length],a=i*2.4;Object.assign(p,{x,y,vx:Math.cos(a)*(big?260:130),vy:-120-Math.abs(Math.sin(a))*260,life:700,angle:a,color:['#fff3ad','#ffacb7','#8cffe5','#c3b5ff'][i%4]});}
+  update(ms){
+    this.time+=ms;this.wagonHitMs=Math.max(0,this.wagonHitMs-ms);this.dockPulseMs=Math.max(0,this.dockPulseMs-ms);
+    for(const p of this.particles){if(p.life<=0)continue;p.life=Math.max(0,p.life-ms);p.x+=p.vx*ms/1000;p.y+=p.vy*ms/1000;p.vy+=560*ms/1000;p.angle+=ms*.004;}
   }
-  effects(){const a=this.art,c=a.c;for(const p of this.particles){if(p.life<=0)continue;c.save();c.globalAlpha=Math.min(1,p.life/200);c.translate(p.x,p.y);c.rotate(p.angle);a.rect(-4,-4,9,9,p.color,2);c.restore();}}
+  handle(e,mode){
+    if(['word','sentence','smash'].includes(e.type))this.wagonHitMs=420;
+    if(['pickup','mission-win','mission-miss'].includes(e.type))this.dockPulseMs=480;
+    if(!['word','word-miss','sentence','pickup','smash','bump','mission-win','mission-miss','land'].includes(e.type))return;
+    let x=e.x??180,y=e.y??800;
+    if(mode==='plaza'){const p=this.iso(e.x??this.plaza.state.x,e.z??this.plaza.state.z);x=p.x;y=p.y-40;}
+    const big=['sentence','mission-win'].includes(e.type),brick=['word','word-miss','smash','bump','pickup','mission-miss'].includes(e.type);
+    const count=this.reduced?4:big?48:brick?18:10;
+    for(let i=0;i<count;i++){const p=this.particles[this.cursor++%this.particles.length],a=i*2.4;Object.assign(p,{x,y,vx:Math.cos(a)*(big?260:155),vy:-140-Math.abs(Math.sin(a))*280,life:750,angle:a,brick:brick&&i%2===0,color:['#fff3ad','#ff7888','#8cffe5','#c3b5ff'][i%4]});}
+  }
+  effects(){const a=this.art,c=a.c;for(const p of this.particles){if(p.life<=0)continue;c.save();c.globalAlpha=Math.min(1,p.life/200);c.translate(p.x,p.y);c.rotate(p.angle);if(p.brick)a.block(-8,-6,16,12,4,p.color,'#fff8d6','#42315c');else a.rect(-4,-4,9,9,p.color,2);c.restore();}}
   header(title,canHome){const a=this.art;a.cached('header',[0,0,720,132],()=>{a.rect(0,0,720,130,'#10264ce8');a.text(title,340,65,30,'#fff0c7');a.rect(528,32,170,67,'#091a38',22,'#a2c9f44d');a.coin(557,64,.6);},title);a.home(canHome);a.counter(this.profile.coins,584,66,99,23,'#ffe6a6','left');}
   runnerView(canHome,pressed=false){
     const a=this.art,c=a.c,s=this.runner.state,t=this.reduced?0:this.time,d=s.distance;
@@ -43,15 +50,35 @@ export class AdventureRenderer {
     }
     a.rect(0,870,720,410,'#1c656a');a.rect(0,870,720,37,'#a4e7a4');a.rect(0,906,720,20,'#4eac8b');
     for(let i=0;i<9;i++){const x=i*112-(d%112);a.line([[x,925],[x+50,996],[x+50,1280]],'#328083',4);a.stud(x+32,870,13,4,4.5,'#57b982','#d7ffbe');a.rect(x+15,951,18,10,'#47979b',3);}
-    // Runaway Starlight Express LEGO wagon with Coco on top cheering the player on!
-    const wagonX=s.goldMs?540:642-s.slot*38+Math.sin(t/210)*8;
-    wagon(a,wagonX,866,.68,t,true);
-    cocoToy(a,wagonX-6,818,.46,t);
-    a.rect(wagonX-106,736,194,32,'#132e4ee6',10,'#ffe79988');
+    // Runaway Starlight Express LEGO wagon with Coco on top — visibly transforms and jolts with each brick hit!
+    const hitReaction=this.wagonHitMs/420,wagonDent=this.reduced?0:Math.sin(hitReaction*Math.PI)*.18;
+    const wagonX=s.goldMs?540:642-s.slot*38+Math.sin(t/210)*8-(hitReaction*18);
+    c.save();c.translate(wagonX,866);c.scale(1+wagonDent,1-wagonDent*.7);
+    wagon(a,0,0,.68,t,true);
+    // Stage 1 hit (slot >= 1): Golden Magnetic Docking Hitch snaps onto the front of the wagon!
+    if(s.slot>=1||s.goldMs){
+      a.block(-56,-36,24,22,7,'#ffd363','#fff5bd','#b5782c');
+      a.stud(-44,-40,6,2.5,3,'#e39d36','#fff6c4');
+    }
+    // Stage 2 hit (slot >= 2): Twin Golden LEGO Booster Wings bolt onto the wagon sides!
+    if(s.slot>=2||s.goldMs){
+      a.poly([[-26,-42],[-58,-72],[-44,-24]],'#ffd86b','#fff5bf',2.5);
+      a.poly([[26,-42],[58,-72],[44,-24]],'#ffd86b','#fff5bf',2.5);
+      a.stud(0,-58,8,3,4,'#49d6c8','#dcfffb');
+    }
+    // Stage 3 hit (goldMs > 0): Turbo Starlight Jet Flame ignites!
+    if(s.goldMs){
+      a.poly([[42,-36],[84+Math.sin(t/45)*14,-52],[72,-22],[88+Math.cos(t/45)*12,-10],[42,-14]],'#63ffee');
+      a.star(0,-30,18,'#fff8c4');
+    }
+    if(hitReaction>0){c.globalAlpha=hitReaction;a.star(-24,-32,34,'#fff7c4');}
+    c.restore();
+    cocoToy(a,wagonX-6,818-hitReaction*14,.46,t);
+    a.rect(wagonX-106,736,194,32,'#132e4ee6',10,hitReaction>0?'#7effd8':'#ffe79988');
     a.text(s.goldMs?'★ 도킹 완료! 황금 질주!':`코코: "${this.runner.sentence[s.slot]}" 브릭 (${Math.max(10,(3-s.slot)*40)}m)`,wagonX-9,752,13.5,'#fff3bd');
-    if(s.goldMs||s.slot>0){
-      c.save();c.globalAlpha=s.goldMs?.9:.35+s.slot*.2;
-      a.line([[CONFIG.runner.playerX+35,795],[wagonX-45,825]],s.goldMs?'#fff39e':'#7effe7',s.goldMs?7:3+s.slot);
+    if(s.goldMs||s.slot>0||hitReaction>0){
+      c.save();c.globalAlpha=s.goldMs?.9:Math.max(.35+s.slot*.2,hitReaction);
+      a.line([[CONFIG.runner.playerX+35,795],[wagonX-45,825]],s.goldMs||hitReaction>0?'#fff39e':'#7effe7',s.goldMs||hitReaction>0?7:3+s.slot);
       c.restore();
     }
     for(const item of this.runner.items.active){
@@ -121,13 +148,22 @@ export class AdventureRenderer {
     });
     const dock=this.iso(-2.2,3.4),parts=trainParts(this.profile.data),captain=this.iso(0,3.15);
     const totalNeeded=this.plaza.mission.reduce((n,m)=>n+m.count,0),collectedTotal=s.collectedA+s.collectedB;
+    const dockPulse=this.dockPulseMs/480,dockDent=this.reduced?0:Math.sin(dockPulse*Math.PI)*.14;
     // Power conduits connecting the Captain Dock to the Starlight Express as core bricks are gathered
     for(let i=0;i<3;i++){
       const lit=collectedTotal>i||s.phase==='success';
-      a.line([[captain.x-18,captain.y-6+i*6],[dock.x+35,dock.y-12+i*6]],lit?'#6effe8':'#32517877',lit?4:2);
+      a.line([[captain.x-18,captain.y-6+i*6],[dock.x+35,dock.y-12+i*6]],lit?'#6effe8':'#32517877',lit?5:2);
     }
-    train(a,dock.x,dock.y-18,.42,{time:t,cars:parts.harborCars,beacon:parts.beacon,coach:parts.coach,reactor:parts.reactor||s.phase==='success',complete:parts.complete});
-    cocoToy(a,dock.x+56,dock.y-8,.42,t);
+    c.save();c.translate(dock.x,dock.y-18);c.scale(1+dockDent,1-dockDent*.7);
+    train(a,0,0,.42,{time:t,cars:parts.harborCars,beacon:parts.beacon,coach:parts.coach,reactor:parts.reactor||s.phase==='success'||collectedTotal>=totalNeeded,complete:parts.complete});
+    // Progressive LEGO Engine Core modules visibly snap onto the train side as each item is collected!
+    for(let i=0;i<Math.min(3,collectedTotal);i++){
+      const mx=-18+i*18,my=-26;
+      a.block(mx-7,my-7,14,14,4,['#ff6c83','#77ceff','#74efd0'][i],'#fff8d6','#1c3b5e');
+    }
+    if(dockPulse>0){c.globalAlpha=dockPulse;a.star(12,-28,28,'#fff6b8');}
+    c.restore();
+    cocoToy(a,dock.x+56,dock.y-8-dockPulse*10,.42,t);
     a.ellipse(captain.x,captain.y,46,22,this.plaza.ready?'#fff0a4':'#6d95b7');
     if(this.plaza.ready){
       const pulse=(Math.sin(t/150)+1)*6;
@@ -136,8 +172,9 @@ export class AdventureRenderer {
       a.text('▼ 엔진 도킹!',captain.x,captain.y-164,15,'#fff3a8');
     }
     // Fixed tiny scene: sort stable references in reusable scratch storage by floor depth.
+    // Keep collected items in the scene so their workbench visibly transforms into an activated green socket!
     this.scene??=[];this.scene.length=0;
-    for(const i of this.plaza.items.active)if(!i.collected)this.scene.push(i);
+    for(const i of this.plaza.items.active)this.scene.push(i);
     for(const h of this.plaza.hazards.active)this.scene.push(h);
     this.player??={kind:'player',x:0,z:0};this.player.x=s.x;this.player.z=s.z;this.scene.push(this.player);
     this.captain??={kind:'captain',x:0,z:3.15};this.scene.push(this.captain);this.scene.sort((x,y)=>(x.x+x.z)-(y.x+y.z));
@@ -151,18 +188,26 @@ export class AdventureRenderer {
           a.poly([[12,0],[-6,-8],[-3,0],[-6,8]],'#ffe875','#143252',1.5);
           c.restore();
         }
-        c.save();c.globalAlpha=s.flashMs&&Math.floor(t/80)%2?.5:1;a.toy(p.x,p.y,.72,{time:t,run:Math.hypot(s.vx,s.vz)>.08,turn:s.vx-s.vz,pitch:(s.vx+s.vz)*.05,squash:s.stunMs?Math.sin(s.stunMs/120)*.4:0,palette:this.profile.palette});c.restore();
+        c.save();c.globalAlpha=s.flashMs&&Math.floor(t/80)%2?.5:1;a.toy(p.x,p.y,.72,{time:t,run:Math.hypot(s.vx,s.vz)>.08,turn:s.vx-s.vz,pitch:(s.vx+s.vz)*.05,squash:s.stunMs?Math.sin(s.stunMs/120)*.4:0,hurt:s.stunMs>0||s.phase==='retry',palette:this.profile.palette});c.restore();
       }
       else if(o.kind==='captain')this.robot(p.x,p.y);
       else if(o.kind){
-        // Preserve memory challenge: all items share neutral pedestals, but approaching shows a nearby name tag so icons are never ambiguous!
-        const dist=Math.hypot(o.x-s.x,o.z-s.z),near=s.phase==='active'&&dist<1.38;
-        if(near)a.ellipse(p.x,p.y+2,29,11,'#fff3b044');
-        this.good(o.kind,p.x,p.y-9-Math.sin(t/300+o.x)*4);
-        a.star(p.x+21,p.y-42,4+Math.sin(t/200+o.z)*2,'#fff3b8');
-        if(near){
-          a.rect(p.x-56,p.y-70,112,24,'#102648f0',8,'#9ed8ff88');
-          a.text(GOODS[o.kind].name,p.x,p.y-58,13,'#fff4c8');
+        if(o.collected){
+          // Visibly transformed workbench socket after pickup!
+          a.ellipse(p.x,p.y+4,26,10,'#215e5288');
+          a.stud(p.x,p.y+2,16,6,5,'#2c9e88','#8effe2');
+          a.text('✓',p.x,p.y-12,18,'#b8fff0');
+        }else{
+          // Preserve memory challenge: all items share neutral pedestals, but approaching shows a nearby name tag so icons are never ambiguous!
+          const dist=Math.hypot(o.x-s.x,o.z-s.z),near=s.phase==='active'&&dist<1.38;
+          a.stud(p.x,p.y+4,16,6,4,'#486688','#9bc2db');
+          if(near)a.ellipse(p.x,p.y+2,29,11,'#fff3b044');
+          this.good(o.kind,p.x,p.y-11-Math.sin(t/300+o.x)*4);
+          a.star(p.x+21,p.y-42,4+Math.sin(t/200+o.z)*2,'#fff3b8');
+          if(near){
+            a.rect(p.x-56,p.y-70,112,24,'#102648f0',8,'#9ed8ff88');
+            a.text(GOODS[o.kind].name,p.x,p.y-58,13,'#fff4c8');
+          }
         }
       }
       else{a.ellipse(p.x,p.y,25,10,'#34497177');a.block(p.x-24,p.y-39,48,33,8,'#e88996','#ffd0b2','#945b88');a.rect(p.x-14,p.y-29,8,7,'#704f74',2);a.rect(p.x+5,p.y-29,8,7,'#704f74',2);}

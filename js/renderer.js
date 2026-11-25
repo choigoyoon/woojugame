@@ -328,12 +328,14 @@ export class Renderer {
     if (y < CONFIG.motion.clipTop - 100 || y > CONFIG.view.height) return;
     const next = step.id === state.step + 1;
     const current = step.id === state.step;
+    const stepped = step.id <= state.step;
     const bridgeGate = step.id > 0 && step.id % CONFIG.puzzle.everySteps === 0;
     const milestone = step.id > 0 && step.id % 10 === 0;
+    // Stepping on a block permanently transforms it from a cool cyan/indigo brick into a lit golden power block!
     const palette = bridgeGate ? ['#fff199', '#f2a93b', '#ad5d28']
-      : current || milestone ? ['#ffe888', '#e5aa47', '#ad7135']
+      : stepped || milestone ? ['#ffe888', '#e5aa47', '#ad7135']
       : step.id % 4 === 0 ? ['#c7bdff', '#9376dc', '#6559b0'] : ['#a9f6e6', '#4ebebc', '#318f9f'];
-    this.cachedLayer('tile:'+palette[0]+':'+next,x,y,[-110,-50,220,155],()=>this.platformBody(0,0,palette,next));
+    this.cachedLayer('tile:'+palette[0]+':'+next+':'+stepped,x,y,[-110,-50,220,155],()=>this.platformBody(0,0,palette,next,stepped));
     if (bridgeGate) {
       this.rect(x - 66, y - 74, 132, 30, '#133154e6', 11, '#ffe885');
       this.text('★ ' + step.id + 'F 등대 다리', x, y - 59, 15, '#fff3b0', 'center');
@@ -364,7 +366,7 @@ export class Renderer {
     this.ctx.drawImage(surface,x+left,y+top,surface.width/scale,surface.height/scale);
   }
 
-  platformBody(x,y,palette,next) {
+  platformBody(x,y,palette,next,stepped=false) {
     this.ellipse(x+10,y+83,82,17,'#1a2d5830');
     if (next) {
       this.ctx.save(); this.ctx.globalAlpha = 0.34;
@@ -373,15 +375,18 @@ export class Renderer {
     }
     this.polygon([[x - 88, y], [x, y + 32], [x, y + 80], [x - 88, y + 48]], palette[1], '#245066', 2);
     this.polygon([[x, y + 32], [x + 88, y], [x + 88, y + 48], [x, y + 80]], palette[2], '#245066', 2);
-    this.polygon([[x - 88, y], [x, y - 32], [x + 88, y], [x, y + 32]], palette[0], next ? '#ffffed' : '#dcfff2', next ? 4 : 2);
+    this.polygon([[x - 88, y], [x, y - 32], [x + 88, y], [x, y + 32]], palette[0], stepped ? '#fff7b2' : next ? '#ffffed' : '#dcfff2', stepped || next ? 4 : 2);
     this.polygon([[x - 88, y + 6], [x, y + 38], [x, y + 44], [x - 88, y + 12]], '#ffffff26');
     this.polygon([[x + 8, y + 42], [x + 78, y + 17], [x + 78, y + 22], [x + 8, y + 47]], '#00072b12');
+    const studH = stepped ? 3.5 : 7;
     for (const [dx, dy] of [[-33, 0], [0, -12], [33, 0], [0, 12]]) {
       this.ellipse(x + dx, y + dy + 2, 13, 5, '#19374838');
-      this.rect(x + dx - 12, y + dy - 7, 24, 7, palette[1], 2);
-      this.ellipse(x + dx, y + dy - 7, 12, 4.6, palette[0]);
-      this.ellipse(x + dx, y + dy - 7.5, 8.5, 3, '#ffffff88');
+      this.rect(x + dx - 12, y + dy - studH, 24, studH, stepped ? '#72f2e0' : palette[1], 2);
+      this.ellipse(x + dx, y + dy, 12, 4.6, stepped ? '#4bc9ba' : palette[1]);
+      this.ellipse(x + dx, y + dy - studH, 12, 4.6, stepped ? '#c8fff6' : palette[0]);
+      this.ellipse(x + dx, y + dy - studH - 0.5, 8.5, 3, '#ffffff88');
     }
+    if (stepped) this.star(x, y, 11, '#fff9d2');
   }
 
   limb(kind, side, stride, crouch, flight) {

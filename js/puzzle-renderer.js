@@ -96,7 +96,7 @@ export class PuzzleRenderer {
     const scenario=SCENARIOS.find(s=>s.id===p.id)??SCENARIOS[0];
     c.fillStyle=a.gradient(0,0,0,1280,['#261b50','#6b3461','#dc624f']);c.fillRect(0,0,720,1280);
     for(let i=0;i<18;i++){const x=(i*137+12)%720,y=574+(i*97+this.time*.025)%680;a.ellipse(x,y,33+i%4*12,8,'#ffcf7533');}
-    a.home(canHome);a.text('구름 등대 레고 브릿지',380,64,29,'#ffebaf');a.coin(561,127,.55);a.counter(this.profile.coins,630,128,130,25,'#ffe9ac');
+    a.home(canHome);a.label('구름 등대 스타 브릿지',380,64,29,'#ffebaf','#0b132b');a.coin(561,127,.55);a.counter(this.profile.coins,630,128,130,25,'#ffe9ac');
     a.text(scenario.speech,360,148,18.5,'#ffe6b5');
     a.rect(46,185,628,351,'#251d4280',32);a.rect(46,173,628,351,a.gradient(0,173,0,524,['#eef5e7','#b9dce0']),32,'#fff4cf');
     this.picture(p.id,360,353,1.07);

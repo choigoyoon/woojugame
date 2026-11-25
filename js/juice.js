@@ -63,7 +63,10 @@ export class Juice {
           :e.type==='mission-win'?['⚡ CORE IGNITION!','#ffe875']
           :e.type==='explode'&&e.boss?['★ BOSS SMASHED! ★','#ffe875']
           :e.type==='gate-win'?['SQUAD UP!','#9effd8']:null;
-        if(callout)this.callouts.spawn(callout[0],x,y-48,callout[1]);
+        if(callout){
+          const cx=this.mode==='runner'?430:x,cy=this.mode==='runner'?385:y-48;
+          this.callouts.spawn(callout[0],cx,cy,callout[1]);
+        }
       }
     }
   }

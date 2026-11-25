@@ -222,12 +222,7 @@ export class Renderer {
   }
 
   coin(x, y, scale = 1) {
-    const c = this.ctx;
-    c.save(); c.translate(x, y); c.scale(scale, scale);
-    this.polygon([[-19, -11], [0, -22], [19, -11], [19, 12], [0, 24], [-19, 12]], '#cf872c', '#826038', 2);
-    this.polygon([[-16, -13], [0, -23], [16, -13], [16, 8], [0, 18], [-16, 8]], '#ffe16a');
-    this.rect(-4, -12, 8, 21, '#fff9cb', 2);
-    c.restore();
+    this.art.coin(x, y, scale);
   }
 
   arrow(x, y, direction, scale, color = '#fff') {
@@ -321,18 +316,20 @@ export class Renderer {
       this.art.stud(424, ty - 4, 14, 5, 6, '#d98a3c', '#fff4bd');
     }
     c.restore();
-    // Distant LEGO Cloud Lighthouse Tower guiding the Starlight Express
+    // Distant Cel-Shaded Cloud Lighthouse Tower guiding the Starlight Express
     const lhY = 660 - clamp(-this.cameraY * 0.035, 0, 260);
-    c.save(); c.globalAlpha = 0.55; c.translate(108, lhY);
+    c.save(); c.globalAlpha = 0.78; c.translate(108, lhY);
     const sweep = this.reducedMotion ? 0.2 : Math.sin(this.time / 900) * 0.28;
     this.polygon([[0, -138], [290, -220 + sweep * 90], [290, -85 + sweep * 90]], '#fff6b546');
-    this.rect(-34, 0, 68, 18, '#65809e', 4);
-    this.rect(-24, -110, 48, 110, '#e8f1fa', 4);
-    this.rect(-24, -92, 48, 22, '#e0675a', 2);
-    this.rect(-24, -48, 48, 22, '#e0675a', 2);
-    this.rect(-30, -120, 60, 12, '#3a5778', 4);
-    this.rect(-18, -144, 36, 24, '#ffe89c', 5);
-    this.art.stud(0, -148, 14, 4.5, 6, '#e39d3b', '#fff5bd');
+    this.rect(-36, -2, 72, 22, '#0b132b', 6);
+    this.rect(-33, 0, 66, 18, '#475569', 4);
+    this.rect(-27, -113, 54, 114, '#0b132b', 6);
+    this.rect(-24, -110, 48, 110, '#ffffff', 4);
+    this.rect(-24, -92, 48, 22, '#ff2a6d', 2);
+    this.rect(-24, -48, 48, 22, '#ff2a6d', 2);
+    this.rect(-32, -122, 64, 14, '#0b132b', 5);
+    this.rect(-20, -146, 40, 26, '#ffbe0b', 6, '#0b132b');
+    this.art.stud(0, -148, 12, 4, 5, '#ff9f1c', '#fff5bd');
     c.restore();
   }
 
@@ -448,29 +445,30 @@ export class Renderer {
   hud() {
     const c = this.ctx; const { state } = this.game;
     this.cachedLayer('hud',0,0,[0,0,720,228],()=>this.hudBackground());
-    this.text(state.step, 126, 152, state.step > 99999 ? 34 : 48, '#fff');
+    this.art.label(state.step, 126, 152, state.step > 99999 ? 34 : 48, '#ffffff', '#0b132b', 'left');
     const coins = this.game.wallet?.coins ?? state.coins;
-    this.text(coins, 436, 152, coins > 999999 ? 26 : coins > 99999 ? 34 : 48, '#fff4b2');
+    this.art.label(coins, 436, 152, coins > 999999 ? 26 : coins > 99999 ? 34 : 48, '#ffbe0b', '#0b132b', 'left');
     const bridgeLeft = Math.max(0, state.nextPuzzle - state.step);
     const bridgeProgress = clamp(1 - bridgeLeft / CONFIG.puzzle.everySteps, 0, 1);
-    this.rect(140, 202, 440, 22, '#102549cc', 11, '#8be9ff4d');
-    this.rect(144, 206, Math.max(14, 432 * bridgeProgress), 14, state.step >= CONFIG.sky.stratosphereStep ? '#ffd86b' : '#58e6d0', 7);
-    this.text(state.step >= CONFIG.sky.stratosphereStep ? '★ 80F 구름 등대 정상 점등! 다음 브릿지 ' + bridgeLeft + '층' : '구름 등대 브릿지까지 ' + bridgeLeft + '층 (+50 코인)', 360, 213, 13.5, '#fff7cc', 'center');
+    this.rect(138, 200, 444, 26, '#0b132b', 13);
+    this.rect(144, 206, Math.max(14, 432 * bridgeProgress), 14, state.step >= CONFIG.sky.stratosphereStep ? '#ffbe0b' : '#00f5d4', 7);
+    this.art.label(state.step >= CONFIG.sky.stratosphereStep ? '★ 80F 구름 등대 정상 점등! 다음 브릿지 ' + bridgeLeft + '층' : '구름 등대 브릿지까지 ' + bridgeLeft + '층 (+50 코인)', 360, 213, 13.5, '#fff7cc', '#0b132b');
     // Vertical Lighthouse Altitude Gauge on the right edge
-    this.rect(672, 280, 24, 300, '#102549b8', 12, '#8be9ff44');
+    this.rect(670, 278, 28, 304, '#0b132b', 14);
     const fillH = Math.max(14, Math.round(288 * bridgeProgress));
-    this.rect(676, 574 - fillH, 16, fillH, '#ffd86b', 8);
-    this.star(684, 266, 11, '#ffe885');
-    this.text(state.nextPuzzle + 'F', 684, 246, 12, '#fff4b8', 'center');
+    this.rect(676, 574 - fillH, 16, fillH, '#ffbe0b', 8);
+    this.star(684, 266, 14, '#0b132b');
+    this.star(684, 266, 11, '#ffbe0b');
+    this.art.label(state.nextPuzzle + 'F', 684, 246, 12.5, '#fff4b8', '#0b132b');
     if (state.combo > 1) {
       c.save(); c.translate(360, 258);
       const elapsed = CONFIG.motion.auraMs - this.aura;
       const pulse = !this.reducedMotion && this.aura > 0 && elapsed < 300 ? 1 + Math.sin(elapsed / 300 * Math.PI) * 0.12 : 1;
       c.scale(pulse, pulse);
-      this.rect(-82, -26, 164, 59, '#1a2c6099', 25, '#c9e3ff29');
-      this.polygon([[-43, -18], [-56, 0], [-43, 0], [-48, 13], [-25, -8], [-39, -8]], '#ffe57a');
-      this.text('×' + state.combo, 15, -3, 28, '#fff5ba', 'center');
-      for (let i = 0; i < 10; i += 1) this.rect(-49 + i * 10, 21, 7, 4, i < (state.combo % 10 || 10) ? '#ffe484' : '#ffffff26', 2);
+      this.rect(-84, -28, 168, 63, '#0b132bf0', 26, '#ffbe0b');
+      this.polygon([[-43, -18], [-56, 0], [-43, 0], [-48, 13], [-25, -8], [-39, -8]], '#ffbe0b');
+      this.art.label('×' + state.combo, 15, -3, 28, '#fff5ba', '#0b132b');
+      for (let i = 0; i < 10; i += 1) this.rect(-49 + i * 10, 21, 7, 4, i < (state.combo % 10 || 10) ? '#00f5d4' : '#ffffff26', 2);
       c.restore();
     }
   }
@@ -478,15 +476,14 @@ export class Renderer {
   hudBackground() {
     const c=this.ctx;
     const shade = c.createLinearGradient(0, 0, 0, 228);
-    shade.addColorStop(0, '#142957db'); shade.addColorStop(1, '#14295700');
+    shade.addColorStop(0, '#0b132bf0'); shade.addColorStop(1, '#0b132b00');
     c.fillStyle = shade; c.fillRect(0, 0, 720, 228);
-    this.text('작전 2 · 구름 등대 신호탑', 139, 48, 27, '#ecffff');
-    for (const [x, width] of [[28, 312], [356, 336]]) {
-      this.rect(x, 118, width, 80, '#11275045', 25);
-      this.rect(x, 112, width, 80, '#1835578c', 25, '#c2f5ff4a');
-      this.rect(x + 20, 115, width - 40, 3, '#ffffff26', 2);
+    this.art.label('작전 2 · 구름 등대 신호탑', 139, 48, 27, '#ecffff', '#0b132b', 'left');
+    for (const [x, width, border] of [[28, 312, '#00f5d4'], [356, 336, '#ffbe0b']]) {
+      this.rect(x - 3, 110, width + 6, 86, '#0b132b', 27);
+      this.rect(x, 112, width, 80, '#162d54', 25, border);
     }
-    this.rect(54, 157, 12, 16, '#9aefef', 3); this.rect(70, 142, 12, 31, '#9aefef', 3); this.rect(86, 126, 12, 47, '#c8ffff', 3);
+    this.rect(54, 157, 12, 16, '#00f5d4', 3); this.rect(70, 142, 12, 31, '#00f5d4', 3); this.rect(86, 126, 12, 47, '#ffffff', 3);
     this.coin(397,151,1.1);
   }
 
@@ -547,8 +544,8 @@ export class Renderer {
   brakeOverlay() {
     const s = this.game.state, c = this.ctx, a = this.art;
     if (s.mode === MODE.AUTO_CLIMB) {
-      a.rect(135,300,450,114,'#17385be8',28,'#fff0a6');
-      a.text('🚀 레고 로켓 점프!',360,340,36,'#fff0a6'); a.text('5단 초고속 상승 · +' + CONFIG.brake.coins,360,384,24,'#b5ffe5');
+      a.rect(135,300,450,114,'#0b132bf2',28,'#ffbe0b');
+      a.label('🚀 스타 부스터 점프!',360,340,36,'#ffbe0b','#0b132b'); a.label('5단 초고속 상승 · +' + CONFIG.brake.coins,360,384,24,'#00f5d4','#0b132b');
       return;
     }
     if (![MODE.BRAKE_WARNING, MODE.BRAKE_HOLD].includes(s.mode)) return;

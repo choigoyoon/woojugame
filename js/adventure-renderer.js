@@ -55,7 +55,7 @@ export class AdventureRenderer {
     for(let i=0;i<count;i++){const p=this.particles[this.cursor++%this.particles.length],a=i*2.4;Object.assign(p,{x,y,vx:Math.cos(a)*(big?260:155),vy:-140-Math.abs(Math.sin(a))*280,life:750,angle:a,brick:brick&&i%2===0,color:['#fff3ad','#ff7888','#8cffe5','#c3b5ff'][i%4]});}
   }
   effects(){const a=this.art,c=a.c;for(const p of this.particles){if(p.life<=0)continue;c.save();c.globalAlpha=Math.min(1,p.life/200);c.translate(p.x,p.y);c.rotate(p.angle);if(p.brick)a.poly([[0,-8],[7,0],[0,8],[-7,0]],p.color,'#0b132b',2.5);else a.star(0,0,6,p.color);c.restore();}}
-  header(title,canHome){const a=this.art;a.cached('header',[0,0,720,132],()=>{a.rect(0,0,720,130,'#10264ce8');a.text(title,340,65,30,'#fff0c7');a.rect(528,32,170,67,'#091a38',22,'#a2c9f44d');a.coin(557,64,.6);},title);a.home(canHome);a.counter(this.profile.coins,584,66,99,23,'#ffe6a6','left');}
+  header(title,canHome){const a=this.art;a.cached('header',[0,0,720,132],()=>{a.rect(0,0,720,130,'#0b132bf0');a.label(title,340,65,30,'#fff0c7','#0b132b');a.rect(526,30,174,71,'#0b132b',24);a.rect(529,33,168,65,'#162d54',22,'#ffbe0b');a.coin(557,64,.6);},title);a.home(canHome);a.counter(this.profile.coins,584,66,99,23,'#ffbe0b','left');}
   runnerView(canHome,pressed=false){
     const a=this.art,c=a.c,s=this.runner.state,t=this.reduced?0:this.time,d=s.distance;
     const hitReaction=this.wagonHitMs/420;
@@ -195,9 +195,9 @@ export class AdventureRenderer {
         a.ellipse(item.x,807,15,4.5,'#00f5d4');
       }
     }
-    // Render spent/transformed solid blocks that were headbutted
+    // Render spent/transformed solid blocks that were headbutted (hide behind giant Gold-Rush Astro-Bot so no cut-off grey box photobombs!)
     for(const b of this.spentBlocks){
-      if(b.life<=0)continue;
+      if(b.life<=0||(s.goldMs>0&&b.x<350))continue;
       c.save();c.globalAlpha=Math.min(1,b.life/350);
       const by=b.y+b.bumpY;
       a.rect(b.x-76,by-4,152,56,'#47627d',16,'#0b132b');
@@ -412,8 +412,8 @@ export class AdventureRenderer {
     if(this.plaza.ready){
       const pulse=(Math.sin(t/150)+1)*6;
       c.save();c.strokeStyle='#ffe885';c.lineWidth=4;c.beginPath();c.ellipse(captain.x,captain.y,52+pulse,25+pulse*.4,0,0,Math.PI*2);c.stroke();c.restore();
-      a.rect(captain.x-66,captain.y-180,132,30,'#0b132bf0',10,'#ffbe0b');
-      a.label('▼ 엔진 도킹!',captain.x,captain.y-165,15,'#fff3a8','#0b132b');
+      a.rect(captain.x-68,captain.y-202,136,30,'#0b132bf2',10,'#ffbe0b');
+      a.label('▼ 엔진 도킹!',captain.x,captain.y-187,15,'#fff3a8','#0b132b');
     }
     // Fixed tiny scene: sort stable references in reusable scratch storage by floor depth.
     // Keep collected items in the scene so their workbench visibly transforms into an activated green socket!
@@ -499,13 +499,14 @@ export class AdventureRenderer {
       a.star(fx,fy,11,'#ffbe0b');
     }
     this.header('작전 4 · 기차 엔진 조립',canHome);
-    a.rect(33,151,654,137,'#172f57eb',26,'#c5cbf077');
-    a.text(this.plaza.ready?'⚡ 코어 완성! 대장 로봇에게 합체!':`🔧 별빛특급 코어 수송 (STAGE ${s.round+1})`,310,183,24,'#f2edcc');
+    a.rect(30,148,660,143,'#0b132b',28);
+    a.rect(33,151,654,137,'#162d54',26,'#4cc9f0');
+    a.label(this.plaza.ready?'⚡ 코어 완성! 대장 로봇에게 합체!':`🔧 별빛특급 코어 수송 (STAGE ${s.round+1})`,310,183,24,'#fff3b0','#0b132b');
     // During briefing or ♪ remind: show target items. During active movement: show collected cargo slots so working memory is genuinely engaged!
     if(s.phase==='briefing'||s.remindMs>0){
       for(let i=0;i<2;i++){
         const m=this.plaza.mission[i],count=i?s.collectedB:s.collectedA;
-        this.good(m.kind,195+i*260,244,.7);a.text(count+' / '+m.count,264+i*260,239,30,'#bbffe1');
+        this.good(m.kind,195+i*260,244,.7);a.label(count+' / '+m.count,264+i*260,239,30,'#00f5d4','#0b132b');
       }
     }else{
       a.bag(128,240,.65);
@@ -514,17 +515,19 @@ export class AdventureRenderer {
         const got=mi?s.collectedB:s.collectedA;
         for(let n=0;n<m.count;n++){
           const sx=206+slotIdx*72,filled=n<got;
-          a.rect(sx-28,212,56,56,filled?'#215768':'#102342',14,filled?'#8effd8':'#688cb855');
-          if(filled)this.good(m.kind,sx,248,.52);else a.text('?',sx,241,24,'#7aa2c4');
+          a.rect(sx-30,210,60,60,'#0b132b',16);
+          a.rect(sx-27,213,54,54,filled?'#1e40af':'#0f172a',14,filled?'#00f5d4':'#4cc9f055');
+          if(filled)this.good(m.kind,sx,248,.52);else a.label('?',sx,241,24,'#7aa2c4','#0b132b');
           slotIdx++;
         }
       });
-      a.text(`${collectedTotal}/${totalNeeded}`,532,240,26,'#bbffe1');
+      a.label(`${collectedTotal}/${totalNeeded}`,532,240,26,'#00f5d4','#0b132b');
     }
-    a.rect(604,164,62,52,'#435f89',15);a.text('♪',635,191,30,'#e9faff');
+    a.rect(602,162,66,56,'#0b132b',17);
+    a.rect(605,165,60,50,'#1d4ed8',15,'#00f5d4');a.label('♪',635,191,30,'#ffffff','#0b132b');
     if(s.phase==='briefing'||s.remindMs>0){
-      a.rect(54,310,612,236,'#122b53f5',27,'#9dceef');a.text('⚡ 기차 엔진에 조립할 레고 코어 도면!',360,350,27,'#fff0b8');
-      this.plaza.mission.forEach((m,i)=>{this.good(m.kind,220+i*270,411,.95);a.text(m.count+'개',280+i*270,403,29,'#d5ffef');a.text(GOODS[m.kind].name,225+i*270,453,20,'#d8edff');});
+      a.rect(54,310,612,236,'#0b132bf5',27,'#00f5d4');a.label('⚡ 기차 엔진에 조립할 스타 코어 도면!',360,350,27,'#ffbe0b','#0b132b');
+      this.plaza.mission.forEach((m,i)=>{this.good(m.kind,220+i*270,411,.95);a.label(m.count+'개',280+i*270,403,29,'#00f5d4','#0b132b');a.label(GOODS[m.kind].name,225+i*270,453,20,'#d8edff','#0b132b');});
       a.text('가까이 다가가 이름표를 확인하고, 고장·과열 부품은 피해 수거!',360,507,18.5,'#c9c4e8');
     }
     if(s.phase==='retry'){a.rect(110,381,500,135,'#392d5ce8',28);a.text('앗! 고장·과열 부품이야! 도면을 다시 확인하자!',360,435,24,'#ffe0ba');}

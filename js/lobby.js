@@ -128,19 +128,20 @@ export class Lobby {
     this.background();const a=this.art,c=a.c,t=this.motion?.matches?0:this.time;
     const progress=this.profile.data.progress.battle,cleared=progress.cleared;
     const parts=trainParts(this.profile.data);
-    a.label('우주 레고',37,65,49,'#f0fbff','#10243d','left');
-    a.label('특급 오락실',37,124,52,'#ffe4a1','#10243d','left');
-    a.star(314,121,12,'#99e4d2');
-    a.rect(455,47,226,76,'#0b1b32',28,'#7497b95e');a.coin(492,84,.8);a.counter(this.profile.coins,529,85,132,29,'#fff0ac','left');
+    a.label('우주 스타',37,65,49,'#00f5d4','#0b132b','left');
+    a.label('특급 오락실',37,124,52,'#ffbe0b','#0b132b','left');
+    a.star(314,121,15,'#0b132b');a.star(314,121,12,'#00f5d4');
+    a.rect(452,44,232,82,'#0b132b',30);
+    a.rect(455,47,226,76,'#162d54',28,'#ffbe0b');a.coin(492,84,.8);a.counter(this.profile.coins,529,85,132,29,'#ffbe0b','left');
     a.cached('avatar-shelf',[30,169,664,175],()=>{
-      a.rect(37,192,646,140,'#0a182d',31);a.rect(37,180,646,148,a.gradient(37,180,683,328,['#587f97','#293b60']),30,'#a6d4df8c');
-      for(let i=0;i<6;i++)a.stud(92+i*92,181,13,4,4.5,'#4e738c','#b7e6ee');
-      a.ellipse(110,318,62,13,'#0c213e');a.stud(110,312,52,11,7,'#4ea3b4','#b0e6db');
-      a.line([[196,195],[196,310]],'#bce4dc25',2);
+      a.rect(34,177,652,158,'#0b132b',32);
+      a.rect(37,180,646,148,a.gradient(37,180,683,328,['#1e3a8a','#0f172a']),30,'#4cc9f0');
+      a.ellipse(110,316,62,14,'#0b132b');a.ellipse(110,314,54,10,'#00f5d4');
+      a.line([[196,195],[196,310]],'#4cc9f044',2.5);
       // Dedicated recessed Train Dock Bay (386..538) separated from Center Status (206..378) and Shop (548..661)
-      a.rect(386,199,152,107,'#0e233b',22,'#82c4d844');
-      a.line([[398,301],[526,301]],'#6fa8bd66',3);
-      a.rect(548,199,113,107,'#172e49',26,'#acd1dd55');a.bag(604,240,.94);a.text('꾸미기',604,282,20,'#fff1c7');
+      a.rect(386,199,152,107,'#0b132b',22,'#00f5d4');
+      a.line([[398,301],[526,301]],'#00f5d4',3);
+      a.rect(548,199,113,107,'#1d4ed8',26,'#0b132b');a.bag(604,238,.92);a.label('꾸미기',604,284,20,'#fff1c7','#0b132b');
     });
     a.toy(110,304,.72,{time:t,palette:this.profile.palette});
     // Zone B (x: 206..378): Campaign title, truthful status, and 4 non-overlapping operation badges
@@ -199,7 +200,7 @@ export class Lobby {
       a.poly([[x+258,y+321+dy],[x+266,y+327+dy],[x+258,y+333+dy]],'#24465a');
     }
     webglStage.renderLobby(this,CARTRIDGES);
-    const note=this.profile.status==='memory'?'이번 실행에서만 보관':this.profile.status==='update-required'?'새 버전으로 열어 주세요':parts.complete?'★ 4대 레고 파츠가 모두 합체된 별빛특급 대장!':`조립 완료 파츠 ${parts.doneCount}/4 · 각 게임을 깨면 내 기차가 진화해요`;
+    const note=this.profile.status==='memory'?'이번 실행에서만 보관':this.profile.status==='update-required'?'새 버전으로 열어 주세요':parts.complete?'★ 4대 스타 파츠가 모두 합체된 별빛특급 대장!':`조립 완료 파츠 ${parts.doneCount}/4 · 각 게임을 깨면 내 기차가 진화해요`;
     a.text(note,38,1222,18,this.profile.status==='memory'?'#ffbf9e':'#a8c6d6','left',650);
     a.rect(538,1190,145,65,'#25415c',20,'#a6c6da55');a.text('보호자',610,1223,23,'#d0e5e9');
   }

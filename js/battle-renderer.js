@@ -67,15 +67,15 @@ export class BattleRenderer {
       let p=this.impacts.find(p=>p.id===event.id&&p.life>230);
       if(p){p.damage+=event.damage;p.x=point.x;p.y=point.y;}
       else{p=this.impacts[this.impactCursor++%this.impacts.length];Object.assign(p,{id:event.id,x:point.x,y:point.y,damage:event.damage,life:360,boss:event.kind==='boss',chain:event.chain});}
-      // Every hit chips off actual 3D LEGO brick/stud debris so targets visibly react!
+      // Every hit chips off cel-shaded armor shard debris so targets visibly react!
       if(!this.reduced){
         const chip=this.debris[this.debrisCursor++%this.debris.length],ang=Math.random()*Math.PI*2;
-        Object.assign(chip,{x:point.x,y:point.y,vx:Math.cos(ang)*145,vy:-120-Math.random()*110,size:11+Math.random()*8,angle:ang,spin:(Math.random()-.5)*11,life:520,color:event.kind==='enemy'?'#ee6679':event.kind==='boss'?'#ffd86b':'#78f2e6'});
+        Object.assign(chip,{x:point.x,y:point.y,vx:Math.cos(ang)*145,vy:-120-Math.random()*110,size:11+Math.random()*8,angle:ang,spin:(Math.random()-.5)*11,life:520,color:event.kind==='enemy'?'#ff2a6d':event.kind==='boss'?'#ffbe0b':'#00f5d4'});
       }
     }
     if(['explode','armor-break','boss-slam'].includes(event.type)){
       this.totalBreaks+=1;this.kick=event.boss?240:event.type==='explode'?120:55;
-      const colors=event.kind==='enemy'?['#c35787','#6c466e','#ffdb95']:event.kind==='crate'?['#44d8ef','#1366b4','#b7ffff']:['#ef9b53','#a84055','#ffe19a'];
+      const colors=event.kind==='enemy'?['#ff2a6d','#7209b7','#ffbe0b']:event.kind==='crate'?['#00f5d4','#3b82f6','#ffffff']:['#ff2a6d','#ffbe0b','#00f5d4'];
       const count=this.reduced?3:event.boss?24:event.type==='armor-break'?5:12;
       for(let i=0;i<count;i++){
         const angle=Math.PI*2*i/count,speed=(event.boss?250:140)+Math.random()*180,p=this.debris[this.debrisCursor++%this.debris.length];
@@ -178,16 +178,15 @@ export class BattleRenderer {
     const a=this.art,c=a.c;
     for(let i=0;i<2;i++){
       const p=this.project(i===0?-.55:.55,gate.z),s=p.s,w=261*s,h=213*s,x=p.x-w/2,y=p.y-h;
-      const blue=i===gate.blueSide,bright=blue?'#79e7ff':'#ffadb3',base=blue?'#279fdf':'#e86b83';
+      const blue=i===gate.blueSide,bright=blue?'#00f5d4':'#ff2a6d',base=blue?'#0284c7':'#e11d48';
       a.ellipse(p.x,p.y+5*s,w*.56,16*s,'#17346328');
-      a.rect(x,y,w,h,blue?'#44c6f132':'#ff739531',8*s,bright);
-      a.rect(x-7*s,y,14*s,h,base,4*s);a.rect(x+w-7*s,y,14*s,h,base,4*s);
-      a.rect(x-10*s,y-5*s,w+20*s,39*s,base,7*s);a.rect(x-10*s,y-5*s,w+20*s,5*s,bright,2*s);
-      for(const dx of[-72,0,72])a.stud(p.x+dx*s,y-6*s,16*s,5.5*s,6*s,base,bright);
-      a.rect(x+9*s,y+44*s,w-18*s,80*s,blue?'#133c77eb':'#6f284feb',10*s);
-      a.label(gate.options[i].text,p.x,y+85*s,Math.max(18,49*s),'#fff8e7',blue?'#122d62':'#592043');
-      c.save();c.globalAlpha=.68;
-      a.poly([[p.x-22*s,p.y-56*s],[p.x,p.y-34*s],[p.x+22*s,p.y-56*s],[p.x+22*s,p.y-43*s],[p.x,p.y-21*s],[p.x-22*s,p.y-43*s]],bright);c.restore();
+      a.rect(x,y,w,h,blue?'#00f5d432':'#ff2a6d31',10*s,'#0b132b');
+      a.rect(x-8*s,y,16*s,h,base,5*s,'#0b132b');a.rect(x+w-8*s,y,16*s,h,base,5*s,'#0b132b');
+      a.rect(x-12*s,y-6*s,w+24*s,42*s,base,9*s,'#0b132b');
+      a.rect(x+9*s,y+44*s,w-18*s,82*s,'#0b132bf0',12*s,bright);
+      a.label(gate.options[i].text,p.x,y+85*s,Math.max(18,49*s),'#fff8e7','#0b132b');
+      c.save();c.globalAlpha=.85;
+      a.poly([[p.x-22*s,p.y-56*s],[p.x,p.y-34*s],[p.x+22*s,p.y-56*s],[p.x+22*s,p.y-43*s],[p.x,p.y-21*s],[p.x-22*s,p.y-43*s]],bright,'#0b132b',2*s);c.restore();
     }
   }
   supply(entity) {
@@ -269,54 +268,29 @@ export class BattleRenderer {
     else wagon(a,0,trainY,1.6,this.time,round===2);
     if(m.locksBroken<2)for(const side of[-1,1])if(side>0||m.locksBroken===0)a.line([[side*86,-248],[side*86,trainY-115]],'#00f5d4',5);
     a.rect(-154,-480,308,38,'#0b132bf2',14,m.weakMs?'#00f5d4':'#ffbe0b');
-    a.text(m.locksBroken<2?'레고 연결 볼트  '+(2-m.locksBroken)+'개 남음':m.weakMs?'⚡ 장갑 파손! 본체 집중 사격!':stage>=2?'🔥 보스 코어 과열 직전!':'볼트 해제 완료! 본체를 밀어내!',0,-461,20,m.weakMs?'#00f5d4':'#fff2bd');
+    a.text(m.locksBroken<2?'플라즈마 볼트  '+(2-m.locksBroken)+'개 남음':m.weakMs?'⚡ 장갑 파손! 본체 집중 사격!':stage>=2?'🔥 보스 코어 과열 직전!':'볼트 해제 완료! 본체를 밀어내!',0,-461,20,m.weakMs?'#00f5d4':'#fff2bd');
     c.restore();
   }
   barrel(entity) {
     const a=this.art,c=a.c,p=this.project(entity.x,entity.z),boss=entity.kind==='boss';
     const bossStyle=this.game.campaign?this.game.round.theme:2;
-    const bossColors=[['#126d88','#40c5d4','#245572'],['#8c4151','#ee9567','#8b4059'],['#68336b','#b75d93','#4c2e62']][bossStyle];
+    const bossColors=[['#1e3a8a','#00f5d4','#0b132b'],['#4c1d95','#ff2a6d','#0b132b'],['#1f2d50','#ffbe0b','#0b132b']][bossStyle];
     const s=p.s,w=(boss?430:184)*s,h=(boss?340:192)*s,x=p.x-w/2,y=p.y-h;
     const impact=entity.hitMs/CONFIG.battle.hitMs;
     const dent=this.reduced?0:Math.sin(impact*Math.PI)*.15;
     c.save();c.translate(p.x,p.y);c.rotate(this.reduced?0:Math.sin(impact*9)*impact*.045);c.scale(1+dent,1-dent*.7);c.translate(-p.x,-p.y);
     a.ellipse(p.x,p.y+8*s,w*.61,19*s,'#14304748');
-    a.rect(x,y+10*s,w,h-10*s,a.gradient(x,y,x+w,y,boss?bossColors:['#b76542','#eea766','#ae5b43']),20*s);
-    a.rect(x+w*.13,y+31*s,w*.065,h-45*s,'#fff6df35',5*s);a.rect(x+w*.88,y+32*s,w*.035,h-46*s,'#16234330',4*s);
-    a.ellipse(p.x,y+12*s,w/2,23*s,boss?bossColors[1]:'#ffce8d');a.ellipse(p.x,y+9*s,w*.39,15*s,boss?bossColors[0]:'#d18850');
-    a.stud(p.x,y+7*s,w*.22,9*s,7*s,boss?bossColors[0]:'#c9743d',boss?bossColors[1]:'#ffe5a8');
+    a.rect(x-4*s,y+6*s,w+8*s,h-4*s,'#0b132b',24*s);
+    a.rect(x,y+10*s,w,h-10*s,a.gradient(x,y,x+w,y,boss?bossColors:['#1e293b','#334155','#0f172a']),20*s,boss?bossColors[1]:'#4cc9f0');
     for(const dy of [h*.26,h*.79]){
-      a.rect(x-5*s,y+dy,w+10*s,14*s,boss?'#452a4c':'#4c647a',4*s);
-      a.rect(x-4*s,y+dy,w+8*s,4*s,boss?'#ffce8a':'#c4d9db',2*s);
+      a.rect(x-5*s,y+dy,w+10*s,14*s,boss?'#ff2a6d':'#00f5d4',4*s,'#0b132b');
     }
     if(entity.explosive){
-      a.rect(x+9*s,y+h*.64,w-18*s,20*s,'#ffda74',2);
-      for(let i=0;i<5;i++)a.poly([[x+(12+i*31)*s,y+h*.64],[x+(25+i*31)*s,y+h*.64],[x+(13+i*31)*s,y+h*.64+20*s],[x+i*31*s,y+h*.64+20*s]],'#5e3851');
+      a.rect(x+9*s,y+h*.64,w-18*s,20*s,'#ffbe0b',4*s,'#0b132b');
     }
-    if(entity.crack>0){
-      const crack=(side,offset)=>{
-        const points=[[p.x+side*w*.42,y+h*.10],[p.x+side*w*.25,y+h*.23],[p.x+side*w*.36,y+h*.32],[p.x+side*w*.20,y+h*.42]];
-        a.line(points.map(([px,py])=>[px,py+offset]),'#642b3d',6*s);a.line(points.map(([px,py])=>[px+2*s,py+offset]),'#ffe291',2*s);
-      };crack(-1,0);if(entity.crack>1)crack(1,h*.37);
-    }
-    if(impact>0){c.save();c.globalAlpha=impact*.35;a.rect(x,y+12*s,w,h-12*s,'#fffce3',18*s);c.restore();}
-    a.rect(x+w*.12,y+h*.36,w*.76,h*.32,boss?'#502641':'#52413e',9*s,'#ffe7b65c');
-    a.text(Math.ceil(entity.hp),p.x,y+h*.52,Math.max(18,(boss?78:62)*s)*(1+impact*.13),'#fff1c4');
-    a.rect(x+w*.1,y+h*.87,w*.8,7*s,'#263951',3*s);a.rect(x+w*.1,y+h*.87,w*.8*Math.max(0,entity.hp/entity.maxHp),7*s,'#ffdf74',3*s);
-    if(boss){
-      if(bossStyle===0){a.scaledBlock(p.x-83*s,y-50*s,s,166,45,16,'#234664','#a2f8e7','#14324d');a.star(p.x,y-28*s,17*s,'#ffe89a');}
-      else if(bossStyle===1){for(const side of[-1,1]){a.line([[p.x+side*70*s,y],[p.x+side*100*s,y-65*s]],'#ffd48f',12*s);a.ellipse(p.x+side*100*s,y-65*s,27*s,27*s,'#ffe5a2');a.ellipse(p.x+side*100*s,y-65*s,11*s,11*s,'#65375a');}}
-      else a.poly([[p.x-72*s,y],[p.x-92*s,y-47*s],[p.x-37*s,y-24*s],[p.x,y-66*s],[p.x+38*s,y-24*s],[p.x+91*s,y-47*s],[p.x+72*s,y]],'#ffe486','#ad6046',2);
-      const warning=this.game.state.attack?.phase==='warning';
-      for(const side of[-1,1]){
-        const armY=y+h*.33-(warning?Math.sin(this.time/90)*12*s+38*s:0);
-        a.scaledBlock(p.x+side*(w*.5+17*s)-24*s,armY,s,47,340*.49,12,'#79354c','#cb6d71','#512c49');
-        const fist=bossStyle===2?92:64;
-        a.scaledBlock(p.x+side*(w*.5+17*s)-fist/2*s,armY+h*.39,s,fist,52,12,entity.rage?'#ff8d63':bossColors[1],'#ffe1a1','#673246');
-        a.rect(p.x+side*65*s-29*s,y+h*.17,58*s,20*s,entity.rage?'#ffed8d':'#9afff3',4*s);
-        a.rect(p.x+side*65*s-5*s,y+h*.17,10*s,20*s,'#4a2849',1);
-      }
-    }
+    a.rect(x+w*.12,y+h*.36,w*.76,h*.32,'#0b132b',10*s,boss?bossColors[1]:'#ffbe0b');
+    a.label(Math.ceil(entity.hp),p.x,y+h*.52,Math.max(18,(boss?78:62)*s)*(1+impact*.13),'#fff1c4','#0b132b');
+    a.rect(x+w*.1,y+h*.87,w*.8,8*s,'#0b132b',4*s);a.rect(x+w*.1,y+h*.87,w*.8*Math.max(0,entity.hp/entity.maxHp),8*s,'#ffbe0b',4*s);
     c.restore();
   }
   crate(entity) {
@@ -404,19 +378,20 @@ export class BattleRenderer {
       if(i===Math.floor(Math.min(5,count)/2))a.toy(p.x,p.y-bob,scale*1.1,{time:this.time,run:true,back:true,turn:this.squadLean*3,jump:s.recoilMs/65*.28,palette:this.profile.palette});
       else c.drawImage(this.troopSprites[phase],p.x-104*scale,p.y-bob-210*scale,208*scale,224*scale);
       if(this.glow>0)a.star(p.x+39*scale,p.y-bob-156*scale,10*scale,'#fff4a5');
-      const powered=s.powerMs>0,weaponId=s.weapon??'pulse',wColor=powered?'#29dce3':CONFIG.campaign.weapons[weaponId]?.color??'#2e4b66';
-      a.block(p.x+16*p.s,p.y-57*p.s+s.recoilMs/65*4,(weaponId==='spread'?20:14)*p.s,(weaponId==='pierce'?36:29)*p.s,4*p.s,wColor,powered?'#c7fff3':'#b4dfe4','#173550');
-      if(weaponId==='arc')a.ellipse(p.x+23*p.s,p.y-60*p.s,7*p.s,7*p.s,'#96f7ff');
+      const powered=s.powerMs>0,weaponId=s.weapon??'pulse',wColor=powered?'#00f5d4':CONFIG.campaign.weapons[weaponId]?.color??'#ffbe0b';
+      const gx=p.x+16*p.s,gy=p.y-57*p.s+s.recoilMs/65*4,gw=(weaponId==='spread'?20:14)*p.s,gh=(weaponId==='pierce'?36:29)*p.s;
+      a.rect(gx-2*p.s,gy-2*p.s,gw+4*p.s,gh+4*p.s,'#0b132b',6*p.s);
+      a.rect(gx,gy,gw,gh,wColor,4*p.s);
+      a.ellipse(gx+gw*.5,gy+4*p.s,gw*.35,gw*.35,'#ffffff');
       if(s.recoilMs>34&&i<Math.min(5,count)){
-        a.star(p.x+23*p.s,p.y-66*p.s,(powered?23:17)*p.s,powered?'#81fff5':'#ffca66');
-        a.star(p.x+23*p.s,p.y-66*p.s,11*p.s,'#fffde0');
-        a.ellipse(p.x+23*p.s,p.y-62*p.s,4*p.s,7*p.s,'#fff');
+        a.star(p.x+23*p.s,p.y-66*p.s,(powered?23:17)*p.s,powered?'#00f5d4':'#ffbe0b');
+        a.star(p.x+23*p.s,p.y-66*p.s,11*p.s,'#ffffff');
       }
       c.restore();
     }
     const center=this.project(s.x,CONFIG.battle.playerZ);
-    if(this.game.harbor?.state.shields){a.ellipse(center.x,center.y-45,105,100,'#92f7ff1c','#b4fff2');a.rect(center.x+58,center.y+23,62,34,'#155b79',15,'#b4fff2');a.text('◆ '+this.game.harbor.state.shields,center.x+89,center.y+41,21,'#d2fff4');}
-    a.rect(center.x-44,center.y+20,88,39,'#153453dc',18,'#b8fff56b');a.text(s.squad,center.x,center.y+40,s.squad>999?21:28,'#eaffda');
+    if(this.game.harbor?.state.shields){a.ellipse(center.x,center.y-45,105,100,'#00f5d422','#00f5d4');a.rect(center.x+58,center.y+23,62,34,'#0b132b',15,'#00f5d4');a.label('◆ '+this.game.harbor.state.shields,center.x+89,center.y+41,21,'#00f5d4','#0b132b');}
+    a.rect(center.x-44,center.y+20,88,39,'#0b132bf0',18,'#00f5d4');a.label(s.squad,center.x,center.y+40,s.squad>999?21:28,'#ffffff','#0b132b');
   }
   effects() {
     const a=this.art,c=a.c;
@@ -458,11 +433,13 @@ export class BattleRenderer {
     }else{
       c.save();c.globalAlpha=attack.remainingMs/CONFIG.battle.bossSlamMs;
       const t=1-c.globalAlpha;const front=this.project(attack.lane===2?0:attack.lane===0?-.55:.55,2.2);
-      // Physical Boss Crane Claw smashing down onto the bridge deck!
-      a.ellipse(front.x,front.y,55+t*170,20+t*65,'#ff6e5499');
-      a.block(front.x-48*front.s,front.y-115*front.s,96*front.s,82*front.s,16*front.s,'#d95b43','#ffd29e','#782834');
-      a.line([[front.x-42*front.s,front.y-33*front.s],[front.x-22*front.s,front.y+8*front.s]],'#ffe39e',12*front.s);
-      a.line([[front.x+42*front.s,front.y-33*front.s],[front.x+22*front.s,front.y+8*front.s]],'#ffe39e',12*front.s);
+      // Cel-Shaded Dreadnought Plasma Pincer Claw smashing down onto the bridge deck (no brown box!)
+      a.ellipse(front.x,front.y,55+t*170,20+t*65,'#ff2a6d88');
+      a.poly([[front.x-54*front.s,front.y-118*front.s],[front.x+54*front.s,front.y-118*front.s],[front.x+42*front.s,front.y-36*front.s],[front.x-42*front.s,front.y-36*front.s]],'#1f2d50','#0b132b',5*front.s);
+      a.poly([[front.x-44*front.s,front.y-42*front.s],[front.x-16*front.s,front.y+10*front.s],[front.x-22*front.s,front.y-42*front.s]],'#ff2a6d','#0b132b',3.5*front.s);
+      a.poly([[front.x+44*front.s,front.y-42*front.s],[front.x+16*front.s,front.y+10*front.s],[front.x+22*front.s,front.y-42*front.s]],'#ff2a6d','#0b132b',3.5*front.s);
+      a.ellipse(front.x,front.y-78*front.s,16*front.s,16*front.s,'#0b132b');
+      a.ellipse(front.x,front.y-78*front.s,11*front.s,11*front.s,'#ffbe0b');
       c.restore();
     }
   }
@@ -476,53 +453,55 @@ export class BattleRenderer {
   hud(canHome) {
     const a=this.art,c=a.c,s=this.game.state;
     a.cached('hud',[0,0,720,240],()=>{
-      const c=a.c;c.fillStyle=a.gradient(0,0,0,240,['#122b5be8','#122b5b00']);c.fillRect(0,0,720,240);
-      a.text('작전 1 · 기차 탈환 배틀',403,62,29,'#fff2c7');
-      a.rect(30,125,274,86,'#122d54df',25,'#96e9fb59');a.toy(67,194,.28,{time:0,palette:this.profile.palette});
-      a.rect(417,125,274,86,'#122d54df',25,'#96e9fb59');a.coin(459,168,.9);
+      const c=a.c;c.fillStyle=a.gradient(0,0,0,240,['#0b132bf0','#0b132b00']);c.fillRect(0,0,720,240);
+      a.label('작전 1 · 기차 탈환 배틀',403,62,29,'#fff2c7','#0b132b');
+      a.rect(28,123,278,90,'#0b132b',27);
+      a.rect(31,125,272,84,'#162d54',24,'#00f5d4');a.toy(67,194,.28,{time:0,palette:this.profile.palette});
+      a.rect(415,123,278,90,'#0b132b',27);
+      a.rect(418,125,272,84,'#162d54',24,'#ffbe0b');a.coin(459,168,.9);
     },this.spritePalette);
-    a.home(canHome);a.text(s.squad,184,168,43,'#c8ffed');a.counter(this.profile.coins,566,168,206,36,'#ffe8a5');
-    a.label(this.game.campaign?'하늘 항구  '+(s.round+1)+' / 3  ·  '+this.game.round.title:'WAVE '+s.wave,360,244,19,'#fff4d4','#18375b');
+    a.home(canHome);a.label(s.squad,184,168,43,'#00f5d4','#0b132b');a.counter(this.profile.coins,566,168,206,36,'#ffbe0b');
+    a.label(this.game.campaign?'하늘 항구  '+(s.round+1)+' / 3  ·  '+this.game.round.title:'WAVE '+s.wave,360,244,19,'#fff4d4','#0b132b');
     const boss=this.game.entities.find(entity=>entity.kind==='boss');
-    a.rect(142,274,436,9,'#143b62a6',5);a.rect(142,274,436*(boss?boss.hp/boss.maxHp:Math.min(1,s.waveMs/this.game.rules.bossAtMs)),9,boss?'#ff8e8d':'#b2f2e2',5);
+    a.rect(140,272,440,13,'#0b132b',6);a.rect(142,274,436*(boss?boss.hp/boss.maxHp:Math.min(1,s.waveMs/this.game.rules.bossAtMs)),9,boss?'#ff2a6d':'#00f5d4',5);
     if(!boss&&this.game.campaign){
       const route=Math.min(1,s.waveMs/this.game.rules.bossAtMs),at=CONFIG.campaign.sectionFractions;
-      for(let i=0;i<=at.length;i++){const point=at[i]??1,x=142+436*point;a.ellipse(x,278,7,7,point<=route?'#b8ffdf':'#204363');}
+      for(let i=0;i<=at.length;i++){const point=at[i]??1,x=142+436*point;a.ellipse(x,278,7,7,point<=route?'#00f5d4':'#0b132b');}
       const section=at.reduce((found,point,index)=>route>=point?index:found,0);
-      a.label(CONFIG.campaign.sectionNames[section]+' · 보스까지 '+Math.max(0,Math.ceil((this.game.rules.bossAtMs-s.waveMs)/1000))+'초',360,308,18,'#d8f6e9','#18375b');
+      a.label(CONFIG.campaign.sectionNames[section]+' · 보스까지 '+Math.max(0,Math.ceil((this.game.rules.bossAtMs-s.waveMs)/1000))+'초',360,308,18,'#d8f6e9','#0b132b');
     }
     if(boss){
       const locksBroken=this.game.harbor?.state.locksBroken??2;
-      a.label(this.game.harbor?['1-1 철통 집게 크레인','1-2 쌍둥이 자석 집게','1-3 항구 수호 거인'][s.round]:this.game.campaign?this.game.round.boss+(boss.rage?' !':''):boss.rage?'BOSS • RAGE':'BOSS',360,310,22,boss.rage?'#ffbd87':'#fff1d3','#18375b');
+      a.label(this.game.harbor?['1-1 철통 집게 크레인','1-2 쌍둥이 자석 집게','1-3 항구 수호 거인'][s.round]:this.game.campaign?this.game.round.boss+(boss.rage?' !':''):boss.rage?'BOSS • RAGE':'BOSS',360,310,22,boss.rage?'#ffbe0b':'#fff1d3','#0b132b');
       if(this.game.harbor){
         for(const [idx,lx]of[[0,118],[1,602]]){
           const intact=locksBroken<=idx;
-          a.rect(lx-18,266,36,24,intact?'#d98648':'#233c54',8,intact?'#fff0a8':'#637d96');
-          a.text(intact?'🔩':'✓',lx,278,15,intact?'#fff8d6':'#95ffd8');
+          a.rect(lx-18,266,36,24,intact?'#ff9f1c':'#0b132b',8,intact?'#0b132b':'#00f5d4');
+          a.text(intact?'🔩':'✓',lx,278,15,intact?'#fff8d6':'#00f5d4');
         }
       }
     }
     const mission=this.game.harbor?.state;
     if(mission?.signalMs>0&&s.bannerMs<=0){
-      a.rect(64,337,592,62,'#133450f0',22,'#9bdcc9');
+      a.rect(64,337,592,62,'#0b132bf0',22,'#00f5d4');
       picoToy(a,106,389,.38,this.time);
-      a.text('삐코 무전 · '+mission.signal,382,368,23,'#fff1c4');
+      a.label('삐코 무전 · '+mission.signal,382,368,23,'#fff1c4','#0b132b');
     }
     if(s.bannerMs>0){
       c.save();c.globalAlpha=Math.min(1,s.bannerMs/260);
       const clear=s.banner==='CLEAR!';
-      a.rect(clear?133:220,340,clear?454:280,clear?123:95,'#142d55e8',27,clear?'#ffe791':'#95ffe0');
-      a.text(s.banner,360,clear?383:374,clear?53:48,clear?'#ffe68e':s.gateResult?.change>=0?'#9dffe3':'#ffc5b1');
-      if(clear){a.coin(310,430,.6);a.text('+'+CONFIG.battle.bossCoins,376,430,28,'#fff4ac');}
-      else if(s.gateResult)a.text(s.gateResult.change>=0?'레고 지원군 합류!':'부대를 지켜!',360,413,22,'#fff5dd');
+      a.rect(clear?133:220,340,clear?454:280,clear?123:95,'#0b132bf2',27,clear?'#ffbe0b':'#00f5d4');
+      a.label(s.banner,360,clear?383:374,clear?53:48,clear?'#ffbe0b':s.gateResult?.change>=0?'#00f5d4':'#ff2a6d','#0b132b');
+      if(clear){a.coin(310,430,.6);a.label('+'+CONFIG.battle.bossCoins,376,430,28,'#fff4ac','#0b132b');}
+      else if(s.gateResult)a.label(s.gateResult.change>=0?'아스트로 지원군 합류!':'부대를 지켜!',360,413,22,'#fff5dd','#0b132b');
       c.restore();
     }
-    if(this.chainMs>0&&this.chain>1){c.save();c.globalAlpha=Math.min(1,this.chainMs/220);a.text('LEGO CHAIN ×'+this.chain,360,1062,28,'#18345c');a.text('LEGO CHAIN ×'+this.chain,360,1059,26,'#fff2ad');c.restore();}
+    if(this.chainMs>0&&this.chain>1){c.save();c.globalAlpha=Math.min(1,this.chainMs/220);a.label('STAR CHAIN ×'+this.chain,360,1059,28,'#ffbe0b','#0b132b');c.restore();}
     const powered=s.powerMs>0,charge=powered?s.powerMs/CONFIG.battle.powerMs:s.charge/CONFIG.battle.chargeKills;
-    a.rect(200,1090,320,55,powered?'#11566bea':'#17314bdf',20,powered?'#8bfff2':'#88cadd66');
-    a.poly([[224,1100],[213,1118],[224,1118],[217,1134],[239,1111],[226,1111]],powered?'#c8fff5':'#ffd879');
-    a.text(powered?(this.powerIntro>0?'MEGA LEGO BURST!':'MEGA LEGO BURST'):(CONFIG.campaign.weapons[s.weapon]?.name??'BLAST')+' · 피버 '+s.charge+'/'+CONFIG.battle.chargeKills,376,1109,this.powerIntro>0?22:18,powered?'#c8fff5':'#ffe7aa');
-    a.rect(250,1126,242,7,'#092f49',4);a.rect(250,1126,242*charge,7,powered?'#7effed':'#ffd373',4);
+    a.rect(200,1090,320,55,'#0b132bf0',20,powered?'#00f5d4':'#ffbe0b');
+    a.poly([[224,1100],[213,1118],[224,1118],[217,1134],[239,1111],[226,1111]],powered?'#00f5d4':'#ffbe0b');
+    a.label(powered?(this.powerIntro>0?'HYPER STAR BURST!':'HYPER STAR BURST'):(CONFIG.campaign.weapons[s.weapon]?.name??'BLAST')+' · 피버 '+s.charge+'/'+CONFIG.battle.chargeKills,376,1109,this.powerIntro>0?22:18,powered?'#00f5d4':'#ffe7aa','#0b132b');
+    a.rect(250,1126,242,7,'#1e293b',4);a.rect(250,1126,242*charge,7,powered?'#00f5d4':'#ffbe0b',4);
     // The drag cue is an icon; the playfield remains one continuous touch surface.
     a.cached('drag-cue',[210,1156,300,78],()=>{
     a.rect(213,1159,294,71,'#143451b3',36,'#b2eeed4d');
@@ -552,7 +531,7 @@ export class BattleRenderer {
       if(done)a.star(x,189,19,'#95643d');else a.text(i+1,x,189,25,'#96b8de');
       a.text('1-'+(i+1),x,244,18,done?'#ffedc4':'#9cb9da');
     }
-    a.text(complete?'하늘 항구 탈환 완료!':'1-'+(s.round+1)+' 레고 파츠 탈환!',360,330,43,'#fff2c2');
+    a.text(complete?'하늘 항구 탈환 완료!':'1-'+(s.round+1)+' 별빛특급 파츠 탈환!',360,330,43,'#fff2c2');
     a.text(this.game.harbor?CONFIG.harbor.recovered[s.round]:complete?'항구 배지를 획득했어':this.game.round.title,360,385,25,'#b9e9e5');
     a.ellipse(360,582,165,36,'#8270bb');a.stud(360,572,148,30,10,'#7c68b8','#c8b4f7');
     if(this.game.harbor){

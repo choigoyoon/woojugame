@@ -582,42 +582,6 @@ export class BattleRenderer {
   render(canHome) {
     if(this.game.campaign&&this.game.state.phase!=='combat'){this.result(canHome);return;}
     const a=this.art,c=a.c;
-    if(webglStage.gl){
-      // 100% Full-3D WebGL2 Highway Mecha Squad Shooter Viewport!
-      c.fillStyle=a.gradient(0,0,0,1280,['#071126','#0f2942','#081d38']);
-      c.fillRect(0,0,720,1280);
-      a.ellipse(580,220,54,54,'#fff3b033');
-      a.ellipse(580,220,36,36,'#fff8d6');
-      webglStage.renderBattle(this);
-      // 3D-Projected Holographic Gate Math & Enemy/Boss HP Badges
-      for(const g of webglStage.projectedGates||[]){
-        const w=Math.max(76,120*g.s),h=Math.max(34,54*g.s);
-        a.rect(g.x-w/2,g.y-h/2,w,h,g.blue?'#06284de6':'#4c0b28e6',12,'#ffffff88');
-        a.label(g.text,g.x,g.y,Math.max(18,34*g.s),'#ffffff','#0b132b');
-      }
-      for(const e of webglStage.projectedEntities||[]){
-        if(e.kind==='boss'){
-          a.rect(e.x-135,e.y-46,270,34,'#0b132bf0',12,'#00f5d4');
-          a.label('⚡ 드레드노트 타이탄 · HP '+e.hp,e.x,e.y-29,18,'#fff8d6','#0b132b');
-          a.rect(e.x-110,e.y-6,220,10,'#0b132b',5);
-          a.rect(e.x-110,e.y-6,220*e.ratio,10,e.ratio<.35?'#ff2a6d':'#00f5d4',5);
-        }else{
-          const bw=Math.max(38,54*e.s);
-          a.rect(e.x-bw/2,e.y-18,bw,8,'#0b132b',4);
-          a.rect(e.x-bw/2,e.y-18,bw*e.ratio,8,e.ratio<.45?'#ff2a6d':'#ffbe0b',4);
-          a.label(e.hp,e.x,e.y-32,Math.max(15,22*e.s),'#ffffff','#0b132b');
-        }
-      }
-      if(webglStage.projectedSquad?.visible){
-        const sq=webglStage.projectedSquad;
-        a.rect(sq.x-42,sq.y+12,84,34,'#0b132be6',16,'#00f5d4');
-        a.label(this.game.state.squad+'기',sq.x,sq.y+29,20,'#00f5d4','#0b132b');
-      }
-      this.effects();
-      this.hud(canHome);
-      this.lootEffects();
-      return;
-    }
     this.ocean();c.save();
     if(!this.reduced&&this.kick>0){const scale=1+Math.min(1,this.kick/180)*.018;c.translate(360,760);c.scale(scale,scale);c.translate(-360,-760);}
     if(!this.reduced&&this.game.state.shakeMs>0){const amp=Math.min(7,this.game.state.shakeMs/40);c.translate(Math.sin(this.time*.11)*amp,Math.cos(this.time*.13)*amp*.6);}
@@ -626,10 +590,10 @@ export class BattleRenderer {
     for(const {object,kind} of objects){if(kind==='gate')this.gate(object);else if(kind==='enemy')this.enemy(object);else if(kind==='crate')this.crate(object);else if(kind==='supply')this.supply(object);else if(kind==='lock'){const p=this.project(object.x,object.z,48);lockToy(a,p.x,p.y,p.s,this.time,object.hitMs/CONFIG.battle.hitMs,object.hp,object.maxHp);}else if(kind==='boss'&&this.game.harbor)this.crane(object);else if(object.cargo){const p=this.project(object.x,object.z);cargoToy(a,p.x,p.y,p.s,object);}else this.barrel(object);}
     for(const bullet of this.game.bullets){
       const p=this.project(bullet.x,bullet.z,56),tail=this.project(bullet.x,bullet.z-(bullet.powered?2.1:1.45),56);
-      const wColor=bullet.powered?'#61ffe6':CONFIG.campaign.weapons[bullet.weapon]?.color??'#ffb43e';
-      a.line([[tail.x,tail.y],[p.x,p.y]],bullet.powered?'#54ffe855':'#ffbb5855',Math.max(8,26*p.s));
+      const wColor=bullet.powered?'#00f5d4':CONFIG.campaign.weapons[bullet.weapon]?.color??'#ffbe0b';
+      a.line([[tail.x,tail.y],[p.x,p.y]],bullet.powered?'#00f5d466':'#ffbe0b66',Math.max(8,26*p.s));
       a.line([[tail.x,tail.y],[p.x,p.y]],wColor,Math.max(4,(bullet.weapon==='pierce'?18:13)*p.s));
-      a.line([[tail.x,tail.y],[p.x,p.y]],'#fffde0',Math.max(2,6*p.s));
+      a.line([[tail.x,tail.y],[p.x,p.y]],'#ffffff',Math.max(2,6*p.s));
       a.ellipse(p.x,p.y,8*p.s,11*p.s,wColor);
       a.ellipse(p.x,p.y,4.5*p.s,6.5*p.s,'#ffffff');
     }

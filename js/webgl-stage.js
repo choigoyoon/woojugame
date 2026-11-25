@@ -513,7 +513,14 @@ export class OGLStage {
    * MODE 1: Full-3D Highway Mecha Squad Shooter (`renderBattle`)
    * Camera positioned behind the 3D squad looking down the 3D suspension bridge over a 3D ocean!
    */
-  renderBattle(view) {
+  renderBattle() {}
+  renderStairs() {}
+  renderRunner() {}
+  renderPlaza() {}
+  renderLobby() {}
+  renderJuice() {}
+
+  oldRenderBattle(view) {
     const c = view.art.c;
     const game = view.game;
     const s = game.state;

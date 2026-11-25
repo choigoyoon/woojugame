@@ -94,20 +94,17 @@ export class Juice {
     c.save();c.beginPath();c.rect(0,132,720,1148);c.rect(tx-28,ty-28,56,56);c.clip();
     for(const p of this.trails){if(p.life<=0)continue;c.save();c.globalAlpha=.11*p.life/210;if(p.sprite)c.drawImage(p.sprite,p.x-115*p.scale,p.y-215*p.scale,230*p.scale,230*p.scale);else a.toy(p.x,p.y,p.scale,{palette:this.profile.palette,run:true,time:this.time-90});c.restore();}
     for(const p of this.rings){if(p.life<=0)continue;const t=1-p.life/p.duration,r=15+t*(p.big?165:65);c.globalAlpha=(1-t)*.7;c.strokeStyle='#fff6c1';c.lineWidth=(p.big?8:3.5)*(1-t)+1;c.beginPath();c.ellipse(p.x,p.y,r,r*.52,0,0,Math.PI*2);c.stroke();}
-    // Render 3D Rigid-Body LEGO Bricks & Studs bouncing on the floor plane with ground shadows & OGL WebGL 3D Meshes!
+    // Render 2D Cel-Shaded Bouncing LEGO Bricks & Studs on the floor plane with ground shadows!
     for(const b of this.physics.bodies){
       if(b.life<=0)continue;
       c.save();c.globalAlpha=Math.min(1,b.life/180);
       const heightAboveFloor=Math.max(0,b.floorY-b.y),shadowScale=Math.max(.35,1-heightAboveFloor/260);
       a.ellipse(b.x,b.floorY+3,b.w*.55*shadowScale,4.5*shadowScale,'#07152b55');
-      if(!webglStage.gl){
-        c.translate(b.x,b.y);c.rotate(b.angle);
-        if(b.kind==='stud')a.stud(0,0,b.w*.55,b.h*.45,b.d,b.front,b.top);
-        else a.block(-b.w/2,-b.h/2,b.w,b.h,b.d,b.front,b.top,b.side);
-      }
+      c.translate(b.x,b.y);c.rotate(b.angle);
+      if(b.kind==='stud')a.stud(0,0,b.w*.55,b.h*.45,b.d,b.front,b.top);
+      else a.block(-b.w/2,-b.h/2,b.w,b.h,b.d,b.front,b.top,b.side);
       c.restore();
     }
-    webglStage.renderJuice(this);
     for(const p of this.sparks){if(p.life<=0)continue;c.globalAlpha=Math.min(1,p.life/180);a.star(p.x,p.y,p.size*(.7+.3*Math.sin(this.time/70)),p.size>4?'#fff2ad':'#bdfde9');}
     for(const p of this.coins){if(p.life<=0)continue;const raw=1-p.life/p.duration,t=raw*raw*(3-2*raw),u=1-t,cx=p.x+(tx-p.x)*.25+p.bend,cy=Math.max(90,p.y-240);const x=u*u*p.x+2*u*t*cx+t*t*tx,y=u*u*p.y+2*u*t*cy+t*t*ty;c.globalAlpha=Math.min(1,p.life/65);a.coin(x,y,.38+Math.sin(raw*Math.PI)*.14);}
     // Render floating Arcade Callout Banners with spring scale-in

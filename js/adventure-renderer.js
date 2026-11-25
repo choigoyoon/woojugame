@@ -60,50 +60,6 @@ export class AdventureRenderer {
     const a=this.art,c=a.c,s=this.runner.state,t=this.reduced?0:this.time,d=s.distance;
     const hitReaction=this.wagonHitMs/420;
     const wagonX=s.goldMs?540:642-s.slot*38+Math.sin(t/210)*8-(hitReaction*18);
-    if(webglStage.gl){
-      // 100% Full-3D WebGL2 Mag-Lev Rail Cyber Surfer & Train Chaser Viewport!
-      c.fillStyle=a.gradient(0,0,0,1280,['#070f24','#122b54','#0b1936']);
-      c.fillRect(0,0,720,1280);
-      a.ellipse(575,260,58,58,'#ffbe0b22');
-      a.ellipse(575,260,38,38,'#fff3b0');
-      webglStage.renderRunner(this,wagonX,hitReaction);
-      for(const cr of webglStage.projectedCrates||[]){
-        a.rect(cr.x-62,cr.y-20,124,38,'#0b132bf0',12,'#00f5d4');
-        a.label(cr.title,cr.x,cr.y-1,17,'#fff8d6','#0b132b');
-      }
-      if(webglStage.projectedTrain?.visible){
-        const tr=webglStage.projectedTrain;
-        a.rect(tr.x-96,tr.y-36,192,30,'#0b132be6',10,s.goldMs?'#ffbe0b':'#00f5d4');
-        a.label(s.goldMs?'★ 도킹 완료! 황금 질주!':`폭주 열차 · 부스터 ${s.slot}/3`,tr.x,tr.y-21,13.5,'#fff8d6','#0b132b');
-      }
-      this.effects();
-      this.header('작전 3 · 3D 호버 레일 추격',canHome);
-      a.cached('sentence-slots',[22,138,676,96],()=>{
-        a.rect(26,142,668,80,'#0b132beb',22,'#00f5d466');
-        const labels=['⚡ 1단 플라즈마 램','🪽 2단 발키리 윙','🚀 3단 하이퍼 제트'];
-        for(let i=0;i<3;i++){
-          const x=38+i*218,filled=i<s.slot,active=i===s.slot;
-          a.rect(x,151,196,62,filled?'#ffbe0b':active?'#1e3a8ae6':'#0f172acc',16,filled?'#fff3b0':active?'#00f5d4':'#475569');
-          a.label(labels[i],x+98,174,16.5,filled?'#0b132b':active?'#ffffff':'#94a3b8',filled?'#fff8d6':'#0b132b');
-          a.text(filled?'★ 3D 합체 완료!':active?'점프 타격 / 적 밟기!':'대기 중',x+98,198,12.5,filled?'#0b132b':active?'#00f5d4':'#64748b');
-        }
-      },s.sentence*4+s.slot);
-      if(s.messageMs){
-        a.rect(76,242,568,72,'#0b132bf0',20,'#ffbe0b');
-        a.label(s.message==='GOLD RUSH!'?'★ 3D 부스터 합체 & 하이퍼 질주!':s.message,360,268,s.message==='GOLD RUSH!'?28:26,'#ffbe0b','#0b132b');
-        if(s.message==='GOLD RUSH!')a.text('3단 풀업그레이드 별빛특급이 전속력으로 돌파합니다!',360,298,16,'#00f5d4');
-      }
-      if(s.goldMs){a.rect(130,322,460,12,'#0b132b',6);a.rect(130,322,460*s.goldMs/CONFIG.runner.goldMs,12,'#ffbe0b',6);}
-      a.cached(pressed?'jump-held':'jump-ready',[64,1041,592,184],()=>{
-        a.rect(66,1058,588,162,'#0b132b',38);
-        a.rect(66,1044+(pressed?10:0),588,160,a.gradient(66,1044,66,1204,['#ffbe0b','#fb5607']),38,'#0b132b');
-        a.rect(82,1054+(pressed?10:0),556,58,'#ffffff28',26);
-        a.poly([[140,1136+(pressed?10:0)],[168,1096+(pressed?10:0)],[196,1136+(pressed?10:0)]],'#ffffff','#0b132b',3.5);
-        a.label('⚡ 터보 점프',382,1112+(pressed?10:0),44,'#ffffff','#0b132b');
-        a.label('길게 누르면 하이점프 & 적 밟기!',382,1166+(pressed?10:0),20,'#fff3b0','#0b132b');
-      });
-      return;
-    }
     const zone=s.round%3;
     const skies=[['#3769b5','#75d5dc','#f5ecb6'],['#3f4b9c','#8b7fd6','#ffd6b0'],['#16244f','#355a96','#8ee8e2']][zone];
     c.fillStyle=a.gradient(0,0,0,1280,skies);c.fillRect(0,0,720,1280);
@@ -142,18 +98,20 @@ export class AdventureRenderer {
       a.rect(gx,590,14,280,'#2b5468cc',3);a.rect(gx-22,582,58,18,'#498399dd',5);
       a.ellipse(gx+7,591,5,5,s.goldMs||s.slot>=2?'#7effd8':'#ffd573');
     }
-    // High-detail LEGO Viaduct Track Deck with glowing speed chevrons and deep girder arches
-    a.rect(0,870,720,410,'#164b56');a.rect(0,870,720,38,'#9be39b');a.rect(0,906,720,24,'#3e967b');
+    // High-detail Cel-Shaded Viaduct Track Deck with glowing speed chevrons and deep girder arches
+    a.rect(0,870,720,410,'#164b56');
+    a.rect(0,870,720,38,'#00f5d4',0,'#0b132b');
+    a.rect(0,906,720,24,'#0f3847',0,'#0b132b');
     a.line([[0,874],[720,874]],'#e6ffda',3);
     for(let i=0;i<9;i++){
       const x=i*112-(d%112);
-      a.line([[x,928],[x+50,998],[x+50,1280]],'#296b70',5);
-      a.stud(x+32,870,14,4.5,5,'#57b982','#d7ffbe');
-      a.rect(x+12,946,32,12,'#47979b',4);
+      a.line([[x,928],[x+50,998],[x+50,1280]],'#0b132b',6);
+      a.rect(x+16,866,32,12,'#ffbe0b',6,'#0b132b');
+      a.rect(x+12,946,32,12,'#4cc9f0',4,'#0b132b');
       // Glowing track booster chevrons (`>>>`) scrolling rapidly underfoot
       if(i%2===0){
         const cx=x+68;
-        a.poly([[cx,882],[cx+16,888],[cx,894],[cx+6,888]],s.goldMs?'#fff18a':'#7effe2aa');
+        a.poly([[cx,881],[cx+18,889],[cx,897],[cx+6,889]],s.goldMs?'#fff18a':'#ffffff','#0b132b',2.5);
       }
     }
     // High-speed arcade action lines when jumping high or in Gold Rush!
@@ -165,10 +123,8 @@ export class AdventureRenderer {
       }
       c.restore();
     }
-    // Runaway Starlight Express LEGO wagon with Coco on top — visibly transforms and jolts with each brick hit!
+    // Runaway Starlight Express wagon with Coco on top — visibly transforms and jolts with each booster hit!
     const wagonDent=this.reduced?0:Math.sin(hitReaction*Math.PI)*.18;
-    // Composite OGL v1.0.11 3D WebGL meshes for 3D Track Studs, 3D Hover Crates, 3D Boosters & 3D Powerups!
-    webglStage.renderRunner(this,wagonX,hitReaction);
     // Wheel sparks flying from under the high-speed runaway train car!
     if(!this.reduced){
       for(let i=0;i<3;i++){
@@ -178,27 +134,27 @@ export class AdventureRenderer {
     }
     c.save();c.translate(wagonX,866);c.scale(1+wagonDent,1-wagonDent*.7);
     wagon(a,0,0,.68,t,true);
-    // Stage 1 hit (slot >= 1): Golden Magnetic Docking Hitch snaps onto the front of the wagon!
+    // Stage 1 hit (slot >= 1): Golden Magnetic Docking Coupler snaps onto the front of the wagon!
     if(s.slot>=1||s.goldMs){
-      a.block(-56,-36,24,22,7,'#ffd363','#fff5bd','#b5782c');
-      a.stud(-44,-40,6,2.5,3,'#e39d36','#fff6c4');
+      a.rect(-60,-34,24,18,'#ffbe0b',8,'#0b132b');
+      a.ellipse(-48,-25,6,6,'#00f5d4');
     }
-    // Stage 2 hit (slot >= 2): Twin Golden LEGO Booster Wings bolt onto the wagon sides!
+    // Stage 2 hit (slot >= 2): Twin Cel-Shaded Golden Booster Wings bolt onto the wagon sides!
     if(s.slot>=2||s.goldMs){
-      a.poly([[-26,-42],[-58,-72],[-44,-24]],'#ffd86b','#fff5bf',2.5);
-      a.poly([[26,-42],[58,-72],[44,-24]],'#ffd86b','#fff5bf',2.5);
-      a.stud(0,-58,8,3,4,'#49d6c8','#dcfffb');
+      a.poly([[-24,-42],[-58,-74],[-44,-24]],'#ffbe0b','#0b132b',3.5);
+      a.poly([[24,-42],[58,-74],[44,-24]],'#ffbe0b','#0b132b',3.5);
+      a.ellipse(0,-58,9,5,'#00f5d4');
     }
     // Stage 3 hit (goldMs > 0): Turbo Starlight Jet Flame ignites!
     if(s.goldMs){
-      a.poly([[42,-36],[84+Math.sin(t/45)*14,-52],[72,-22],[88+Math.cos(t/45)*12,-10],[42,-14]],'#63ffee');
+      a.poly([[42,-36],[84+Math.sin(t/45)*14,-52],[72,-22],[88+Math.cos(t/45)*12,-10],[42,-14]],'#00f5d4','#0b132b',3);
       a.star(0,-30,18,'#fff8c4');
     }
     if(hitReaction>0){c.globalAlpha=hitReaction;a.star(-24,-32,34,'#fff7c4');}
     c.restore();
     cocoToy(a,wagonX-6,818-hitReaction*14,.46,t);
-    a.rect(wagonX-106,736,194,32,'#132e4ee6',10,hitReaction>0?'#7effd8':'#ffe79988');
-    a.text(s.goldMs?'★ 도킹 완료! 황금 질주!':`폭주 객차 ${Math.max(10,(3-s.slot)*40)}m · 부스터 ${s.slot}/3`,wagonX-9,752,13.5,'#fff3bd');
+    a.rect(wagonX-108,734,200,34,'#0b132bf0',12,hitReaction>0?'#00f5d4':'#ffbe0b');
+    a.label(s.goldMs?'★ 도킹 완료! 황금 질주!':`폭주 객차 ${Math.max(10,(3-s.slot)*40)}m · 부스터 ${s.slot}/3`,wagonX-8,751,14,'#fff3bd','#0b132b');
     if(s.goldMs||s.slot>0||hitReaction>0){
       c.save();c.globalAlpha=s.goldMs?.9:Math.max(.35+s.slot*.2,hitReaction);
       a.line([[CONFIG.runner.playerX+35,795],[wagonX-45,825]],s.goldMs||hitReaction>0?'#fff39e':'#7effe7',s.goldMs||hitReaction>0?7:3+s.slot);
@@ -207,50 +163,53 @@ export class AdventureRenderer {
     for(const item of this.runner.items.active){
       if(item.kind==='word'){
         const stageIdx=s.slot%3,title=['⚡ 1단 연결기','🪽 2단 부스터','🚀 3단 스타제트'][stageIdx];
-        // Commercial 3D LEGO '?' Power-Up Crate with hovering thruster wings and glowing core!
+        // Commercial 2D Cel-Shaded Hover Booster Capsule with glowing thruster wings and bold ink outline!
         const bob=this.reduced?0:Math.sin(t/140+item.x*.02)*6;
         const iy=item.y+bob;
-        a.ellipse(item.x-62,iy-4,20,7,'#7effe8cc');a.ellipse(item.x+62,iy-4,20,7,'#7effe8cc');
-        a.block(item.x-66,iy-10,132,66,14,'#f5b935','#fff5b8','#a6681e');
-        for(const sx of[-38,0,38])a.stud(item.x+sx,iy-15,11,4,5,'#e0931f','#fff9d2');
-        a.rect(item.x-56,iy,112,46,'#132d52f2',12,'#88f5ffaa');
-        a.label(title,item.x,iy+24,20,'#fff8d6','#0f223d');
+        a.poly([[item.x-64,iy+12],[item.x-88,iy-6],[item.x-64,iy+28]],'#00f5d4','#0b132b',3);
+        a.poly([[item.x+64,iy+12],[item.x+88,iy-6],[item.x+64,iy+28]],'#00f5d4','#0b132b',3);
+        a.rect(item.x-70,iy-12,140,68,'#0b132b',20);
+        a.rect(item.x-66,iy-10,132,62,a.gradient(item.x-66,iy-10,item.x-66,iy+52,['#ffe66d','#ff9f1c']),18,'#0b132b');
+        a.rect(item.x-56,iy,112,44,'#0b132bf2',12,'#00f5d4');
+        a.label(title,item.x,iy+23,20,'#fff8d6','#0b132b');
       }else if(item.kind==='coin')a.coin(item.x,item.y+Math.sin(t/180+item.x)*5,.65);
       else{
-        // Horned Cyber-Beetle Tank Bot with Neon Yellow Spring Stomp-Pad!
+        // Horned Cyber-Beetle Tank Bot with Neon Yellow Spring Stomp-Pad & bold Cel-Shaded ink contours!
         const walk=this.reduced?0:Math.sin(t/65+item.x*.05)*5;
         a.ellipse(item.x,872,38,10,'#091d3455');
         for(const side of[-1,1]){
-          a.ellipse(item.x+side*20,862+(side>0?walk:-walk)*.3,11,11,'#17233b');
-          a.ellipse(item.x+side*20,862+(side>0?walk:-walk)*.3,5,5,'#ff4f79');
+          a.ellipse(item.x+side*20,862+(side>0?walk:-walk)*.3,13,13,'#0b132b');
+          a.ellipse(item.x+side*20,862+(side>0?walk:-walk)*.3,10,10,'#1e2f4d');
+          a.ellipse(item.x+side*20,862+(side>0?walk:-walk)*.3,5,5,'#ff2a6d');
         }
         // Beetle Armored Shell & Front Plasma Horn
-        a.ellipse(item.x,838,34,26,'#281d3d');
-        a.poly([[item.x-32,838],[item.x-48,818],[item.x-22,824]],'#ff4f79');
-        a.rect(item.x-26,828,52,16,'#091020',8,'#ff4f79');
-        a.ellipse(item.x-10+Math.sin(t/120)*8,836,6,6,'#ff2e55');
+        a.ellipse(item.x,838,38,29,'#0b132b');
+        a.ellipse(item.x,838,34,25,'#2b1e4a');
+        a.poly([[item.x-32,838],[item.x-50,816],[item.x-22,824]],'#ff2a6d','#0b132b',3);
+        a.rect(item.x-26,828,52,16,'#0b132b',8,'#ff2a6d');
+        a.ellipse(item.x-10+Math.sin(t/120)*8,836,6,6,'#ff2a6d');
         a.ellipse(item.x-10+Math.sin(t/120)*8,836,2.5,2.5,'#ffe875');
         // Neon Spring-Loaded Top Stomp Target Pad
-        a.ellipse(item.x,810,22,7,'#ffd86b');
-        a.ellipse(item.x,807,16,5,'#7effe8');
+        a.ellipse(item.x,810,24,8,'#0b132b');
+        a.ellipse(item.x,810,21,6.5,'#ffbe0b');
+        a.ellipse(item.x,807,15,4.5,'#00f5d4');
       }
     }
-    // Render spent/transformed solid blocks that were headbutted (bouncing up & turning into riveted steel blocks!)
+    // Render spent/transformed solid blocks that were headbutted
     for(const b of this.spentBlocks){
       if(b.life<=0)continue;
       c.save();c.globalAlpha=Math.min(1,b.life/350);
       const by=b.y+b.bumpY;
-      a.block(b.x-78,by-4,156,60,10,b.good?'#56738f':'#6e536b',b.good?'#9ebbd4':'#b593b2','#334659');
-      for(const dx of[-58,58])a.ellipse(b.x+dx,by+26,5,5,'#263747');
-      a.text(b.good?'✓ 작동 완료':b.word,b.x,by+26,22,'#d8eeff');
+      a.rect(b.x-76,by-4,152,56,'#47627d',16,'#0b132b');
+      a.label(b.good?'✓ 작동 완료':b.word,b.x,by+24,22,'#d8eeff','#0b132b');
       c.restore();
     }
     // Render physical ejected Star Core powerups flying from the hit block into the runaway train car!
     for(const u of this.powerups){
       if(u.life<=0)continue;
       a.ellipse(u.x,u.y,24,24,'#fff4a366');
-      a.star(u.x,u.y,19,'#ffe875');
-      a.stud(u.x,u.y-4,8,3.5,4,'#e39d36','#fff9d6');
+      a.star(u.x,u.y,21,'#0b132b');
+      a.star(u.x,u.y,18,'#ffbe0b');
     }
     // Render stomped / flattened enemy mechs tumbling off the track!
     for(const m of this.crushedMechs){
@@ -279,15 +238,14 @@ export class AdventureRenderer {
     this.effects();this.header('작전 3 · 폭주 기차칸 추격',canHome);
     // Sleek, compact Arcade Chase Radar & 3-Stage Booster Core HUD (zero grammar worksheet flashcards!)
     a.cached('sentence-slots',[22,138,676,96],()=>{
-      a.rect(26,142,668,80,'#0e2445eb',22,'#7ed8ff55');
+      a.rect(26,142,668,80,'#0b132bf2',22,'#4cc9f0');
       const labels=['⚡ 1단 범퍼 연결','🪽 2단 부스터 윙','🚀 3단 제트 점화'];
       for(let i=0;i<3;i++){
         const x=38+i*218,filled=i<s.slot,active=i===s.slot;
-        a.rect(x,151,196,62,filled?'#f6de91':active?'#1e4c7ae6':'#132e52cc',16,filled?'#fff7be':active?'#7effe2':'#7eb5d644');
-        for(const sx of[x+52,x+98,x+144])a.stud(sx,150,8,3,3.5,filled?'#e0b84f':'#28527d',filled?'#fff8c8':'#7bb8d4');
-        a.label(labels[i],x+98,174,17,filled?'#4a3519':active?'#ffffff':'#8ab4cc',filled?'#fff8d6':'#142847');
-        a.text(filled?'★ 장착 완료!':active?'박치기 / 적 밟기!':'대기 중',x+98,198,12.5,filled?'#78521a':active?'#9efff0':'#6e96b3');
-        if(i<2)a.text('›',x+207,181,24,'#ffe89c');
+        a.rect(x,151,196,62,filled?'#ffbe0b':active?'#1a3d6e':'#102342',16,filled?'#0b132b':active?'#00f5d4':'#4cc9f055');
+        a.label(labels[i],x+98,174,17,filled?'#ffffff':active?'#ffffff':'#8ab4cc','#0b132b');
+        a.label(filled?'★ 장착 완료!':active?'박치기 / 적 밟기!':'대기 중',x+98,198,12.5,filled?'#fff3b0':active?'#00f5d4':'#6e96b3','#0b132b');
+        if(i<2)a.label('›',x+207,181,24,'#ffbe0b','#0b132b');
       }
     },s.sentence*4+s.slot);
     if(s.messageMs){
@@ -318,116 +276,101 @@ export class AdventureRenderer {
     c.restore();
   }
   robot(x,y){
-    // Sleek Harbor Commander Mecha-Unit (Captain Dock)
+    // Sleek Harbor Commander Mecha-Unit (Captain Dock) with bold Cel-Shaded ink contours
     const a=this.art,t=this.reduced?0:this.time,bob=Math.sin(t/220)*3;
     a.ellipse(x,y,42,14,'#0d224055');
-    a.ellipse(x,y-2,30,10,'#63ffee44');
+    a.ellipse(x,y-2,30,10,'#00f5d444');
     // Hover Base & Contoured Commander Torso
-    a.rect(x-28,y-68+bob,56,52,'#264e82',20,'#7ee8ff');
-    a.ellipse(x,y-42+bob,16,16,'#0b1e3b');
-    a.star(x,y-42+bob,13,'#ffe875');
+    a.rect(x-30,y-70+bob,60,56,'#0b132b',22);
+    a.rect(x-27,y-67+bob,54,50,'#264e82',19,'#4cc9f0');
+    a.ellipse(x,y-42+bob,16,16,'#0b132b');
+    a.star(x,y-42+bob,13,'#ffbe0b');
     // Commander Space-Dome Head & Panoramic Cyan Visor
-    a.rect(x-34,y-124+bob,68,52,'#e8f6ff',24,'#7ee8ff');
-    a.rect(x-26,y-112+bob,52,28,'#09172e',14,'#63ffee');
-    a.ellipse(x-11,y-98+bob,5.5,7,'#63ffee');
-    a.ellipse(x+11,y-98+bob,5.5,7,'#63ffee');
+    a.rect(x-37,y-127+bob,74,58,'#0b132b',26);
+    a.rect(x-34,y-124+bob,68,52,'#ffffff',24,'#4cc9f0');
+    a.rect(x-26,y-112+bob,52,28,'#0b132b',14,'#00f5d4');
+    a.ellipse(x-11,y-98+bob,5.5,7,'#00f5d4');
+    a.ellipse(x+11,y-98+bob,5.5,7,'#00f5d4');
     a.ellipse(x-12,y-100+bob,2,2,'#ffffff');
     a.ellipse(x+10,y-100+bob,2,2,'#ffffff');
     // Golden Commander Crest & Beacon Antenna
-    a.poly([[x-18,y-124+bob],[x,y-142+bob],[x+18,y-124+bob]],'#ffd86b','#fff6c0',2);
-    a.ellipse(x,y-146+bob,6,6,'#63ffee');
+    a.poly([[x-18,y-124+bob],[x,y-144+bob],[x+18,y-124+bob]],'#ffbe0b','#0b132b',3);
+    a.ellipse(x,y-148+bob,8,8,'#0b132b');
+    a.ellipse(x,y-148+bob,5.5,5.5,'#00f5d4');
   }
   plazaView(canHome){
     const a=this.art,c=a.c,s=this.plaza.state,t=this.reduced?0:this.time;
     const dock=this.iso(-2.2,3.4),collectedTotal=s.collectedA+s.collectedB;
-    if(webglStage.gl){
-      // 100% Full-3D WebGL2 Mecha Brawl Survival Arena Viewport!
-      c.fillStyle=a.gradient(0,0,0,1280,['#060d1f','#102244','#071126']);
-      c.fillRect(0,0,720,1280);
-      webglStage.renderPlaza(this,dock,collectedTotal);
-      for(const pi of webglStage.projectedItems||[]){
-        if(pi.item.collected){
-          a.label('✓ 장착',pi.x,pi.y,15,'#00f5d4','#0b132b');
-        }else if(pi.near||s.phase==='briefing'||s.remindMs>0){
-          a.rect(pi.x-54,pi.y-16,108,26,'#0b132bf0',8,'#00f5d4');
-          a.label(GOODS[pi.item.kind].name,pi.x,pi.y-3,13,'#fff8d6','#0b132b');
-        }
-      }
-      if(this.plaza.ready&&webglStage.projectedCaptain?.visible){
-        const cp=webglStage.projectedCaptain;
-        a.rect(cp.x-68,cp.y-24,136,30,'#0b132bf0',10,'#ffbe0b');
-        a.label('▼ 코어 도킹!',cp.x,cp.y-9,16,'#ffbe0b','#0b132b');
-      }
-      this.effects();
-      this.header('작전 4 · 3D 메카 브롤 아레나',canHome);
-      a.rect(33,144,654,124,'#0b132beb',24,'#00f5d466');
-      a.label(this.plaza.ready?'⚡ 코어 3종 확보 완료! 대장 메카에게 도킹!':`⚡ 3D 아레나 코어 수거 & 자동 사격 (STAGE ${s.round+1})`,360,174,21,'#fff8d6','#0b132b');
-      for(let i=0;i<2;i++){
-        const m=this.plaza.mission[i],count=i?s.collectedB:s.collectedA;
-        a.rect(86+i*286,196,258,56,'#14284ee6',16,count>=m.count?'#00f5d4':'#ffbe0b');
-        this.good(m.kind,124+i*286,230,.58);
-        a.label(`${GOODS[m.kind].name}  ${count}/${m.count}`,228+i*286,224,17,count>=m.count?'#00f5d4':'#ffffff','#0b132b');
-      }
-      if(s.phase!=='active'){
-        a.rect(127,1046,466,118,a.gradient(127,1046,127,1164,['#00f5d4','#00b4d8']),34,'#0b132b');
-        a.label(s.phase==='success'?'★ 다음 3D 아레나 출동!':'⚡ 3D 아레나 출동!',360,1105,36,'#ffffff','#0b132b');
-      }else if(this.joystick){
-        c.save();c.strokeStyle='#00f5d4aa';c.lineWidth=4;c.beginPath();c.arc(this.joystick.x,this.joystick.y,58,0,Math.PI*2);c.stroke();
-        a.ellipse(this.joystick.knobX,this.joystick.knobY,24,24,'#00f5d4');c.restore();
-      }else{
-        a.rect(180,1120,360,54,'#0b132bcc',27,'#00f5d455');
-        a.label('🕹️ 화면을 드래그해 360° 이동 & 자동 사격',360,1147,17,'#00f5d4','#0b132b');
-      }
-      return;
-    }
     a.cached('plaza-ground',[0,0,720,1280],()=>{
     a.c.fillStyle=a.gradient(0,0,720,1280,['#193258','#385d8a','#1f365c']);a.c.fillRect(0,0,720,1280);
     for(let i=0;i<18;i++)a.star((i*173+19)%720,300+(i*71)%840,3+i%3,'#fff0bb55');
-    // Sleek Sky Harbor Control Balcony at top & Tactile Cyber-Radar Deck at bottom (zero copy-pasted grey boxes!)
-    a.rect(40,312,640,98,'#0b132bd9',24,'#00f5d466');
+    // Sleek Sky Harbor Control Balcony at top & Tactile Cyber-Radar Deck at bottom
+    a.rect(40,312,640,98,'#0b132be6',24,'#00f5d4');
     a.line([[72,362],[648,362]],'#00f5d444',3);
     for(let i=0;i<4;i++){
       const px=126+i*156;
-      a.ellipse(px,362,22,22,'#14284e');
+      a.ellipse(px,362,24,24,'#0b132b');
+      a.ellipse(px,362,20,20,'#14284e');
       a.ellipse(px,362,14,14,i%2?'#00f5d4':'#ffbe0b');
       a.star(px,362,9,'#ffffff');
     }
-    a.rect(40,982,640,226,'#0b132bd9',28,'#4cc9f055');
-    a.ellipse(360,1076,58,58,'#14284e');
+    // Bottom Cel-Shaded Arcade Command & Radar Joystick Deck
+    a.rect(40,982,640,226,'#0b132bf0',28,'#4cc9f0');
+    a.rect(62,1006,184,178,'#132a4fe6',20,'#00f5d466');
+    a.label('⚡ 엔진 코어 슬롯',154,1036,16,'#00f5d4','#0b132b');
+    a.label('도면 부품을 모아',154,1132,13.5,'#b8d8ff','#0b132b');
+    a.label('대장 로봇에게 도킹!',154,1154,13.5,'#ffbe0b','#0b132b');
+    a.rect(474,1006,184,178,'#132a4fe6',20,'#ffbe0b66');
+    a.label('📡 자석 스캐너',566,1036,16,'#ffbe0b','#0b132b');
+    a.ellipse(566,1088,28,28,'#0b132b');
+    a.ellipse(566,1088,22,22,'#00f5d433');
+    a.star(566,1088,12,'#00f5d4');
+    a.label('부품 근처 접근 시',566,1134,13.5,'#b8d8ff','#0b132b');
+    a.label('이름표 자동 스캔!',566,1156,13.5,'#00f5d4','#0b132b');
+    a.ellipse(360,1076,66,66,'#0b132b');
+    a.ellipse(360,1076,60,60,'#14284e');
     a.ellipse(360,1076,40,40,'#00f5d433');
     a.ellipse(360,1076,18,18,'#00f5d4');
-    for(const [dx,dy]of[[0,-44],[0,44],[-44,0],[44,0]])a.ellipse(360+dx,1076+dy,5,5,'#ffbe0b');
+    for(const [dx,dy]of[[0,-46],[0,46],[-46,0],[46,0]])a.ellipse(360+dx,1076+dy,6,6,'#ffbe0b');
     const corners=[this.iso(-4,-4),this.iso(4,-4),this.iso(4,4),this.iso(-4,4)];
-    a.poly([corners[0],[corners[1].x,corners[1].y],[corners[2].x,corners[2].y+36],[corners[3].x,corners[3].y+36]].map(p=>Array.isArray(p)?p:[p.x,p.y+28]),'#273b61','#8cc4e0',4);
+    a.poly([corners[0],[corners[1].x,corners[1].y],[corners[2].x,corners[2].y+36],[corners[3].x,corners[3].y+36]].map(p=>Array.isArray(p)?p:[p.x,p.y+28]),'#1d3557','#0b132b',5);
     for(let x=-4;x<4;x++)for(let z=-4;z<4;z++){
       const points=[this.iso(x,z),this.iso(x+1,z),this.iso(x+1,z+1),this.iso(x,z+1)];
       const border=x===-4||x===3||z===-4||z===3;
-      a.poly(points.map(p=>[p.x,p.y]),border?'#7faec4':(x+z)%2?'#aacacb':'#bed8cf','#6f99ad',1.2);
+      a.poly(points.map(p=>[p.x,p.y]),border?'#4cc9f0':(x+z)%2?'#a8dadc':'#caf0f8','#1d3557',1.8);
       const center=this.iso(x+.5,z+.5);
-      a.ellipse(center.x,center.y-2,7.5,3.5,border?'#fff2b255':'#ffffff45');
+      a.ellipse(center.x,center.y-2,7.5,3.5,border?'#fff2b277':'#ffffff66');
     }
-    // 4 Corner LEGO Beacon Pillars framing the workshop arena
+    // 4 Corner Cel-Shaded Holo-Beacon Pylons framing the workshop arena
     for(const [cx,cz]of[[-3.8,-3.8],[3.8,-3.8],[3.8,3.8],[-3.8,3.8]]){
       const cp=this.iso(cx,cz);
-      a.block(cp.x-14,cp.y-42,28,40,8,'#3b6990','#8ee2ff','#214161');
-      a.stud(cp.x,cp.y-46,9,3.5,4,'#e39d3b','#fff6be');
+      a.rect(cp.x-16,cp.y-46,32,46,'#0b132b',10);
+      a.rect(cp.x-13,cp.y-43,26,40,'#264e82',8,'#4cc9f0');
+      a.ellipse(cp.x,cp.y-48,11,6,'#0b132b');
+      a.ellipse(cp.x,cp.y-48,8,4,'#00f5d4');
     }
     });
     const parts=trainParts(this.profile.data),captain=this.iso(0,3.15);
     const totalNeeded=this.plaza.mission.reduce((n,m)=>n+m.count,0);
     const dockPulse=this.dockPulseMs/480,dockDent=this.reduced?0:Math.sin(dockPulse*Math.PI)*.14;
-    webglStage.renderPlaza(this,dock,collectedTotal);
+    // Live Core Module LED indicators inside the left bottom deck card
+    for(let i=0;i<3;i++){
+      const lit=i<collectedTotal||s.phase==='success',lx=106+i*48;
+      a.ellipse(lx,1084,18,18,'#0b132b');
+      a.ellipse(lx,1084,14,14,lit?'#ffbe0b':'#1e3a5f');
+      if(lit)a.star(lx,1084,9,'#ffffff');
+    }
     // Power conduits connecting the Captain Dock to the Starlight Express as core bricks are gathered
     for(let i=0;i<3;i++){
       const lit=collectedTotal>i||s.phase==='success';
-      a.line([[captain.x-18,captain.y-6+i*6],[dock.x+35,dock.y-12+i*6]],lit?'#6effe8':'#32517877',lit?5:2);
+      a.line([[captain.x-18,captain.y-6+i*6],[dock.x+35,dock.y-12+i*6]],lit?'#00f5d4':'#32517877',lit?5:2);
     }
     c.save();c.translate(dock.x,dock.y-18);c.scale(1+dockDent,1-dockDent*.7);
     train(a,0,0,.42,{time:t,cars:parts.harborCars,beacon:parts.beacon,coach:parts.coach,reactor:parts.reactor||s.phase==='success'||collectedTotal>=totalNeeded,complete:parts.complete});
-    // Progressive LEGO Engine Core modules visibly snap onto the train side as each item is collected!
+    // Progressive Cel-Shaded Engine Core modules visibly snap onto the train side as each item is collected!
     for(let i=0;i<Math.min(3,collectedTotal);i++){
       const mx=-18+i*18,my=-26;
-      a.block(mx-7,my-7,14,14,4,['#ff6c83','#77ceff','#74efd0'][i],'#fff8d6','#1c3b5e');
+      a.rect(mx-8,my-8,16,16,['#ff2a6d','#4cc9f0','#00f5d4'][i],5,'#0b132b');
     }
     if(dockPulse>0){c.globalAlpha=dockPulse;a.star(12,-28,28,'#fff6b8');}
     c.restore();
@@ -436,8 +379,8 @@ export class AdventureRenderer {
     if(this.plaza.ready){
       const pulse=(Math.sin(t/150)+1)*6;
       c.save();c.strokeStyle='#ffe885';c.lineWidth=4;c.beginPath();c.ellipse(captain.x,captain.y,52+pulse,25+pulse*.4,0,0,Math.PI*2);c.stroke();c.restore();
-      a.rect(captain.x-62,captain.y-178,124,28,'#133454f0',10,'#ffe885');
-      a.text('▼ 엔진 도킹!',captain.x,captain.y-164,15,'#fff3a8');
+      a.rect(captain.x-66,captain.y-180,132,30,'#0b132bf0',10,'#ffbe0b');
+      a.label('▼ 엔진 도킹!',captain.x,captain.y-165,15,'#fff3a8','#0b132b');
     }
     // Fixed tiny scene: sort stable references in reusable scratch storage by floor depth.
     // Keep collected items in the scene so their workbench visibly transforms into an activated green socket!
@@ -450,7 +393,7 @@ export class AdventureRenderer {
       if(o.kind==='player'){
         const moving=Math.hypot(s.vx,s.vz)>.08;
         const scanR=32+Math.sin(t/160)*5;
-        c.save();c.strokeStyle=this.plaza.ready?'#ffe875':'#7effe888';c.lineWidth=2.5;
+        c.save();c.strokeStyle=this.plaza.ready?'#ffe875':'#00f5d488';c.lineWidth=2.5;
         c.beginPath();c.ellipse(p.x,p.y,scanR,scanR*.45,0,0,Math.PI*2);c.stroke();c.restore();
         a.ellipse(p.x,p.y,29,13,'#c4fff0');
         // Magnetic Tractor Beam towards nearby target parts!
@@ -461,7 +404,7 @@ export class AdventureRenderer {
             if(d<1.38){
               const ip=this.iso(item.x,item.z);
               c.save();c.globalAlpha=.65;
-              a.line([[p.x,p.y-28],[ip.x,ip.y-18]],isTarget?'#7effe8':'#ff6b7b',isTarget?4:2.5);
+              a.line([[p.x,p.y-28],[ip.x,ip.y-18]],isTarget?'#00f5d4':'#ff2a6d',isTarget?4:2.5);
               c.restore();
             }
           }
@@ -470,7 +413,7 @@ export class AdventureRenderer {
         if(this.plaza.ready&&s.phase==='active'){
           const ang=Math.atan2(captain.y-p.y,captain.x-p.x);
           c.save();c.translate(p.x+Math.cos(ang)*42,p.y-12+Math.sin(ang)*24);c.rotate(ang);
-          a.poly([[12,0],[-6,-8],[-3,0],[-6,8]],'#ffe875','#143252',1.5);
+          a.poly([[12,0],[-6,-8],[-3,0],[-6,8]],'#ffbe0b','#0b132b',2.5);
           c.restore();
         }
         c.save();c.globalAlpha=s.flashMs&&Math.floor(t/80)%2?.5:1;a.toy(p.x,p.y,.72,{time:t,run:moving,turn:s.vx-s.vz,pitch:(s.vx+s.vz)*.05,squash:s.stunMs?Math.sin(s.stunMs/120)*.4:0,hurt:s.stunMs>0||s.phase==='retry',palette:this.profile.palette});c.restore();
@@ -479,23 +422,38 @@ export class AdventureRenderer {
       else if(o.kind){
         if(o.collected){
           // Visibly transformed workbench socket after pickup!
-          a.ellipse(p.x,p.y+4,26,10,'#215e5288');
-          a.stud(p.x,p.y+2,16,6,5,'#2c9e88','#8effe2');
-          a.text('✓',p.x,p.y-12,18,'#b8fff0');
+          a.ellipse(p.x,p.y+4,26,11,'#0b132b');
+          a.ellipse(p.x,p.y+4,22,8,'#00f5d4');
+          a.label('✓',p.x,p.y-12,18,'#00f5d4','#0b132b');
         }else{
           // Preserve memory challenge: all items share neutral pedestals, but approaching shows a nearby name tag so icons are never ambiguous!
           const dist=Math.hypot(o.x-s.x,o.z-s.z),near=s.phase==='active'&&dist<1.38;
-          a.stud(p.x,p.y+4,16,6,4,'#486688','#9bc2db');
-          if(near)a.ellipse(p.x,p.y+2,29,11,'#fff3b044');
+          a.ellipse(p.x,p.y+5,22,9,'#0b132b');
+          a.ellipse(p.x,p.y+4,18,7,'#3b6990');
+          a.ellipse(p.x,p.y+2,12,4.5,'#4cc9f0');
+          if(near)a.ellipse(p.x,p.y+2,29,11,'#fff3b055');
           this.good(o.kind,p.x,p.y-11-Math.sin(t/300+o.x)*4);
           a.star(p.x+21,p.y-42,4+Math.sin(t/200+o.z)*2,'#fff3b8');
           if(near){
-            a.rect(p.x-56,p.y-70,112,24,'#102648f0',8,'#9ed8ff88');
-            a.text(GOODS[o.kind].name,p.x,p.y-58,13,'#fff4c8');
+            a.rect(p.x-58,p.y-72,116,26,'#0b132bf0',10,'#00f5d4');
+            a.label(GOODS[o.kind].name,p.x,p.y-58,13,'#fff4c8','#0b132b');
           }
         }
       }
-      else{a.ellipse(p.x,p.y,25,10,'#34497177');a.block(p.x-24,p.y-39,48,33,8,'#e88996','#ffd0b2','#945b88');a.rect(p.x-14,p.y-29,8,7,'#704f74',2);a.rect(p.x+5,p.y-29,8,7,'#704f74',2);}
+      else{
+        // Cel-Shaded Pirate Spider-Walker Patrol Drone Hazard (replaces old pink rectangle!)
+        const leg=this.reduced?0:Math.sin(t/90+o.x)*4;
+        a.ellipse(p.x,p.y+2,26,10,'#09182e66');
+        for(const side of[-1,1]){
+          a.line([[p.x+side*10,p.y-16],[p.x+side*24,p.y-8+side*leg*.4],[p.x+side*20,p.y+2]],'#0b132b',6);
+          a.line([[p.x+side*10,p.y-16],[p.x+side*24,p.y-8+side*leg*.4],[p.x+side*20,p.y+2]],'#ff2a6d',3);
+        }
+        a.ellipse(p.x,p.y-20,24,18,'#0b132b');
+        a.ellipse(p.x,p.y-20,20,14,'#2b1e4a');
+        a.rect(p.x-15,p.y-25,30,10,'#0b132b',5,'#ff2a6d');
+        a.ellipse(p.x+Math.sin(t/120)*5,p.y-20,4.5,4.5,'#ff2a6d');
+        a.ellipse(p.x+Math.sin(t/120)*5,p.y-20,2,2,'#ffe66d');
+      }
     }
     this.effects();
     // Render flying 3D engine parts arcing from the workbench straight into the Starlight Express engine dock!

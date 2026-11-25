@@ -23,10 +23,15 @@ export function blockSprite(w,h,d,front,top,side){
   surface.width=Math.ceil(width*scale);surface.height=Math.ceil(height*scale);const c=surface.getContext('2d');c.scale(scale,scale);c.translate(margin,margin+d*.6+studLift);
   const polygon=(p,color)=>{c.beginPath();p.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.closePath();c.fillStyle=finish(c,color,0,-d*.6,w+d,h+d*.6);c.fill();c.strokeStyle='#132c4880';c.lineWidth=1.3;c.lineJoin='round';c.stroke();};
   polygon([[0,0],[d,-d*.6],[w+d,-d*.6],[w,0]],top);polygon([[w,0],[w+d,-d*.6],[w+d,h-d*.6],[w,h]],side);
-  c.beginPath();c.roundRect(0,0,w,h,Math.min(4,w/6));c.fillStyle=finish(c,front,0,0,w,h);c.fill();c.strokeStyle='#142b4c99';c.lineWidth=1.4;c.stroke();
-  c.beginPath();c.moveTo(3,h-4);c.lineTo(3,4);c.lineTo(w-4,4);c.strokeStyle='#ffffff80';c.lineWidth=1.8;c.stroke();
-  c.beginPath();c.moveTo(w-3,8);c.lineTo(w-3,h-3);c.lineTo(5,h-3);c.strokeStyle='#10213c38';c.lineWidth=2;c.stroke();
-  c.beginPath();c.moveTo(2,-1);c.lineTo(d,-d*.6+1);c.lineTo(w+d-2,-d*.6+1);c.strokeStyle='#ffffff95';c.lineWidth=1.4;c.stroke();
+  c.beginPath();c.roundRect(0,0,w,h,Math.min(4,w/6));c.fillStyle=finish(c,front,0,0,w,h);c.fill();c.strokeStyle='#0d1f3a99';c.lineWidth=1.5;c.stroke();
+  // Glossy injection-molded ABS LEGO plastic specular highlight band
+  if(w>=18&&h>=14){
+    c.fillStyle='#ffffff26';
+    c.beginPath();c.roundRect(3,3,w-6,Math.max(3,Math.min(10,h*.22)),2);c.fill();
+  }
+  c.beginPath();c.moveTo(3,h-4);c.lineTo(3,4);c.lineTo(w-4,4);c.strokeStyle='#ffffff99';c.lineWidth=1.9;c.stroke();
+  c.beginPath();c.moveTo(w-3,8);c.lineTo(w-3,h-3);c.lineTo(5,h-3);c.strokeStyle='#09152955';c.lineWidth=2.2;c.stroke();
+  c.beginPath();c.moveTo(2,-1);c.lineTo(d,-d*.6+1);c.lineTo(w+d-2,-d*.6+1);c.strokeStyle='#ffffffb0';c.lineWidth=1.5;c.stroke();
   if(studLift>0){
     const cols=Math.max(1,Math.min(4,Math.round(w/28))),rx=Math.max(3.2,Math.min(9.2,w/cols*.27)),ry=Math.max(1.5,rx*.42),sh=studLift*.82;
     for(let i=0;i<cols;i++){

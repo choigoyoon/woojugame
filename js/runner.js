@@ -23,8 +23,9 @@ export class Runner extends Adventure {
     if(word!==expected){s.misses++;s.message=`코코: "${expected}" 브릭!`;s.messageMs=850;s.spawnMs=Math.min(s.spawnMs,750);this.emit({type:'word-miss',x:item.x,y:item.y});return;}
     s.slot++;this.reward(CONFIG.runner.wordCoins);this.emit({type:'word',word,x:item.x,y:item.y});
     for(const other of this.items.active)if(other.kind==='word')other.dead=true;
-    s.spawnMs=1100;
+    s.spawnMs=950;
     if(s.slot===3){s.goldMs=CONFIG.runner.goldMs;s.completed++;this.progress.cleared++;this.reward(CONFIG.runner.sentenceCoins,{sentences:1});s.message='GOLD RUSH!';s.messageMs=1800;this.emit({type:'sentence',speech:this.sentence.slice(0,3).join(' ')});}
+    else{s.message=`★ ${s.slot}단 부스터 합체!`;s.messageMs=750;}
   }
   tick(ms){
     const s=this.state,c=CONFIG.runner,dt=ms/1000;
@@ -41,7 +42,7 @@ export class Runner extends Adventure {
     s.spawnMs-=ms;s.obstacleMs-=ms;
     if(s.spawnMs<=0){
       if(s.goldMs){for(let i=0;i<3;i++)this.spawn('coin',{x:820+i*64,y:750-Math.sin(i/2*Math.PI)*85});s.spawnMs=950;}
-      else{const correct=s.serial%3!==1;const slot=correct?s.slot:(s.slot+1)%3;const sentence=correct?s.sentence:(s.sentence+3)%SENTENCES.length;this.spawn('word',{slot,sentence});s.serial++;s.spawnMs=c.spawnMs;}
+      else{this.spawn('word',{slot:s.slot,sentence:s.sentence});s.serial++;s.spawnMs=c.spawnMs;}
     }
     if(s.obstacleMs<=0){
       this.spawn('obstacle');
@@ -60,8 +61,8 @@ export class Runner extends Adventure {
         if(Math.abs(item.x-c.playerX)<52*CONFIG.engine.collectScale&&Math.abs(item.y-(c.groundY-s.y-70))<95*CONFIG.engine.collectScale){item.dead=true;this.reward(1);this.emit({type:'pickup',x:item.x,y:item.y});}
       }else if(s.vy<0&&s.y>=32&&s.y<=98&&Math.abs(item.x-c.playerX)<(c.playerWidth/2+34)*CONFIG.engine.collectScale){
         // Real platformer stomp-and-bounce: landing on top of an enemy mech crushes it and bounces the player high!
-        item.dead=true;s.vy=c.jumpVelocity*.86;s.coyoteMs=0;s.squashMs=180;
-        this.reward(2);s.message='밟기 점프! +2';s.messageMs=700;
+        item.dead=true;s.vy=c.jumpVelocity*.88;s.coyoteMs=0;s.squashMs=180;
+        this.reward(2);s.message='🚀 메카 밟기 점프! +2';s.messageMs=700;
         this.emit({type:'smash',stomp:true,x:item.x,y:item.y});
       }else if(Math.abs(item.x-c.playerX)<(c.playerWidth/2+28)*CONFIG.engine.hurtScale&&s.y<55*CONFIG.engine.hurtScale){
         if(s.goldMs){item.dead=true;this.reward(3);this.emit({type:'smash',x:item.x,y:item.y});}

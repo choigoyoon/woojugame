@@ -53,10 +53,18 @@ export class Plaza extends Adventure {
     if(!s.stunMs){s.x=clamp(s.x+s.vx*c.speed*dt,-3.6,3.6);s.z=clamp(s.z+s.vz*c.speed*dt,-3.6,3.6);s.steps+=Math.hypot(s.vx,s.vz)*ms;}
     for(const h of this.hazards.active)if(!s.stunMs&&Math.hypot(s.x-h.x,s.z-h.z)<(c.radius+c.hazardRadius)*CONFIG.engine.hurtScale){s.stunMs=650;s.flashMs=450;this.emit({type:'bump'});}
     if(!s.stunMs){
-      // At most one item per tick: nearest target wins a simultaneous overlap.
+      // At most one item per tick: nearest target wins; non-target decoys gently bounce off shield instead of resetting the stage!
       let nearest=null,distance=Infinity;
-      for(const item of this.items.active){if(item.collected)continue;const d=Math.hypot(s.x-item.x,s.z-item.z),target=this.mission.some(m=>m.kind===item.kind);const radius=(c.radius+c.itemRadius)*(target?CONFIG.engine.collectScale:CONFIG.engine.hurtScale);if(d<radius&&d<distance){nearest=item;distance=d;}}
-      if(nearest)this.collect(nearest);
+      for(const item of this.items.active){if(item.collected)continue;const d=Math.hypot(s.x-item.x,s.z-item.z),target=this.mission.some(m=>m.kind===item.kind);const radius=(c.radius+c.itemRadius)*(target?CONFIG.engine.collectScale*1.12:CONFIG.engine.hurtScale);if(d<radius&&d<distance){nearest=item;distance=d;}}
+      if(nearest){
+        const isTarget=this.mission.some((m,idx)=>m.kind===nearest.kind&&(idx===0?s.collectedA:s.collectedB)<m.count);
+        if(isTarget)this.collect(nearest);
+        else{
+          const dx=s.x-nearest.x,dz=s.z-nearest.z,len=Math.hypot(dx,dz)||1;
+          s.x=clamp(nearest.x+dx/len*.52,-3.6,3.6);s.z=clamp(nearest.z+dz/len*.52,-3.6,3.6);
+          s.stunMs=240;s.flashMs=320;this.emit({type:'bump',x:nearest.x,z:nearest.z});
+        }
+      }
       if(s.phase==='active'&&this.ready&&Math.hypot(s.x,s.z-3.15)<.68*CONFIG.engine.collectScale){s.phase='success';s.resultMs=0;this.release();this.progress.cleared++;this.reward(c.reward,{missions:1,missionWins:1});this.emit({type:'mission-win',coins:c.reward});}
     }
   }

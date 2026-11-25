@@ -150,7 +150,7 @@ export class AdventureRenderer {
     c.restore();
     cocoToy(a,wagonX-6,818-hitReaction*14,.46,t);
     a.rect(wagonX-106,736,194,32,'#132e4ee6',10,hitReaction>0?'#7effd8':'#ffe79988');
-    a.text(s.goldMs?'★ 도킹 완료! 황금 질주!':`코코: "${this.runner.sentence[s.slot]}" 브릭 (${Math.max(10,(3-s.slot)*40)}m)`,wagonX-9,752,13.5,'#fff3bd');
+    a.text(s.goldMs?'★ 도킹 완료! 황금 질주!':`폭주 객차 ${Math.max(10,(3-s.slot)*40)}m · 부스터 ${s.slot}/3`,wagonX-9,752,13.5,'#fff3bd');
     if(s.goldMs||s.slot>0||hitReaction>0){
       c.save();c.globalAlpha=s.goldMs?.9:Math.max(.35+s.slot*.2,hitReaction);
       a.line([[CONFIG.runner.playerX+35,795],[wagonX-45,825]],s.goldMs||hitReaction>0?'#fff39e':'#7effe7',s.goldMs||hitReaction>0?7:3+s.slot);
@@ -158,14 +158,15 @@ export class AdventureRenderer {
     }
     for(const item of this.runner.items.active){
       if(item.kind==='word'){
-        const text=SENTENCES[item.sentence][item.slot],icon=['⚡','⚙️','🚀'][item.slot]??SYMBOLS[SENTENCES[item.sentence][3]];
-        // Hover Drone LEGO Power-Up Crate — commercial arcade power block look!
-        a.ellipse(item.x-54,item.y-6,18,6,'#7effe8aa');a.ellipse(item.x+54,item.y-6,18,6,'#7effe8aa');
-        a.block(item.x-64,item.y-8,128,62,12,'#f0b849','#fff3ad','#9c6828');
-        for(const sx of[-36,0,36])a.stud(item.x+sx,item.y-12,10,3.8,4.5,'#d99526','#fff7c4');
-        a.rect(item.x-52,item.y+2,104,42,'#163254eb',10,'#8eeeff88');
-        a.text(icon,item.x-32,item.y+23,24,'#ffe885');
-        a.label(text,item.x+14,item.y+24,21,'#fff9e8','#152c4a');
+        const stageIdx=s.slot%3,title=['⚡ 1단 연결기','🪽 2단 부스터','🚀 3단 스타제트'][stageIdx];
+        // Commercial 3D LEGO '?' Power-Up Crate with hovering thruster wings and glowing core!
+        const bob=this.reduced?0:Math.sin(t/140+item.x*.02)*6;
+        const iy=item.y+bob;
+        a.ellipse(item.x-62,iy-4,20,7,'#7effe8cc');a.ellipse(item.x+62,iy-4,20,7,'#7effe8cc');
+        a.block(item.x-66,iy-10,132,66,14,'#f5b935','#fff5b8','#a6681e');
+        for(const sx of[-38,0,38])a.stud(item.x+sx,iy-15,11,4,5,'#e0931f','#fff9d2');
+        a.rect(item.x-56,iy,112,46,'#132d52f2',12,'#88f5ffaa');
+        a.label(title,item.x,iy+24,20,'#fff8d6','#0f223d');
       }else if(item.kind==='coin')a.coin(item.x,item.y+Math.sin(t/180+item.x)*5,.65);
       else{
         // Animated LEGO Patrol Mech-Crawler with stompable yellow top bounce-pad!
@@ -224,17 +225,17 @@ export class AdventureRenderer {
     a.toy(0,0,scale,{time:t,run:s.y<=0,jump:jumpFactor,pitch,squash,gold:s.goldMs>0,glow:s.slot/3,palette:this.profile.palette});
     c.restore();
     this.effects();this.header('작전 3 · 폭주 기차칸 추격',canHome);
-    // Sleek, compact Arcade Chase Radar & Power Brick HUD (replaces the huge 140px flashcard boxes that blocked the upper screen!)
+    // Sleek, compact Arcade Chase Radar & 3-Stage Booster Core HUD (zero grammar worksheet flashcards!)
     a.cached('sentence-slots',[22,138,676,96],()=>{
-      a.rect(26,142,668,84,'#0e2445eb',22,'#7ed8ff55');
-      const labels=['1단 연결기','2단 부스터 날개','3단 제트 점화'];
+      a.rect(26,142,668,80,'#0e2445eb',22,'#7ed8ff55');
+      const labels=['⚡ 1단 범퍼 연결','🪽 2단 부스터 윙','🚀 3단 제트 점화'];
       for(let i=0;i<3;i++){
         const x=38+i*218,filled=i<s.slot,active=i===s.slot;
-        a.rect(x,152,196,64,filled?'#f6de91':active?'#1e4c7ae6':'#132e52cc',16,filled?'#fff7be':active?'#7effe2':'#7eb5d644');
-        for(const sx of[x+52,x+98,x+144])a.stud(sx,151,8,3,3.5,filled?'#e0b84f':'#28527d',filled?'#fff8c8':'#7bb8d4');
-        a.text(labels[i],x+98,169,12.5,filled?'#785c36':'#9fd6eb');
-        a.label(filled?this.runner.sentence[i]:active?this.runner.sentence[i]:'···',x+98,195,21,filled?'#fff9e5':active?'#a8fff0':'#8ab4cc','#1c3152');
-        if(i<2)a.text('›',x+207,183,24,'#ffe89c');
+        a.rect(x,151,196,62,filled?'#f6de91':active?'#1e4c7ae6':'#132e52cc',16,filled?'#fff7be':active?'#7effe2':'#7eb5d644');
+        for(const sx of[x+52,x+98,x+144])a.stud(sx,150,8,3,3.5,filled?'#e0b84f':'#28527d',filled?'#fff8c8':'#7bb8d4');
+        a.label(labels[i],x+98,174,17,filled?'#4a3519':active?'#ffffff':'#8ab4cc',filled?'#fff8d6':'#142847');
+        a.text(filled?'★ 장착 완료!':active?'박치기 / 적 밟기!':'대기 중',x+98,198,12.5,filled?'#78521a':active?'#9efff0':'#6e96b3');
+        if(i<2)a.text('›',x+207,181,24,'#ffe89c');
       }
     },s.sentence*4+s.slot);
     if(s.messageMs){

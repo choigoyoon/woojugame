@@ -52,8 +52,8 @@ with ArcadeBrowser() as h:
     assert reloaded_combat and h.state()['battle']['cleared']==3
     assert h.state()['profile']['progress']['battle']['unlocked']['pierce']==1
     assert h.state()['profile']['progress']['battle']['unlocked']['arc']==1
-    h.tap('replay');b=h.state()['battle'];assert b['round']==0 and b['weapon']=='arc' and b['phase']=='combat'
-    h.home();capture('4-lobby-badge')
+    h.tap('loadout-arc');h.tap('route-1');h.tap('replay');b=h.state()['battle'];assert b['round']==0 and b['weapon']=='arc' and b['phase']=='combat' and b['mission']['route']==1
+    h.home();h.advance(350);assert h.state()['profile']['progress']['battle']['harbor']['rescued']==7;h.tap('harbor-train');capture('4-lobby-badge')
     assert not h.errors and not h.failures,(h.errors,h.failures)
     report={'mode':'mobile Chromium, controlled clock, real touches and real-origin reloads','rounds':rounds,
         'checks':['complete three-round route and explicit weapon choices','mid-combat reload preserves enemies, ammunition, time and coins','result reload preserves rewards, unlocks and pending choices','18 result/viewport combinations fit safe areas','center/lane boss warning and persistent Harbor badge; replay keeps weapons'],

@@ -8,9 +8,9 @@ from browser_support import OUTPUT
 
 out=OUTPUT/'audio-audit'
 groups={'soundtracks':['lobby-all','stairs-all','battle-all','runner-all','plaza-all'],
-        'safety':['battle-overload','calm-musicbox','background-silence','mode-transitions','effects-showcase']}
+        'safety':['battle-overload','calm-musicbox','background-silence','mode-transitions','effects-showcase','harbor-effects']}
 for group,names in groups.items():
-    fig,axes=plt.subplots(5,2,figsize=(14,12),layout='constrained')
+    fig,axes=plt.subplots(len(names),2,figsize=(14,len(names)*2.4),layout='constrained')
     fig.suptitle('UJU BLOCK ARCADE | '+group.upper()+' | 44.1 kHz production output',fontsize=15)
     for row,name in enumerate(names):
         with wave.open(str(out/(name+'.wav')),'rb') as f:

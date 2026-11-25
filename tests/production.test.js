@@ -76,9 +76,9 @@ test('plaza requires exact cargo and captain return; distractions reset mission 
   assert.ok(missionFor(10).reduce((a,m)=>a+m.count,0)>missionFor(0).reduce((a,m)=>a+m.count,0));
 });
 
-test('v1/v2 migrate to v3; damaged primary restores purchases, settings and checkpoints from backup',()=>{
+test('v1/v2 migrate to current schema; damaged primary restores purchases, settings and checkpoints from backup',()=>{
   const storage=memory();storage.setItem(CONFIG.arcade.storageKey,JSON.stringify({version:2,coins:1500,owned:['pilot','coral','none'],equipped:{head:'pilot',body:'coral',back:'none'}}));
-  const p=new Profile(storage);assert.equal(p.data.version,3);assert.equal(p.buy('jet'),'bought');p.setting('haptics');
+  const p=new Profile(storage);assert.equal(p.data.version,CONFIG.arcade.storageVersion);assert.equal(p.buy('jet'),'bought');p.setting('haptics');
   const r=new Runner(p);r.setPaused(false);wait(r,1200);r.setPaused(true);storage.setItem(CONFIG.arcade.storageKey,'{broken');
   const recovered=new Profile(storage);assert.equal(recovered.status,'recovered');assert.equal(recovered.coins,1200);assert.equal(recovered.equipped.back,'jet');assert.equal(recovered.data.settings.haptics,false);
   assert.equal(new Runner(recovered).state.elapsedMs,r.state.elapsedMs);

@@ -1,5 +1,6 @@
 import { CONFIG } from './config.js';
 import { Battle } from './battle.js';
+import { Harbor, harborProgress, validMission } from './harbor.js';
 
 const clone=value=>JSON.parse(JSON.stringify(value));
 const integer=(n,min,max)=>Number.isSafeInteger(n)&&n>=min&&n<=max;
@@ -14,7 +15,7 @@ export function normalizeProgress(saved) {
   const unlocked={pulse:1};for(const id of Object.keys(CONFIG.campaign.weapons))if(integer(b.unlocked?.[id],1,2))unlocked[id]=b.unlocked[id];
   const selected=weapon(b.weapon)?b.weapon:'pulse',rank=integer(b.rank,1,2)?b.rank:1;unlocked[selected]=Math.max(unlocked[selected]??1,rank);
   return {battle:{round:integer(b.round,0,2)?Math.min(b.round,cleared):0,cleared,
-    weapon:selected,rank,unlocked,
+    weapon:selected,rank,unlocked,harbor:harborProgress(b.harbor),
     records:Array.from({length:3},(_,i)=>{
       const r=b.records?.[i];return r&&finite(r.bestMs,1)&&integer(r.runs,1,1000000)?{bestMs:r.bestMs,runs:r.runs}:null;
     }),skill:{level:integer(skill.level,0,maxLevel)?skill.level:0,samples:Array.isArray(skill.samples)?skill.samples.filter(v=>typeof v==='boolean').slice(-CONFIG.campaign.sampleCount):[]},
@@ -41,7 +42,9 @@ export function campaignGate(random,level=0,assisted=false) {
 // A checkpoint is untrusted local data. Validate the complete simulation boundary
 // before applying anything; a bad run must never discard the separate wallet.
 export function validCheckpoint(cp,template,progress) {
-  if(!keys(cp,['version','round','seed','state','entities','bullets','gates','director'])||cp.version!==CONFIG.campaign.checkpointVersion||cp.round!==progress.round||!integer(cp.seed,0,0xffffffff))return false;
+  if(!keys(cp,['version','round','seed','state','entities','bullets','gates','director','mission'])||![1,CONFIG.campaign.checkpointVersion].includes(cp.version)||cp.round!==progress.round||!integer(cp.seed,0,0xffffffff))return false;
+  if(cp.version===1&&cp.mission!==undefined)return false;
+  if(cp.version===2&&cp.mission!==null&&!validMission(cp.mission,cp.round))return false;
   const s=cp.state;
   if(!s||!['combat','result','complete'].includes(s.phase)||s.round!==cp.round||s.weapon!==progress.weapon||s.rank!==progress.rank||Object.keys(s).some(key=>!Object.hasOwn(template,key)))return false;
   for(const [key,value]of Object.entries(template)){
@@ -57,12 +60,15 @@ export function validCheckpoint(cp,template,progress) {
   if(!Array.isArray(cp.entities)||cp.entities.length>CONFIG.battle.maxEntities||!Array.isArray(cp.bullets)||cp.bullets.length>CONFIG.battle.maxBullets||!Array.isArray(cp.gates)||cp.gates.length>2)return false;
   const ids=new Set();
   for(const e of cp.entities){
-    if(!keys(e,['id','kind','x','baseX','z','hp','maxHp','hitMs','dead','crack','rage','radius','explosive','weave','previousZ']))return false;
-    if(!['barrel','enemy','crate','boss'].includes(e.kind)||!integer(e.id,1,1e9)||ids.has(e.id)||!finite(e.x,-1,1)||!finite(e.baseX,-1,1)||!finite(e.z,-4,60)||!finite(e.hp,.001,1e8)||!finite(e.maxHp,e.hp,1e8)||!finite(e.hitMs,0,CONFIG.battle.hitMs)||!integer(e.crack,0,3)||!finite(e.radius,.1,1.5)||e.dead!==false)return false;
+    if(!keys(e,['id','kind','x','baseX','z','hp','maxHp','hitMs','dead','crack','rage','radius','explosive','weave','previousZ','cargo','pair','rewardKind','value','weapon']))return false;
+    if(!['barrel','enemy','crate','boss','lock','supply'].includes(e.kind)||!integer(e.id,1,1e9)||ids.has(e.id)||!finite(e.x,-1,1)||!finite(e.baseX,-1,1)||!finite(e.z,-4,60)||!finite(e.hp,.001,1e8)||!finite(e.maxHp,e.hp,1e8)||!finite(e.hitMs,0,CONFIG.battle.hitMs)||!integer(e.crack,0,3)||!finite(e.radius,.1,1.5)||e.dead!==false)return false;
+    if(e.kind==='supply'&&(!integer(e.pair,1,20)||!['weapon','crew','shield'].includes(e.rewardKind)||!integer(e.value,1,5)||!['spread','pierce'].includes(e.weapon)))return false;
+    if(['lock','supply'].includes(e.kind)&&!cp.mission)return false;
     ids.add(e.id);
     if(e.previousZ!==undefined&&!finite(e.previousZ,-4,60))return false;
-    for(const key of ['rage','explosive','weave'])if(e[key]!==undefined&&typeof e[key]!=='boolean')return false;
+    for(const key of ['rage','explosive','weave','cargo'])if(e[key]!==undefined&&typeof e[key]!=='boolean')return false;
   }
+  if(cp.mission){const m=cp.mission,locks=cp.entities.filter(e=>e.kind==='lock').length;if(m.locksSpawned?locks!==2-m.locksBroken:locks!==0||m.locksBroken!==0)return false;}
   for(const b of cp.bullets){
     if(!keys(b,['x','z','damage','powered','id','weapon','remaining','hitIds','spent'])||typeof b.powered!=='boolean'||!weapon(b.weapon))return false;
     if(!integer(b.id,1,1e9)||ids.has(b.id)||!finite(b.x,-1.5,1.5)||!finite(b.z,0,60)||!finite(b.damage,.001,1000)||b.spent===true)return false;
@@ -90,14 +96,16 @@ export class CampaignBattle extends Battle {
     this.seed=Math.floor(random()*0x100000000)>>>0;
     this.random=()=>{this.seed=(Math.imul(this.seed,1664525)+1013904223)>>>0;return this.seed/0x100000000;};
     this.pendingStats={};this.pendingCoins=0;this.saveClock=0;this.dirty=false;this.recovered=false;this.campaign=true;
+    this.legacyRun=checkpoint?.version===1||(checkpoint?.version===2&&checkpoint.mission===null);
     this.resetRound();
     if(checkpoint){
       if(validCheckpoint(checkpoint,this.state,this.progress)){
         this.state=clone(checkpoint.state);this.entities=clone(checkpoint.entities);this.bullets=clone(checkpoint.bullets);this.gates=clone(checkpoint.gates);
         Object.assign(this,clone(checkpoint.director));this.seed=checkpoint.seed;
+        this.harbor=checkpoint.mission?new Harbor(this,checkpoint.mission):null;
         this.state.paused=true;this.state.laneSince=this.state.elapsedMs;this.state.lastSteerAt=0;
         if(this.state.attack?.phase==='warning')this.state.attack.remainingMs=this.rules.bossWarningMs;
-      }else this.recovered=true;
+      }else{this.recovered=true;this.legacyRun=false;this.resetRound();}
     }
     if(!checkpoint&&this.progress.cleared===3){this.progress.round=2;this.resetRound();this.state.phase='complete';this.state.resultMs=CONFIG.campaign.resultGuardMs;}
     this.events=[];this.saveRun();
@@ -107,6 +115,7 @@ export class CampaignBattle extends Battle {
   resetRound() {
     const r=this.round,gateTimes=[];for(let t=CONFIG.campaign.gateFirstMs;t<=r.durationMs-CONFIG.campaign.gateReserveMs;t+=CONFIG.campaign.gateEveryMs)gateTimes.push(t);
     this.roundRules={...CONFIG.battle,gateTimes,enemyEveryMs:r.enemyEveryMs,bossAtMs:r.durationMs,patterns:r.patterns,bossHp:r.bossHp,bossHpPerWave:0,bossCombatSeconds:r.bossSeconds,bossWarningMs:r.warningMs};
+    if(!this.legacyRun)Object.assign(this.roundRules,{gateTimes:CONFIG.harbor.gateTimes,enemyEveryMs:CONFIG.harbor.disabledAtMs,bossAtMs:CONFIG.harbor.bossTimes[this.progress.round],bossWarningMs:CONFIG.harbor.warningMs});
     const paused=this.state.paused;
     Object.assign(this.state,{paused,phase:'combat',round:this.progress.round,weapon:this.progress.weapon,rank:this.progress.rank,
       mathLevel:this.progress.skill.level,resultMs:0,roundMs:0,roundCoins:0,roundGates:0,roundCorrect:0,roundMaxSquad:r.squad,
@@ -114,6 +123,8 @@ export class CampaignBattle extends Battle {
       wave:this.progress.round+1,squad:r.squad,x:0,targetX:0,shotClock:0,powerMs:0,charge:0,combo:0,comboMs:0,
       banner:'',bannerMs:0,clearingMs:0,gateResult:null,bossAttacks:0,bossHits:0,dodges:0});
     super.startWave();this.nextSupply=CONFIG.campaign.extraSupplyMs;this.events=[];
+    this.harbor=this.legacyRun?null:new Harbor(this);
+    if(this.harbor){this.heavySpawned=true;this.supplySpawned=true;this.nextSupply=CONFIG.harbor.disabledAtMs;}
   }
   reward(amount) {
     if(!this.campaign){super.reward(amount);return;}
@@ -121,7 +132,16 @@ export class CampaignBattle extends Battle {
   }
   setPaused(paused) {super.setPaused(paused);if(this.campaign)this.saveRun();}
   steer(x) {if(this.state.phase==='combat'&&!this.state.paused&&Number.isFinite(x)){super.steer(x);this.state.lastSteerAt=this.state.elapsedMs;}}
-  createGate(){return{...campaignGate(this.random,this.state.mathLevel,this.state.missStreak>=2),spawnedAt:this.state.elapsedMs};}
+  hurt(amount){return this.harbor?this.harbor.hurt(amount):super.hurt(amount);}
+  collectSupply(entity){this.harbor?.collect(entity);}
+  gateChoice(gate){return this.harbor?(Math.abs(this.state.x)>.08?(this.state.x<0?0:1):this.harbor.state.lane):super.gateChoice(gate);}
+  createGate(){
+    if(this.harbor&&this.progress.round===0){
+      const pairs=[[[2,1,'+'],[2,3,'+']],[[9,2,'−'],[4,5,'+']]],options=pairs[Math.min(1,this.gateIndex)].map(([a,b,op])=>({a,b,op,result:op==='+'?a+b:a-b,text:a+' '+op+' '+b}));
+      if(this.harbor.state.route)options.reverse();
+      return{options,correct:options[0].result>options[1].result?0:1,blueSide:this.gateIndex%2,speedMultiplier:1,spawnedAt:this.state.elapsedMs};
+    }
+    return{...campaignGate(this.random,this.state.mathLevel,this.state.missStreak>=2),spawnedAt:this.state.elapsedMs};}
   passGate(gate) {
     if(gate.passed)return;
     const lane=this.state.x<0?0:1;if(lane!==this.state.lane){this.state.lane=lane;this.state.laneSince=this.state.elapsedMs;}
@@ -149,13 +169,28 @@ export class CampaignBattle extends Battle {
   }
   hit(entity,damage,chain=false) {
     if(entity.dead)return;
+    if(entity.kind==='supply')return;
+    if(this.harbor&&entity.kind==='boss'){
+      if(this.harbor.state.weakMs)damage*=CONFIG.harbor.weakDamage;
+      if(this.harbor.state.locksBroken<2)damage=Math.min(damage,Math.max(0,entity.hp-1));
+      if(damage<=0)return;
+    }
     super.hit(entity,damage,chain);
+    if(this.harbor&&entity.dead){
+      if(entity.kind==='lock'){this.harbor.state.locksBroken++;this.harbor.say(this.harbor.state.locksBroken===2?'연결 해제! 집게 본체를 밀어내!':'반대쪽 연결 볼트도!');}
+      if(entity.cargo){this.harbor.state.cargo++;this.harbor.say('별 도장 상자 '+this.harbor.state.cargo+' / 2');}
+    }
     if(this.state.weapon==='arc'&&!chain&&!this.arcing){
-      const c=CONFIG.campaign,near=this.entities.filter(e=>!e.dead&&e.id!==entity.id&&Math.abs(e.x-entity.x)<=c.arcRangeX&&Math.abs(e.z-entity.z)<=c.arcRangeZ).sort((a,b)=>Math.abs(a.z-entity.z)-Math.abs(b.z-entity.z))[0];
+      const c=CONFIG.campaign,near=this.entities.filter(e=>!e.dead&&!['lock','supply'].includes(e.kind)&&e.id!==entity.id&&Math.abs(e.x-entity.x)<=c.arcRangeX&&Math.abs(e.z-entity.z)<=c.arcRangeZ).sort((a,b)=>Math.abs(a.z-entity.z)-Math.abs(b.z-entity.z))[0];
       if(near){this.arcing=true;this.emit({type:'arc-link',x:entity.x,z:entity.z,toX:near.x,toZ:near.z});this.hit(near,damage*c.arcSplash,true);this.arcing=false;}
     }
   }
+  updateBoss(ms){
+    const before=this.state.bossAttacks;super.updateBoss(ms);
+    if(this.harbor&&this.state.bossAttacks>before)this.harbor.state.weakMs=CONFIG.harbor.weakMs;
+  }
   nextAttackLane() {
+    if(this.harbor&&this.progress.round===0&&this.state.bossAttacks===0)return this.state.x<0?1:0;
     if(this.progress.round===2&&this.state.bossAttacks%2===0)return 2;
     if(this.progress.round===1)return this.state.bossAttacks%2;
     return super.nextAttackLane();
@@ -163,12 +198,13 @@ export class CampaignBattle extends Battle {
   attackHits(attack){return attack.lane===2?Math.abs(this.state.x)<CONFIG.campaign.bossSafeX*CONFIG.engine.hurtScale:super.attackHits(attack);}
   finishWave() {
     if(this.state.phase!=='combat')return;
+    this.harbor?.finish();
     const s=this.state,index=this.progress.round,first=this.progress.cleared<index+1;
     this.progress.cleared=Math.max(this.progress.cleared,index+1);
     const old=this.progress.records[index];this.progress.records[index]={bestMs:Math.min(old?.bestMs??Infinity,s.roundMs),runs:Math.min(1000000,(old?.runs??0)+1)};
     s.firstReward=first?this.round.reward:0;if(first)this.reward(s.firstReward);
     s.phase=index===2?'complete':'result';s.resultMs=0;s.attack=null;this.entities=[];this.bullets=[];this.gates=[];
-    if(index===2)this.progress.skill.level=nextDifficulty(this.progress.skill.level,this.progress.skill.samples);
+    if(index===2&&!this.harbor)this.progress.skill.level=nextDifficulty(this.progress.skill.level,this.progress.skill.samples);
     this.emit({type:'round-clear',final:index===2});this.dirty=true;
   }
   get offers() {
@@ -179,25 +215,33 @@ export class CampaignBattle extends Battle {
     if(this.state.phase!=='result'||this.state.resultMs<CONFIG.campaign.resultGuardMs||!integer(index,0,1))return false;
     const offer=this.offers[index];this.progress.weapon=offer.id;this.progress.rank=offer.rank;this.progress.round+=1;
     this.progress.unlocked[offer.id]=offer.rank;
-    this.resetRound();this.saveRun();this.emit({type:'power-up'});return true;
+    this.legacyRun=false;this.resetRound();this.saveRun();this.emit({type:'power-up'});return true;
   }
   replay() {
     if(this.state.phase!=='complete'||this.state.resultMs<CONFIG.campaign.resultGuardMs)return false;
-    this.progress.round=0;this.resetRound();this.saveRun();this.emit({type:'wave'});return true;
+    this.progress.round=0;this.legacyRun=false;this.resetRound();this.saveRun();this.emit({type:'wave'});return true;
+  }
+  selectLoadout(id){
+    if(this.state.phase!=='complete'||!weapon(id)||!this.progress.unlocked[id]||this.state.resultMs<CONFIG.campaign.resultGuardMs)return false;
+    this.state.weapon=this.progress.weapon=id;this.state.rank=this.progress.rank=this.progress.unlocked[id];this.saveRun();return true;
+  }
+  selectRoute(route){
+    if(this.state.phase!=='complete'||!integer(route,0,1)||this.state.resultMs<CONFIG.campaign.resultGuardMs)return false;
+    this.progress.harbor.route=route;this.saveRun();return true;
   }
   tick(ms) {
     if(this.state.phase!=='combat'){this.state.resultMs=Math.min(10000,this.state.resultMs+ms);return;}
     const s=this.state;s.roundMs+=ms;
     let section=0;for(let i=1;i<CONFIG.campaign.sectionFractions.length;i++)if(s.waveMs>=this.rules.bossAtMs*CONFIG.campaign.sectionFractions[i])section=i;
     this.roundRules.patterns=CONFIG.campaign.sectionPatterns[section];
-    super.tick(ms);
+    this.harbor?.before(ms);super.tick(ms);this.harbor?.after();
     const lane=s.x<0?0:1;if(lane!==s.lane){s.lane=lane;s.laneSince=s.elapsedMs;}
     s.roundMaxSquad=Math.max(s.roundMaxSquad,s.squad);
-    if(!this.bossSpawned&&s.waveMs>=this.nextSupply){this.spawn('crate',this.random()<.5?-.55:.55,25,CONFIG.battle.supplyHp);this.nextSupply+=CONFIG.campaign.extraSupplyMs;}
+    if(!this.harbor&&!this.bossSpawned&&s.waveMs>=this.nextSupply){this.spawn('crate',this.random()<.5?-.55:.55,25,CONFIG.battle.supplyHp);this.nextSupply+=CONFIG.campaign.extraSupplyMs;}
     this.saveClock+=ms;
   }
   checkpoint() {
-    return {version:CONFIG.campaign.checkpointVersion,round:this.progress.round,seed:this.seed,state:clone(this.state),
+    return {version:CONFIG.campaign.checkpointVersion,round:this.progress.round,seed:this.seed,state:clone(this.state),mission:this.harbor?clone(this.harbor.state):null,
       entities:clone(this.entities.filter(e=>!e.dead)),bullets:clone(this.bullets.filter(b=>!b.spent)),gates:clone(this.gates.filter(g=>!g.passed)),
       director:Object.fromEntries(['nextId','gateIndex','nextEnemy','formation','bossAttackClock','nextSupply','heavySpawned','bossSpawned','supplySpawned'].map(key=>[key,this[key]]))};
   }
@@ -208,5 +252,5 @@ export class CampaignBattle extends Battle {
     this.pendingCoins=0;this.saveClock=0;this.dirty=false;
   }
   advance(ms){super.advance(ms);if(this.dirty||this.saveClock>=CONFIG.campaign.saveMs)this.saveRun();}
-  snapshot(){return{...super.snapshot(),campaign:true,cleared:this.progress.cleared,offers:clone(this.offers),recovered:this.recovered};}
+  snapshot(){return{...super.snapshot(),campaign:true,cleared:this.progress.cleared,offers:clone(this.offers),recovered:this.recovered,mission:this.harbor?clone(this.harbor.state):null,harbor:clone(this.progress.harbor),unlocked:clone(this.progress.unlocked)};}
 }

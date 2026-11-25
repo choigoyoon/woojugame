@@ -31,7 +31,7 @@ export class Profile {
     const next=clone(this.data);
     if(raw.length>CONFIG.campaign.maxSaveBytes)throw Error('Oversized profile');
     const saved=JSON.parse(raw);
-    if(!saved||![1,2,CONFIG.arcade.storageVersion].includes(saved.version)||!Number.isSafeInteger(saved.coins)||saved.coins<0)throw Error('Invalid profile');
+    if(!saved||![1,2,3,CONFIG.arcade.storageVersion].includes(saved.version)||!Number.isSafeInteger(saved.coins)||saved.coins<0)throw Error('Invalid profile');
     next.coins=count(saved.coins);
     next.owned=PARTS.filter(p=>p.price===0||Array.isArray(saved.owned)&&saved.owned.includes(p.id)).map(p=>p.id);
     for(const slot of Object.keys(BASE_AVATAR)){

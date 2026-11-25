@@ -1,5 +1,6 @@
 import { CONFIG } from './config.js';
 import { Art } from './art.js';
+import { train, wagon, lockToy, cargoToy } from './harbor-art.js';
 
 export class BattleRenderer {
   constructor(ctx,battle,profile) {
@@ -58,7 +59,7 @@ export class BattleRenderer {
     if(event.type==='arc-link')Object.assign(this.links[this.linkCursor++%this.links.length],{from:this.project(event.x,event.z,65),to:this.project(event.toX,event.toZ,65),life:140});
     const point=this.project(event.x??this.game.state.x,event.z??CONFIG.battle.playerZ,event.kind==='boss'?170:event.kind==='barrel'?90:65);
     if(event.type==='gate-win')this.glow=900;
-    if(event.type==='power-up'){this.glow=900;this.powerIntro=1100;this.kick=130;}
+    if(['power-up','supply-pickup','shield-block'].includes(event.type)){this.glow=900;this.powerIntro=1100;this.kick=130;}
     if(event.type==='hit'){
       this.totalImpacts+=1;
       // Merge a shotgun volley into one readable number per target.
@@ -79,13 +80,13 @@ export class BattleRenderer {
       if(event.combo>1){this.chain=event.combo;this.chainMs=1200;}
 
     }
-    const count=event.type==='explode'?(event.boss?100:35):['gate-win','power-up'].includes(event.type)?50:event.type==='hit'?3:event.type==='bump'?15:0;
+    const count=event.type==='explode'?(event.boss?100:35):['gate-win','power-up','supply-pickup','shield-block'].includes(event.type)?50:event.type==='hit'?3:event.type==='bump'?15:0;
     for(let i=0;i<(this.reduced?Math.min(count,5):count);i++){
       const p=this.particles[this.cursor++%this.particles.length],angle=Math.random()*Math.PI*2,speed=90+Math.random()*(event.boss?420:230);
       Object.assign(p,{x:point.x,y:point.y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-110,size:4+Math.random()*10,angle,spin:(Math.random()-.5)*12,life:CONFIG.battle.particleMs,
         color:(event.type==='gate-win'?['#73ffee','#fff6ad','#9facff']:['#ffcf62','#ff965d','#fff4bf','#9ce6ff'])[i%4]});
     }
-    if(['explode','gate-win','power-up','boss-slam'].includes(event.type)){
+    if(['explode','gate-win','power-up','boss-slam','supply-pickup','shield-block'].includes(event.type)){
       Object.assign(this.rings[this.ringCursor++%this.rings.length],{x:point.x,y:point.y,life:500,boss:event.boss});
       if(event.coins)Object.assign(this.popups[this.popupCursor++%this.popups.length],{x:point.x,y:point.y-60,life:950,text:'+'+event.coins});
     }
@@ -164,6 +165,42 @@ export class BattleRenderer {
       c.save();c.globalAlpha=.68;
       a.poly([[p.x-22*s,p.y-56*s],[p.x,p.y-34*s],[p.x+22*s,p.y-56*s],[p.x+22*s,p.y-43*s],[p.x,p.y-21*s],[p.x-22*s,p.y-43*s]],bright);c.restore();
     }
+  }
+  supply(entity) {
+    const a=this.art,c=a.c,p=this.project(entity.x,entity.z),s=p.s;
+    const shield=entity.rewardKind==='shield',crew=entity.rewardKind==='crew',color=shield?'#9bdfff':crew?'#ffe391':CONFIG.campaign.weapons[entity.weapon].color;
+    c.save();c.translate(p.x,p.y);c.scale(s,s);
+    a.ellipse(0,5,120,22,'#103e5544');a.block(-111,-232,222,220,16,'#245875',color,'#183f61');
+    a.rect(-98,-214,196,172,a.gradient(-98,-214,98,-42,['#102f53','#31688a']),16,color);
+    if(crew){for(const dx of[-38,0,38])a.toy(dx,-75,.38,{time:this.time,run:!this.reduced,back:true,palette:this.profile.palette});a.label('+5',0,-166,38,'#fff3b5','#193752');}
+    else if(shield){a.poly([[0,-195],[49,-177],[40,-118],[0,-91],[-40,-118],[-49,-177]],'#7cdce9','#dcfff1',5);a.star(0,-151,25,'#f1ffdb');a.label('+2',0,-69,29,'#ddfff4','#173b64');}
+    else{c.save();c.scale(.65,.65);this.weaponIcon(entity.weapon,0,-130);c.restore();}
+    a.rect(-111,-280,222,42,'#153552',12,color);a.label(crew?'지원병':shield?'실드':CONFIG.campaign.weapons[entity.weapon].name,0,-259,30,'#fff6d3','#123453');
+    a.line([[-17,20],[0,35],[17,20]],color,7);c.restore();
+  }
+  crane(entity) {
+    const a=this.art,c=a.c,p=this.project(0,entity.z),s=p.s,m=this.game.harbor.state;
+    const warning=this.game.state.attack?.phase==='warning',lift=warning?18+Math.sin(this.time/90)*5:0;
+    c.save();c.translate(p.x,p.y);c.scale(s,s);
+    a.ellipse(0,8,250,35,'#18324740');
+    for(const side of[-1,1]){
+      a.line([[side*104,-302-lift],[side*220,-232-lift],[side*187,-62]],'#334964',37);
+      a.line([[side*104-5,-308-lift],[side*215,-237-lift],[side*182,-68]],'#ffc37b',22);
+      a.ellipse(side*218,-236-lift,24,24,'#e5915c');a.ellipse(side*218,-239-lift,13,13,'#ffe7a4');
+      a.line([[side*187,-61],[side*156,-32],[side*134,-63]],'#e6ab72',19);
+    }
+    a.block(-142,-382-lift,284,127,27,'#c77c57','#ffe0a0','#8b4e57');
+    a.rect(-119,-357-lift,238,77,'#203e5c',19,'#fff0bb');
+    for(const side of[-1,1]){a.rect(side*66-26,-339-lift,52,23,m.weakMs?'#a5ffe6':'#ffbd83',8);a.rect(side*66-5,-339-lift,10,23,'#254054',2);}
+    a.rect(-18,-301-lift,36,9,'#a2e8df',4);
+    for(let i=0;i<5;i++)a.poly([[-111+i*49,-258-lift],[-91+i*49,-258-lift],[-105+i*49,-240-lift],[-125+i*49,-240-lift]],'#593f50');
+    const trainY=-52+Math.sin(this.time/350)*5;
+    if(this.game.state.round===0)train(a,0,trainY,.82,{time:this.time,held:m.locksBroken<2});
+    else wagon(a,0,trainY,1.6,this.time,this.game.state.round===2);
+    if(m.locksBroken<2)for(const side of[-1,1])a.line([[side*86,-252],[side*86,trainY-125]],'#d5eeef',5);
+    a.rect(-137,-432,274,32,'#183450',12,'#e2c38a');a.text(m.locksBroken<2?'연결 볼트  '+(2-m.locksBroken):m.weakMs?'지금이야!':'집게를 밀어내!',0,-415,22,m.weakMs?'#abffe8':'#ffefbc');
+    if(entity.hitMs){c.globalAlpha=entity.hitMs/CONFIG.battle.hitMs*.25;a.rect(-142,-382-lift,284,127,'#fff0b0',18);}
+    c.restore();
   }
   barrel(entity) {
     const a=this.art,c=a.c,p=this.project(entity.x,entity.z),boss=entity.kind==='boss';
@@ -258,6 +295,7 @@ export class BattleRenderer {
       c.restore();
     }
     const center=this.project(s.x,CONFIG.battle.playerZ);
+    if(this.game.harbor?.state.shields){a.ellipse(center.x,center.y-45,105,100,'#92f7ff1c','#b4fff2');a.rect(center.x+58,center.y+23,62,34,'#155b79',15,'#b4fff2');a.text('◆ '+this.game.harbor.state.shields,center.x+89,center.y+41,21,'#d2fff4');}
     a.rect(center.x-44,center.y+20,88,39,'#153453dc',18,'#b8fff56b');a.text(s.squad,center.x,center.y+40,s.squad>999?21:28,'#eaffda');
   }
   effects() {
@@ -318,7 +356,9 @@ export class BattleRenderer {
       const section=at.reduce((found,point,index)=>route>=point?index:found,0);
       a.label(CONFIG.campaign.sectionNames[section],360,308,18,'#d8f6e9','#18375b');
     }
-    if(boss)a.label(this.game.campaign?this.game.round.boss+(boss.rage?' !':''):boss.rage?'BOSS • RAGE':'BOSS',360,310,22,boss.rage?'#ffbd87':'#fff1d3','#18375b');
+    if(boss)a.label(this.game.harbor?'집게 견인차':this.game.campaign?this.game.round.boss+(boss.rage?' !':''):boss.rage?'BOSS • RAGE':'BOSS',360,310,22,boss.rage?'#ffbd87':'#fff1d3','#18375b');
+    const mission=this.game.harbor?.state;
+    if(mission?.signalMs>0&&s.bannerMs<=0){a.rect(80,339,560,58,'#153955e8',21,'#9bdcc9');a.text(mission.signal,360,368,26,'#fff1c4');}
     if(s.bannerMs>0){
       c.save();c.globalAlpha=Math.min(1,s.bannerMs/260);
       const clear=s.banner==='CLEAR!';
@@ -364,22 +404,31 @@ export class BattleRenderer {
       a.text('1-'+(i+1),x,244,18,done?'#ffedc4':'#9cb9da');
     }
     a.text(complete?'하늘 항구 완료!':'1-'+(s.round+1)+' CLEAR!',360,330,45,'#fff2c2');
-    a.text(complete?'항구 배지를 획득했어':this.game.round.title,360,385,25,'#b9e9e5');
+    a.text(this.game.harbor?CONFIG.harbor.recovered[s.round]:complete?'항구 배지를 획득했어':this.game.round.title,360,385,25,'#b9e9e5');
     a.ellipse(360,582,139,36,'#8270bb');a.ellipse(360,570,139,34,'#bca4ef');
-    if(complete){a.poly([[360,430],[435,469],[422,548],[360,587],[298,548],[285,469]],'#ffd074','#fff2bc',5);a.star(360,507,42,'#fff4ca');}
+    if(this.game.harbor)train(a,complete?440:360,552,.82,{time:this.time,cars:s.round});
+    else if(complete){a.poly([[360,430],[435,469],[422,548],[360,587],[298,548],[285,469]],'#ffd074','#fff2bc',5);a.star(360,507,42,'#fff4ca');}
     else a.toy(350,568,.92,{time:this.time,palette:this.profile.palette});
     a.rect(70,623,580,114,'#10213de6',26,'#9fbbe76b');
     a.coin(126,670,.9);a.text('+'+s.roundCoins,242,671,38,'#ffe8a3');
     a.text('최다 부대',492,651,18,'#b4cfec');a.text(s.roundMaxSquad,492,688,34,'#baffed');
     a.text(s.firstReward?'첫 클리어 보너스 +'+s.firstReward+' 포함':'보관 완료',275,712,16,'#a8d9d1');
     const ready=s.resultMs>=CONFIG.campaign.resultGuardMs;
+    if(this.game.harbor){const m=this.game.harbor.state;['연쇄 4','상자 2','공격 회피'].forEach((label,i)=>{const x=153+i*207,done=!!(m.medals&(1<<i));a.star(x-58,763,12,done?'#ffe296':'#65758e');a.text(label,x,764,17,done?'#fff0bf':'#a4b5cc');});}
     if(complete){
-      a.text('무기와 배지는 다음 출동에도 함께!',360,816,25,'#d7e8ff');
-      a.text('다음 구역 준비 중',360,862,20,'#94adce');
-      c.save();c.globalAlpha=ready?1:.5;a.rect(105,1000,510,112,'#112543',29);a.rect(105,987,510,112,'#55d5c1',29,'#baffec');a.text('다시 출동',360,1043,35,'#143654');c.restore();
-      a.text('집 버튼으로 돌아가도 이어서 보관돼',360,1185,20,'#b4c8e0');return;
+      for(const [i,id]of Object.keys(CONFIG.campaign.weapons).entries()){
+        const x=36+i*166,unlocked=this.game.progress.unlocked[id],chosen=s.weapon===id,color=CONFIG.campaign.weapons[id].color;
+        a.rect(x,800,150,75,chosen?'#3e6c89':'#1b3554',18,chosen?color:'#57738b');
+        a.text(unlocked?CONFIG.campaign.weapons[id].name:'잠김',x+75,837,24,unlocked?color:'#8498b2');
+      }
+      a.text('다음에는 어떤 길로 갈까?',360,913,23,'#c3dfed');
+      CONFIG.harbor.routes.forEach((name,i)=>{const x=60+i*310,chosen=this.game.progress.harbor.route===i;
+        a.rect(x,943,290,74,chosen?'#3c697e':'#213856',20,chosen?'#aef2d4':'#71859d');a.text(name,x+145,981,26,chosen?'#e1ffe2':'#b3ccdf');});
+      c.save();c.globalAlpha=ready?1:.5;a.rect(105,1060,510,112,'#112543',29);a.rect(105,1047,510,112,'#55d5c1',29,'#baffec');a.text('다시 출동',360,1103,35,'#143654');c.restore();
+      const record=this.game.progress.harbor.records[this.game.progress.harbor.route*3+s.round];
+      a.text(record?'이 길의 최고 기록  '+(record.bestMs/1000).toFixed(1)+'초':'처음 가는 길 · 적 배치가 달라져',360,1210,20,'#b4c8e0');return;
     }
-    a.text('다음 출동의 무기를 골라!',360,782,25,'#d5e7fa');
+    a.text(this.game.harbor?(s.round===0?'별 도장 짐칸을 쫓아가자!':'선로 끝, 마지막 칸을 구하자!'):'다음 출동의 무기를 골라!',360,805,21,'#d5e7fa');
     this.game.offers.forEach((offer,i)=>{
       const x=36+i*342,w=306,color=CONFIG.campaign.weapons[offer.id].color;
       c.save();c.globalAlpha=ready?1:.55;a.rect(x,836,w,332,'#071b34',25);a.rect(x,824,w,332,'#294871',25,color);
@@ -394,15 +443,16 @@ export class BattleRenderer {
     const a=this.art,c=a.c;this.ocean();c.save();
     if(!this.reduced&&this.kick>0){const scale=1+Math.min(1,this.kick/180)*.018;c.translate(360,760);c.scale(scale,scale);c.translate(-360,-760);}
     if(!this.reduced&&this.game.state.shakeMs>0){const amp=Math.min(7,this.game.state.shakeMs/40);c.translate(Math.sin(this.time*.11)*amp,Math.cos(this.time*.13)*amp*.6);}
-    this.deck();this.danger();
+    this.deck();
     const objects=this.drawList;objects.length=0;let entryIndex=0;for(const object of this.game.gates){const entry=this.drawEntries[entryIndex++];entry.object=object;entry.kind='gate';objects.push(entry);}for(const object of this.game.entities){const entry=this.drawEntries[entryIndex++];entry.object=object;entry.kind=object.kind;objects.push(entry);}objects.sort((a,b)=>b.object.z-a.object.z);
-    for(const {object,kind} of objects){if(kind==='gate')this.gate(object);else if(kind==='enemy')this.enemy(object);else if(kind==='crate')this.crate(object);else this.barrel(object);}
+    for(const {object,kind} of objects){if(kind==='gate')this.gate(object);else if(kind==='enemy')this.enemy(object);else if(kind==='crate')this.crate(object);else if(kind==='supply')this.supply(object);else if(kind==='lock'){const p=this.project(object.x,object.z,48);lockToy(a,p.x,p.y,p.s,this.time,object.hitMs/CONFIG.battle.hitMs);}else if(kind==='boss'&&this.game.harbor)this.crane(object);else if(object.cargo){const p=this.project(object.x,object.z);cargoToy(a,p.x,p.y,p.s);}else this.barrel(object);}
     for(const bullet of this.game.bullets){
       const p=this.project(bullet.x,bullet.z,56),tail=this.project(bullet.x,bullet.z-(bullet.powered?1.7:1.15),56);
       a.line([[tail.x,tail.y],[p.x,p.y]],bullet.powered?'#54ffe833':'#ffbb5838',Math.max(5,19*p.s));
       a.line([[tail.x,tail.y],[p.x,p.y]],bullet.powered?'#61ffe6':CONFIG.campaign.weapons[bullet.weapon]?.color??'#ffb43e',Math.max(3,(bullet.weapon==='pierce'?15:10)*p.s));
       a.line([[tail.x,tail.y],[p.x,p.y]],'#fffde0',Math.max(2,4*p.s));a.ellipse(p.x,p.y,3*p.s,6*p.s,'#fff');
     }
-    this.squad();this.effects();c.restore();this.hud(canHome);this.lootEffects();
+    this.danger();this.squad();this.effects();
+    if(this.game.harbor&&this.game.state.clearingMs){const t=1-this.game.state.clearingMs/CONFIG.battle.waveBreakMs;train(a,360+Math.sin(t*Math.PI)*80,620+Math.sin(t*Math.PI)*95,.8,{time:this.time,cars:this.game.state.round});}c.restore();this.hud(canHome);this.lootEffects();
   }
 }

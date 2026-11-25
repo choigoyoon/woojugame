@@ -47,6 +47,9 @@ export class Battle {
   attackHits(attack) { return Math.abs(this.state.x-(attack.lane===0?-.4:.4))<.4*CONFIG.engine.hurtScale; }
   takeEvents() { return this.events.splice(0); }
   reward(amount) { this.state.coins += amount; this.wallet?.credit(amount); }
+  hurt(amount) { this.state.squad=Math.max(1,this.state.squad-amount);return true; }
+  collectSupply(entity) { entity.dead=true; }
+  canHit(entity) { return entity.kind!=='supply'; }
   setPaused(paused) {
     if(this.state.paused&&!paused&&this.state.attack?.phase==='warning')this.state.attack.remainingMs=this.rules.bossWarningMs;
     this.state.paused = Boolean(paused);if(paused)this.state.axis=0;
@@ -93,10 +96,11 @@ export class Battle {
     s.shots += pellets; s.recoilMs = 65;
     this.emit({ type: 'shot', power: pellets, powered:s.powerMs>0 });
   }
+  gateChoice(gate) { return Math.abs(this.state.x)<=.4*(CONFIG.engine.collectScale-1)?gate.correct:this.state.x<0?0:1; }
   passGate(gate) {
     if (gate.passed) return;
     gate.passed = true;
-    const s = this.state; const index = Math.abs(s.x)<=.4*(CONFIG.engine.collectScale-1)?gate.correct:s.x < 0 ? 0 : 1;
+    const s = this.state; const index = this.gateChoice(gate);
     const selected = gate.options[index]; const good = index === gate.correct;
     const previous = s.squad;
     if (selected.result >= 0) {
@@ -128,7 +132,7 @@ export class Battle {
     else if(!boss&&!this.state.powerMs){this.state.charge+=1;if(this.state.charge>=CONFIG.battle.chargeKills)this.powerUp();}
     // Mark the source dead before the cascade: every prop/reward can resolve only once.
     if(entity.explosive)for(const target of this.entities){
-      if(!target.dead&&target.kind!=='boss'&&Math.abs(target.x-entity.x)<=CONFIG.battle.chainRadiusX&&Math.abs(target.z-entity.z)<=CONFIG.battle.chainRadiusZ)this.hit(target,CONFIG.battle.chainDamage,true);
+      if(!target.dead&&!['boss','lock','supply'].includes(target.kind)&&Math.abs(target.x-entity.x)<=CONFIG.battle.chainRadiusX&&Math.abs(target.z-entity.z)<=CONFIG.battle.chainRadiusZ)this.hit(target,CONFIG.battle.chainDamage,true);
     }
     if (boss) {
       this.state.bosses += 1; this.state.clearingMs = CONFIG.battle.waveBreakMs;
@@ -145,7 +149,7 @@ export class Battle {
       if(s.attack.phase==='warning'){
         const hit=this.attackHits(s.attack);
         s.attack.phase='slam';s.attack.remainingMs=b.bossSlamMs;s.bossAttacks+=1;
-        if(hit){s.squad=Math.max(1,s.squad-b.bossPenalty);s.bossHits+=1;}else s.dodges+=1;
+        if(hit){if(this.hurt(b.bossPenalty))s.bossHits+=1;}else s.dodges+=1;
         s.shakeMs=hit?240:100;
         this.emit({type:'boss-slam',x:s.attack.lane===2?0:s.attack.lane===0?-.55:.55,z:b.playerZ,hit});
       }else{s.attack=null;this.bossAttackClock=boss.rage?b.bossRageGapMs:b.bossAttackGapMs;}
@@ -196,7 +200,7 @@ export class Battle {
     while (s.shotClock <= 0) { this.shoot(); s.shotClock += this.firepower().interval; }
     for (const entity of this.entities) {
       entity.previousZ = entity.z;
-      entity.z = entity.kind === 'boss' ? Math.max(9, entity.z - b.speed * dt) : entity.z - b.speed * dt;
+      entity.z = entity.kind === 'boss' ? Math.max(9, entity.z - b.speed * dt) : entity.kind==='lock'?Math.max(8.2,entity.z-b.speed*dt):entity.z-b.speed*dt;
       entity.hitMs = Math.max(0, entity.hitMs - ms);
       if(entity.weave)entity.x=entity.baseX+Math.sin(s.elapsedMs/550+entity.id)*.18;
     }
@@ -204,7 +208,7 @@ export class Battle {
     for (const bullet of this.bullets) {
       const previousZ = bullet.z; bullet.z += b.bulletSpeed * dt;
       const candidates=this.candidates;candidates.length=0;
-      for(const entity of this.entities)if(!entity.dead&&!bullet.hitIds?.includes(entity.id)&&Math.abs(entity.x-bullet.x)<=entity.radius*CONFIG.engine.collectScale&&previousZ<=entity.previousZ+.45&&bullet.z>=entity.z-.45)candidates.push(entity);
+      for(const entity of this.entities)if(!entity.dead&&this.canHit(entity)&&!bullet.hitIds?.includes(entity.id)&&Math.abs(entity.x-bullet.x)<=entity.radius*CONFIG.engine.collectScale&&previousZ<=entity.previousZ+.45&&bullet.z>=entity.z-.45)candidates.push(entity);
       candidates.sort((a,c)=>a.z-c.z);
       for(const target of candidates){
         this.hit(target,bullet.damage);(bullet.hitIds??=[]).push(target.id);bullet.remaining=(bullet.remaining??1)-1;
@@ -214,8 +218,9 @@ export class Battle {
     this.bulletPool.prune(bullet => !bullet.spent && bullet.z < b.farZ);
     for (const entity of this.entities) {
       if (entity.dead || entity.z > b.playerZ - 0.3) continue;
+      if(entity.kind==='supply'){this.collectSupply(entity);continue;}
       if (Math.abs(entity.x - s.x) < 0.42*CONFIG.engine.hurtScale) {
-        s.squad = Math.max(1, s.squad - 1); s.shakeMs = 100;
+        this.hurt(1);s.shakeMs = 100;
         this.emit({ type: 'bump', x: s.x, z: b.playerZ });
       }
       entity.dead = true;

@@ -5,7 +5,7 @@ from browser_support import ArcadeBrowser, OUTPUT
 checks=[]
 with ArcadeBrowser() as h:
     h.tap('mode-runner')
-    future=h.page.evaluate('''()=>{const p=window.__uju.snapshot().profile;p.version=4;p.coins=918;const raw=JSON.stringify(p);localStorage.setItem('uju-arcade-profile',raw);return raw;}''')
+    future=h.page.evaluate('''()=>{const p=window.__uju.snapshot().profile;p.version+=1;p.coins=918;const raw=JSON.stringify(p);localStorage.setItem('uju-arcade-profile',raw);return raw;}''')
     h.advance(1600)
     assert h.state()['paused']
     assert h.page.evaluate("localStorage.getItem('uju-arcade-profile')")==future

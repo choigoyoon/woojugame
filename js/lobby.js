@@ -1,4 +1,5 @@
 import { Art } from './art.js';
+import { train } from './harbor-art.js';
 
 export const CARTRIDGES = Object.freeze([
   { id:'stairs', title:'블록 계단 점프', tag:'구름 위로 폴짝', x:36,y:374, colors:['#42d2bc','#156d85'], accent:'#b8ffe5' },
@@ -124,6 +125,7 @@ export class Lobby {
       a.poly([[x,269],[x+14,277],[x+12,294],[x,301],[x-12,294],[x-14,277]],done?'#ffd378':'#253e59',done?'#fff1bf':'#6d8a9d',2);
       if(done)a.star(x,284,9,'#fff6c9');else a.text(i+1,x,285,13,'#9bb8c8');
     }
+    if(progress.harbor?.rescued&1)train(a,461,302,.37,{time:t+(this.pressed==='train'?this.pressMs*5:0)});
     a.text('마음 가는 곳으로, 출동!',41,354,19,'#c4dfe8','left',650);
     for(const card of CARTRIDGES){
       const {x,y}=card,w=306;
@@ -132,7 +134,7 @@ export class Lobby {
       c.save();c.beginPath();c.roundRect(x+20,y+54,w-44,204,16);c.clip();
       this.mini(card.id,x+w/2,y+158);c.restore();
       a.text(card.title,x+w/2,y+288,card.id==='plaza'?24:26,'#fff5dc');
-      const subtitle=card.id==='battle'?(cleared===3?'항구 배지 획득':(progress.round+1)+' / 3 구간'):card.id==='stairs'?'폴짝 · 멈춤 · 폴짝':card.id==='runner'?'높이 뛰어넘기':'찾고, 들고, 출발';
+      const subtitle=card.id==='battle'?(cleared===3?'별빛특급, 다시 출동!':(progress.round+1)+' / 3 구간'):card.id==='stairs'?'폴짝 · 멈춤 · 폴짝':card.id==='runner'?'높이 뛰어넘기':'찾고, 들고, 출발';
       a.text(subtitle,x+26,y+329,14,'#b9d5df','left',650);
       const pressed=this.pressed===card.id&&this.pressMs>0;
       const dy=pressed?this.pressMs/450*5:0;

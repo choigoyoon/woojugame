@@ -84,7 +84,7 @@ test('three complete rounds stop for choices, retain weapons, award first clears
   let {storage,profile,battle:b}=create();const durations=[];
   for(let round=0;round<3;round++){
     const elapsed=play(b);durations.push(elapsed);assert.equal(b.state.phase,round===2?'complete':'result');
-    assert.ok(elapsed>=CONFIG.campaign.rounds[round].durationMs&&elapsed<180000);
+    assert.ok(elapsed>=CONFIG.harbor.bossTimes[round]&&elapsed<180000);
     assert.equal(b.state.firstReward,CONFIG.campaign.rounds[round].reward);assert.equal(b.progress.cleared,round+1);
     assert.equal(b.state.mathLevel,0);const earned=profile.coins;
     b.finishWave();b.saveRun();assert.equal(profile.coins,earned);assert.equal(b.progress.records[round].runs,1);
@@ -93,7 +93,7 @@ test('three complete rounds stop for choices, retain weapons, award first clears
     if(round<2){assert.equal(b.choose(round===0?1:1),true);assert.equal(b.choose(0),false);assert.equal(b.state.weapon,round===0?'pierce':'arc');}
   }
   assert.equal(b.progress.cleared,3);assert.equal(b.progress.unlocked.pierce,1);assert.equal(b.progress.unlocked.arc,1);
-  assert.equal(b.replay(),true);assert.equal(b.state.weapon,'arc');assert.equal(b.state.round,0);
+  assert.equal(b.selectLoadout('arc'),true);assert.equal(b.replay(),true);assert.equal(b.state.weapon,'arc');assert.equal(b.state.round,0);
   play(b);assert.equal(b.state.firstReward,0);assert.equal(b.progress.records[0].runs,2);
   console.log('Harbor round durations (simulation):',durations.map(ms=>(ms/1000).toFixed(1)).join(', '),'seconds');
 });
@@ -129,7 +129,7 @@ test('a larger squad defeats the same boss sooner, and an existing saved boss re
   for(const squad of [5,30]){
     const {battle:b}=create();b.entities=[];b.bullets=[];b.gates=[];
     b.bossSpawned=b.heavySpawned=b.supplySpawned=true;b.gateIndex=100;b.nextEnemy=b.nextSupply=1e8;b.bossAttackClock=1e8;
-    b.state.squad=squad;b.spawn('boss',0,9,600);let elapsed=0;
+    b.harbor=null;b.state.squad=squad;b.spawn('boss',0,9,600);let elapsed=0;
     while(!b.state.bosses&&elapsed<60000){b.advance(25);b.takeEvents();elapsed+=25;}
     assert.equal(b.state.bosses,1);durations.push(elapsed);
   }

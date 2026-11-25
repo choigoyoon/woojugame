@@ -14,14 +14,14 @@ export const MODE = Object.freeze({
 
 export const CONFIG = freeze({
   features: { brake: true, puzzle: true, battle: true, shop: true, runner: true, plaza: true, persistence: true, cooldown: false, pwa: true },
-  arcade: { homeIdleMs: 800, maxFrameMs: 50, storageKey: 'uju-arcade-profile', storageVersion: 3, maxCoins: 999999999 },
+  arcade: { homeIdleMs: 800, maxFrameMs: 50, storageKey: 'uju-arcade-profile', storageVersion: 4, maxCoins: 999999999 },
   engine: { stepMs: 5, bufferMs: 100, hurtScale: .85, collectScale: 1.2 },
   runner: { speed: 210, maxSpeed: 270, gravity: 1850, heldGravity: 1050, jumpVelocity: 690, cutVelocity: 260, holdMs: 220, coyoteMs: 100, groundY: 870, playerX: 180, playerWidth: 54, playerHeight: 135, goldMs: 5000, wordCoins: 5, sentenceCoins: 30, itemLimit: 24, spawnMs: 1650 },
   plaza: { speed: 2.65, radius: .27, itemRadius: .22, hazardRadius: .35, joystickRadius: 85, reward: 50, introMs: 1600, resultMs: 800, itemLimit: 24, hazardLimit: 3 },
   shop: { normalPrices: { visor:100,cat:220,mint:150,armor:300,cape:150,jet:300 }, legendaryPrice:500 },
   parent: { maxAttempts: 5, lockMs: 30000, sessionMs: 5 * 60 * 1000 },
   campaign: {
-    checkpointVersion: 1, saveMs: 1000, resultGuardMs: 800, stableChoiceMs: 900, sampleCount: 10,
+    checkpointVersion: 2, saveMs: 1000, resultGuardMs: 800, stableChoiceMs: 900, sampleCount: 10,
     gateEveryMs: 30000, gateFirstMs:18000, gateReserveMs:16000, assistedGateSpeed:.75,
     extraSupplyMs: 30000, maxSaveBytes: 262144, bossSafeX:.35,
     math:{maxOperands:[10,20,20],minGaps:[3,3,1],promoteWins:8,demoteWins:5},
@@ -41,6 +41,21 @@ export const CONFIG = freeze({
     baseDps:12, memberDps:2, maxDps:360,
     sectionFractions:[0,.34,.68], sectionNames:['선착장 진입','수송로 돌파','대장에게 접근'],
     sectionPatterns:[[0,1],[1,2],[2,0,1]],
+  },
+  harbor: {
+    version:1, disabledAtMs:1e9, maxSquad:99, gateTimes:[18000,50000], laneHoldMs:100,
+    bossTimes:[75000,95000,110000], lockHp:[18,24,30], lockX:.72, lockRadius:.15,
+    warningMs:1500, invulnerableMs:1000, weakMs:1500, weakDamage:1.5,
+    supplyZ:30, supplyRadius:.3, crew:5, shieldGrant:2, maxShields:4, signalMs:3000,
+    chainMedal:4, cargoMedal:2, enemyHp:[24,32,40], cargoHp:18,
+    routes:['기차 선로','화물 선로'],
+    goals:['기관차를 내려줘!','짐칸을 되찾자!','별빛특급 출발!'],
+    recovered:['기관차와 코코를 구했어!','별 도장 짐칸을 찾았어!','별빛특급이 다시 달려!'],
+    events:[
+      [[8000,'convoy'],[29000,'row'],[34000,'warning'],[39000,'armory'],[61000,'stock'],[68000,'cargo'],[72000,'warning']],
+      [[8000,'line'],[29000,'warning'],[33000,'armory'],[42000,'convoy'],[62000,'stock'],[73000,'cargo'],[81000,'weave'],[90000,'warning']],
+      [[8000,'weave'],[29000,'warning'],[33000,'stock'],[42000,'line'],[61000,'armory'],[72000,'cargo'],[82000,'convoy'],[90000,'stock'],[99000,'warning']],
+    ],
   },
   brake: { minSteps: 15, maxSteps: 25, warningMs: 500, holdMs: 2000, coins: 15, autoSteps: 5, autoStepMs: 190 },
   puzzle: { everySteps: 50, brakeExclusionSteps: 3, chestCoins: 50, celebrationMs: 1800, wrongMs: 450 },

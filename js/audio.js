@@ -80,7 +80,9 @@ export class Audio {
       this.tone(530+(event.crack??0)*100,145,.065,'triangle',0,.35);this.noise(.04,.22);
     }
     if(event.type==='armor-break'){this.noise(.11,.45);this.tone(860,280,.12,'square',0,.19);}
-    if(event.type==='power-up'){
+    if(event.type==='train'){for(const delay of[0,.32]){this.tone(330,330,.24,'triangle',delay,.22);this.tone(440,440,.24,'sine',delay,.2);}this.noise(.12,.08);}
+    if(event.type==='shield-block'){this.fm(330,990,.23,0,.3);this.noise(.065,.18);}
+    if(['power-up','supply-pickup'].includes(event.type)){
       [392,523,784,1046].forEach((hz,i)=>this.tone(hz*.5,hz,.18,'sawtooth',i*.055,.25));
       this.tone(80,190,.28,'sine',0,.5);
     }

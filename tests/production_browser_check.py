@@ -7,7 +7,7 @@ with ArcadeBrowser() as h:
     # Fixture is an existing 0.3 wallet, not an in-game debug reward endpoint.
     h.page.evaluate("window.dispatchEvent(new Event('pagehide'));localStorage.setItem('uju-arcade-profile',JSON.stringify({version:2,coins:3500,owned:['pilot','coral','none'],equipped:{head:'pilot',body:'coral',back:'none'}}))")
     h.reload();h.advance(64)
-    assert h.state()['profile']['version']==3
+    assert h.state()['profile']['version']==4
     h.tap('parents');question=h.state()['center']['question']
     def digits(value):
         for digit in str(value):h.tap('digit-'+digit)

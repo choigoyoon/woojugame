@@ -40,9 +40,12 @@ function button(id,action,label,x,y,w,h){
 button('battle-field','steer','부대를 좌우로 드래그 이동',0,108,720,1172);
 button('weapon-0','weapon-0','왼쪽 무기로 다음 라운드',36,824,306,332);
 button('weapon-1','weapon-1','오른쪽 무기로 다음 라운드',378,824,306,332);
-button('replay','replay','하늘 항구 다시 출동',105,987,510,112);
+button('replay','replay','하늘 항구 다시 출동',105,1047,510,112);
+Object.keys(CONFIG.campaign.weapons).forEach((id,i)=>button('loadout-'+id,'loadout-'+id,CONFIG.campaign.weapons[id].name+' 다시 장착',36+i*166,800,150,75));
+CONFIG.harbor.routes.forEach((name,i)=>button('route-'+i,'route-'+i,name+' 선택',60+i*310,943,290,74));
 for(const card of CARTRIDGES){const b=button('mode-'+card.id,card.id,card.title+(card.locked?' · 준비 중':''),card.x,card.y,306,364);if(card.locked)b.setAttribute('aria-disabled','true');}
 button('avatar','profile','내 아바타와 파츠 상점',37,180,646,148);
+button('harbor-train','train','구한 별빛특급 경적',396,265,140,60).style.zIndex=2;
 button('coins','profile','코인 보관함',455,47,226,76);
 button('turn','turn','방향 전환',0,1280*.78,360,1280*.22);
 button('climb','climb','오르기',360,1280*.78,360,1280*.22);
@@ -112,6 +115,7 @@ const input=new Input(element,{
     }
     if(arcade.mode==='lobby'){
       lobby.tap(action);
+      if(action==='train'){audio.play({type:'train'});return;}
       lobby.render();
       if(arcade.enter(action))changed();else audio.play({type:'locked'});
       return;
@@ -140,7 +144,7 @@ const input=new Input(element,{
     }else if(arcade.mode==='battle'){
       if(arcade.battle.state.phase!=='combat'){
         if(input.hasGameplayInput())return;
-        const accepted=action==='weapon-0'?arcade.battle.choose(0):action==='weapon-1'?arcade.battle.choose(1):action==='replay'?arcade.battle.replay():false;
+        const accepted=action==='weapon-0'?arcade.battle.choose(0):action==='weapon-1'?arcade.battle.choose(1):action==='replay'?arcade.battle.replay():action?.startsWith('loadout-')?arcade.battle.selectLoadout(action.slice(8)):action?.startsWith('route-')?arcade.battle.selectRoute(Number(action.slice(6))):false;
         if(accepted){arcade.interact();changed();}return;
       }
       if(['left','right'].includes(action)){record.gameplay=true;arcade.interact();}
@@ -164,10 +168,11 @@ function syncUI(){
     uiKey=key;
     for(const [id,node]of controls){
       node.hidden=!(arcade.mode==='lobby'&&(id.startsWith('mode-')||['avatar','coins','parents'].includes(id))
+        ||arcade.mode==='lobby'&&id==='harbor-train'&&!!(profile.data.progress.battle.harbor?.rescued&1)
         ||arcade.mode!=='lobby'&&id==='home'
         ||arcade.mode==='battle'&&phase==='combat'&&id==='battle-field'
         ||arcade.mode==='battle'&&phase==='result'&&id.startsWith('weapon-')
-        ||arcade.mode==='battle'&&phase==='complete'&&id==='replay'
+        ||arcade.mode==='battle'&&phase==='complete'&&(id==='replay'||id.startsWith('loadout-')||id.startsWith('route-'))
         ||arcade.mode==='stairs'&&!puzzle&&['turn','climb'].includes(id)
         ||puzzle&&['choice-0','choice-1','speech'].includes(id)
         ||arcade.mode==='runner'&&id==='runner-jump'
@@ -177,11 +182,15 @@ function syncUI(){
     if(arcade.mode==='profile'&&center.stage==='shop')center.parts.forEach((p,i)=>controls.get('part-'+i).setAttribute('aria-label',p.name+(p.legendary?' 전설':'')+' '+p.price+' 코인'));
     if(puzzle){const p=arcade.stairs.state.puzzle,s=SCENARIOS.find(s=>s.id===p.id);p.choices.forEach((choice,i)=>controls.get('choice-'+i).setAttribute('aria-label',s.labels[s.choices.indexOf(choice)]));}
     if(arcade.mode==='battle'&&phase==='result')arcade.battle.offers.forEach((o,i)=>controls.get('weapon-'+i).setAttribute('aria-label',CONFIG.campaign.weapons[o.id].name+(o.rank===2?' 강화':'')+' 선택, 다음 라운드'));
-    canvas.setAttribute('aria-label',arcade.mode==='battle'?'현수교 위 블록 부대와 수식 게이트':puzzle?'상황 그림과 용암 다리':arcade.mode==='stairs'?'하늘 위 블록 계단과 캐릭터':arcade.mode==='runner'?'자동 달리기와 세 낱말 슬롯':arcade.mode==='plaza'?'쿼터뷰 광장과 목표 물건':arcade.mode==='parents'?'보호자 확인과 누적 지표':arcade.mode==='profile'?'아바타 파츠 상점':'네 개의 입체 게임 카트리지');
+    canvas.setAttribute('aria-label',arcade.mode==='battle'?'지원품을 고르고 별빛특급을 구하는 다리 전투':puzzle?'상황 그림과 용암 다리':arcade.mode==='stairs'?'하늘 위 블록 계단과 캐릭터':arcade.mode==='runner'?'자동 달리기와 세 낱말 슬롯':arcade.mode==='plaza'?'쿼터뷰 광장과 목표 물건':arcade.mode==='parents'?'보호자 확인과 누적 지표':arcade.mode==='profile'?'아바타 파츠 상점':'네 개의 입체 게임 카트리지');
   }
   const enabled=['profile','parents'].includes(arcade.mode)||arcade.canHome(input.hasGameplayInput());
   const home=controls.get('home');if(home.getAttribute('aria-disabled')!==String(!enabled))home.setAttribute('aria-disabled',String(!enabled));
   for(const id of ['weapon-0','weapon-1','replay']){const node=controls.get(id),disabled=String(arcade.battle.state.resultMs<CONFIG.campaign.resultGuardMs);if(node.getAttribute('aria-disabled')!==disabled)node.setAttribute('aria-disabled',disabled);}
+  if(arcade.mode==='battle'&&phase==='complete'){
+    for(const id of Object.keys(CONFIG.campaign.weapons)){const node=controls.get('loadout-'+id),disabled=String(arcade.battle.state.resultMs<CONFIG.campaign.resultGuardMs||!arcade.battle.progress.unlocked[id]),pressed=String(arcade.battle.state.weapon===id);if(node.getAttribute('aria-disabled')!==disabled)node.setAttribute('aria-disabled',disabled);if(node.getAttribute('aria-pressed')!==pressed)node.setAttribute('aria-pressed',pressed);}
+    for(let i=0;i<2;i++){const node=controls.get('route-'+i),pressed=String(arcade.battle.progress.harbor.route===i);if(node.getAttribute('aria-pressed')!==pressed)node.setAttribute('aria-pressed',pressed);}
+  }
   const value='코인 '+profile.coins;if(score.value!==value)score.value=value;
 }
 function render(force=false){

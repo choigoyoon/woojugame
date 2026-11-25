@@ -65,20 +65,50 @@ export class AdventureRenderer {
       const x=(i*310-d*(.12+layer*.12))%1600-310,y=550+layer*100;
       a.poly([[x,y+220],[x+160,y-70],[x+320,y+220]],[['#89d4d2','#53b9b6','#398c9c'],['#9a93d8','#6d67b5','#4a468c'],['#4d7fb8','#325c91','#1f3d68']][zone][layer]);
     }
-    // Shared Harbor World landmarks on the horizon: Cloud Lighthouse (Stairs) & Bridge Tower (Battle)
+    // Shared Harbor World landmarks on the horizon: Cloud Lighthouse (Stairs), Suspension Bridge & Skyline!
     const parts=trainParts(this.profile.data);
-    a.rect(112,545,22,75,'#e8f1fa88',3);a.rect(112,562,22,14,'#e0675a88',2);a.rect(112,590,22,14,'#e0675a88',2);
-    a.stud(123,542,9,3,4,'#e39d3b','#fff5bd');
-    if(parts.beacon)a.poly([[123,542],[240,505+Math.sin(t/700)*18],[240,565+Math.sin(t/700)*18]],'#fff6b538');
-    for(let i=0;i<5;i++){const x=((i*251-d*.08)%1200+1200)%1200-220,y=365+(i%3)*65;a.ellipse(x,y,70,16,'#e8fff2bb');a.ellipse(x+20,y-14,35,25,'#f1fff3bb');}
-    // Track distance markers & overhead railway gantries
+    // Distant LEGO Harbor City Skyline silhouettes so the middle screen is never empty dead space
+    for(let i=0;i<7;i++){
+      const bx=((i*165-d*.22)%1155+1155)%1155-180,bh=110+(i*47)%115,bw=78+(i%3)*26,by=870-bh;
+      a.rect(bx,by,bw,bh,zone===2?'#18325cbb':'#2a587899',6);
+      for(let wy=by+18;wy<850;wy+=26)for(let wx=bx+14;wx<bx+bw-16;wx+=22){
+        a.rect(wx,wy,10,14,(i+wy)%3===0?'#ffe89499':'#8eeeff55',2);
+      }
+    }
+    // Red LEGO Suspension Bridge Towers & Cables spanning the background
+    for(let i=0;i<2;i++){
+      const tx=((i*580-d*.32)%1160+1160)%1160-200;
+      a.rect(tx,420,28,450,'#c84b5eaa',4);a.rect(tx+4,420,9,450,'#ff968288',2);
+      a.rect(tx-18,480,64,18,'#e0675acc',4);a.rect(tx-18,610,64,16,'#e0675acc',4);
+      a.stud(tx+14,416,12,4,5,'#b83b4e','#ffb5a6');
+      a.line([[tx+14,430],[tx-190,690]],'#ffb5a655',3);
+      a.line([[tx+14,430],[tx+220,690]],'#ffb5a655',3);
+    }
+    a.rect(112,515,26,115,'#e8f1facc',4);a.rect(112,538,26,18,'#e0675acc',2);a.rect(112,576,26,18,'#e0675acc',2);
+    a.stud(125,511,11,3.5,5,'#e39d3b','#fff5bd');
+    if(parts.beacon)a.poly([[125,511],[280,465+Math.sin(t/700)*18],[280,545+Math.sin(t/700)*18]],'#fff6b548');
+    for(let i=0;i<5;i++){const x=((i*251-d*.08)%1200+1200)%1200-220,y=335+(i%3)*55;a.ellipse(x,y,70,16,'#e8fff2bb');a.ellipse(x+20,y-14,35,25,'#f1fff3bb');}
+    // Track distance markers, overhead railway gantries & catenary power wires
+    a.line([[0,595],[720,595]],'#7bc8dc55',3);
     for(let i=0;i<3;i++){
       const gx=((i*360-d*.45)%1080+1080)%1080-180;
-      a.rect(gx,640,10,230,'#2b546888',2);a.rect(gx-16,632,42,14,'#498399aa',4);
-      a.ellipse(gx+5,639,4,4,s.goldMs||s.slot>=2?'#7effd8':'#ffd573');
+      a.rect(gx,590,14,280,'#2b5468cc',3);a.rect(gx-22,582,58,18,'#498399dd',5);
+      a.ellipse(gx+7,591,5,5,s.goldMs||s.slot>=2?'#7effd8':'#ffd573');
     }
-    a.rect(0,870,720,410,'#1c656a');a.rect(0,870,720,37,'#a4e7a4');a.rect(0,906,720,20,'#4eac8b');
-    for(let i=0;i<9;i++){const x=i*112-(d%112);a.line([[x,925],[x+50,996],[x+50,1280]],'#328083',4);a.stud(x+32,870,13,4,4.5,'#57b982','#d7ffbe');a.rect(x+15,951,18,10,'#47979b',3);}
+    // High-detail LEGO Viaduct Track Deck with glowing speed chevrons and deep girder arches
+    a.rect(0,870,720,410,'#164b56');a.rect(0,870,720,38,'#9be39b');a.rect(0,906,720,24,'#3e967b');
+    a.line([[0,874],[720,874]],'#e6ffda',3);
+    for(let i=0;i<9;i++){
+      const x=i*112-(d%112);
+      a.line([[x,928],[x+50,998],[x+50,1280]],'#296b70',5);
+      a.stud(x+32,870,14,4.5,5,'#57b982','#d7ffbe');
+      a.rect(x+12,946,32,12,'#47979b',4);
+      // Glowing track booster chevrons (`>>>`) scrolling rapidly underfoot
+      if(i%2===0){
+        const cx=x+68;
+        a.poly([[cx,882],[cx+16,888],[cx,894],[cx+6,888]],s.goldMs?'#fff18a':'#7effe2aa');
+      }
+    }
     // Runaway Starlight Express LEGO wagon with Coco on top — visibly transforms and jolts with each brick hit!
     const hitReaction=this.wagonHitMs/420,wagonDent=this.reduced?0:Math.sin(hitReaction*Math.PI)*.18;
     const wagonX=s.goldMs?540:642-s.slot*38+Math.sin(t/210)*8-(hitReaction*18);
@@ -177,10 +207,18 @@ export class AdventureRenderer {
     a.toy(0,0,scale,{time:t,run:s.y<=0,jump:jumpFactor,pitch,squash,gold:s.goldMs>0,glow:s.slot/3,palette:this.profile.palette});
     c.restore();
     this.effects();this.header('작전 3 · 폭주 기차칸 추격',canHome);
-    a.cached('sentence-slots',[22,144,676,154],()=>{const labels=['1단 파워 브릭','2단 연결 브릭','3단 부스터 점화'];
-    for(let i=0;i<3;i++){const x=24+i*232,filled=i<s.slot;a.rect(x,154,208,137,filled?'#f6de91':'#183a61e6',22,filled?'#fff7be':'#add5e466');
-      for(const sx of[x+54,x+104,x+154])a.stud(sx,154,12,4,4.5,filled?'#e0b84f':'#28527d',filled?'#fff8c8':'#7bb8d4');
-      a.text(labels[i],x+104,180,16,filled?'#89704c':'#b5d9e4');a.label(filled?this.runner.sentence[i]:i===s.slot?'점프!':'···',x+104,232,27,filled?'#fff9e5':'#e3f9ff','#263a60');if(i<2)a.text('›',x+220,217,29,'#fff2b8');}
+    // Sleek, compact Arcade Chase Radar & Power Brick HUD (replaces the huge 140px flashcard boxes that blocked the upper screen!)
+    a.cached('sentence-slots',[22,138,676,96],()=>{
+      a.rect(26,142,668,84,'#0e2445eb',22,'#7ed8ff55');
+      const labels=['1단 연결기','2단 부스터 날개','3단 제트 점화'];
+      for(let i=0;i<3;i++){
+        const x=38+i*218,filled=i<s.slot,active=i===s.slot;
+        a.rect(x,152,196,64,filled?'#f6de91':active?'#1e4c7ae6':'#132e52cc',16,filled?'#fff7be':active?'#7effe2':'#7eb5d644');
+        for(const sx of[x+52,x+98,x+144])a.stud(sx,151,8,3,3.5,filled?'#e0b84f':'#28527d',filled?'#fff8c8':'#7bb8d4');
+        a.text(labels[i],x+98,169,12.5,filled?'#785c36':'#9fd6eb');
+        a.label(filled?this.runner.sentence[i]:active?this.runner.sentence[i]:'···',x+98,195,21,filled?'#fff9e5':active?'#a8fff0':'#8ab4cc','#1c3152');
+        if(i<2)a.text('›',x+207,183,24,'#ffe89c');
+      }
     },s.sentence*4+s.slot);
     if(s.messageMs){
       a.text(s.message==='GOLD RUSH!'?'★ 폭주 객차 도킹 & 황금 질주!':s.message,360,445,s.message==='GOLD RUSH!'?40:34,'#fff6bc');
@@ -206,11 +244,38 @@ export class AdventureRenderer {
   plazaView(canHome){
     const a=this.art,c=a.c,s=this.plaza.state,t=this.reduced?0:this.time;
     a.cached('plaza-ground',[0,0,720,1280],()=>{
-    a.c.fillStyle=a.gradient(0,0,720,1280,['#28476e','#7b80b7','#bf9cbb']);a.c.fillRect(0,0,720,1280);
-    for(let i=0;i<15;i++)a.star((i*173+19)%720,310+(i*71)%800,3+i%3,'#fff0bb66');
+    a.c.fillStyle=a.gradient(0,0,720,1280,['#193258','#385d8a','#1f365c']);a.c.fillRect(0,0,720,1280);
+    for(let i=0;i<18;i++)a.star((i*173+19)%720,300+(i*71)%840,3+i%3,'#fff0bb55');
+    // LEGO Sky Harbor Station Architecture surrounding the isometric plaza so there is zero empty purple void!
+    a.rect(44,315,632,120,'#152c4ecc',22,'#639bc244');
+    for(let i=0;i<5;i++){
+      const px=88+i*136;
+      a.block(px-24,335,48,74,8,'#2c567d','#79bce0','#1b3854');
+      a.rect(px-14,350,28,34,'#ffe89488',4);
+      a.stud(px,331,11,4,4.5,'#e39d3b','#fff5bd');
+    }
+    // Lower Harbor Dock Pier & Crane Girder framing the bottom of the plaza
+    a.rect(36,975,648,240,'#0f233fcc',26,'#5b94bd33');
+    for(let i=0;i<6;i++){
+      const bx=86+i*110;
+      a.stud(bx,996,15,5.5,6,'#3a668c','#8ed2f2');
+      a.rect(bx-28,1012,56,10,'#25486b',3);
+    }
     const corners=[this.iso(-4,-4),this.iso(4,-4),this.iso(4,4),this.iso(-4,4)];
-    a.poly(corners.map(p=>[p.x,p.y+28]),'#364872','#97c1d8',3);
-    for(let x=-4;x<4;x++)for(let z=-4;z<4;z++){const points=[this.iso(x,z),this.iso(x+1,z),this.iso(x+1,z+1),this.iso(x,z+1)];a.poly(points.map(p=>[p.x,p.y]),(x+z)%2?'#aacacb':'#bed8cf','#86abbc',1);const center=this.iso(x+.5,z+.5);a.ellipse(center.x,center.y-2,7,3.2,'#ffffff38');}
+    a.poly([corners[0],[corners[1].x,corners[1].y],[corners[2].x,corners[2].y+36],[corners[3].x,corners[3].y+36]].map(p=>Array.isArray(p)?p:[p.x,p.y+28]),'#273b61','#8cc4e0',4);
+    for(let x=-4;x<4;x++)for(let z=-4;z<4;z++){
+      const points=[this.iso(x,z),this.iso(x+1,z),this.iso(x+1,z+1),this.iso(x,z+1)];
+      const border=x===-4||x===3||z===-4||z===3;
+      a.poly(points.map(p=>[p.x,p.y]),border?'#7faec4':(x+z)%2?'#aacacb':'#bed8cf','#6f99ad',1.2);
+      const center=this.iso(x+.5,z+.5);
+      a.ellipse(center.x,center.y-2,7.5,3.5,border?'#fff2b255':'#ffffff45');
+    }
+    // 4 Corner LEGO Beacon Pillars framing the workshop arena
+    for(const [cx,cz]of[[-3.8,-3.8],[3.8,-3.8],[3.8,3.8],[-3.8,3.8]]){
+      const cp=this.iso(cx,cz);
+      a.block(cp.x-14,cp.y-42,28,40,8,'#3b6990','#8ee2ff','#214161');
+      a.stud(cp.x,cp.y-46,9,3.5,4,'#e39d3b','#fff6be');
+    }
     });
     const dock=this.iso(-2.2,3.4),parts=trainParts(this.profile.data),captain=this.iso(0,3.15);
     const totalNeeded=this.plaza.mission.reduce((n,m)=>n+m.count,0),collectedTotal=s.collectedA+s.collectedB;

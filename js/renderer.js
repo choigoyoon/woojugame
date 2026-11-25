@@ -306,11 +306,25 @@ export class Renderer {
       this.polygon([[-90, 0], [0, -35], [90, 0], [0, 34]], '#dbfff7');
       c.restore();
     }
+    // Giant LEGO Cloud Lighthouse Tower rising in the center-background behind the stairs + distant Harbor Lighthouse
+    const towerShift = (-this.cameraY * 0.18) % 240;
+    c.save();
+    c.globalAlpha = 0.24;
+    this.rect(250, 180, 220, 860, '#1b3b63', 12);
+    for (let i = -1; i < 5; i += 1) {
+      const ty = 220 + i * 240 + towerShift;
+      this.rect(236, ty, 248, 28, '#e0675a', 6);
+      this.rect(268, ty + 48, 56, 86, '#ffe89c', 14);
+      this.rect(396, ty + 48, 56, 86, '#ffe89c', 14);
+      this.art.stud(296, ty - 4, 14, 5, 6, '#d98a3c', '#fff4bd');
+      this.art.stud(424, ty - 4, 14, 5, 6, '#d98a3c', '#fff4bd');
+    }
+    c.restore();
     // Distant LEGO Cloud Lighthouse Tower guiding the Starlight Express
     const lhY = 660 - clamp(-this.cameraY * 0.035, 0, 260);
-    c.save(); c.globalAlpha = 0.42; c.translate(108, lhY);
+    c.save(); c.globalAlpha = 0.55; c.translate(108, lhY);
     const sweep = this.reducedMotion ? 0.2 : Math.sin(this.time / 900) * 0.28;
-    this.polygon([[0, -138], [260, -210 + sweep * 90], [260, -90 + sweep * 90]], '#fff6b536');
+    this.polygon([[0, -138], [290, -220 + sweep * 90], [290, -85 + sweep * 90]], '#fff6b546');
     this.rect(-34, 0, 68, 18, '#65809e', 4);
     this.rect(-24, -110, 48, 110, '#e8f1fa', 4);
     this.rect(-24, -92, 48, 22, '#e0675a', 2);

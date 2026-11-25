@@ -54,7 +54,7 @@ export class AdventureRenderer {
     const count=this.reduced?4:big?48:brick?18:10;
     for(let i=0;i<count;i++){const p=this.particles[this.cursor++%this.particles.length],a=i*2.4;Object.assign(p,{x,y,vx:Math.cos(a)*(big?260:155),vy:-140-Math.abs(Math.sin(a))*280,life:750,angle:a,brick:brick&&i%2===0,color:['#fff3ad','#ff7888','#8cffe5','#c3b5ff'][i%4]});}
   }
-  effects(){const a=this.art,c=a.c;for(const p of this.particles){if(p.life<=0)continue;c.save();c.globalAlpha=Math.min(1,p.life/200);c.translate(p.x,p.y);c.rotate(p.angle);if(p.brick)a.block(-8,-6,16,12,4,p.color,'#fff8d6','#42315c');else a.rect(-4,-4,9,9,p.color,2);c.restore();}}
+  effects(){const a=this.art,c=a.c;for(const p of this.particles){if(p.life<=0)continue;c.save();c.globalAlpha=Math.min(1,p.life/200);c.translate(p.x,p.y);c.rotate(p.angle);if(p.brick)a.poly([[0,-8],[7,0],[0,8],[-7,0]],p.color,'#0b132b',2.5);else a.star(0,0,6,p.color);c.restore();}}
   header(title,canHome){const a=this.art;a.cached('header',[0,0,720,132],()=>{a.rect(0,0,720,130,'#10264ce8');a.text(title,340,65,30,'#fff0c7');a.rect(528,32,170,67,'#091a38',22,'#a2c9f44d');a.coin(557,64,.6);},title);a.home(canHome);a.counter(this.profile.coins,584,66,99,23,'#ffe6a6','left');}
   runnerView(canHome,pressed=false){
     const a=this.art,c=a.c,s=this.runner.state,t=this.reduced?0:this.time,d=s.distance;
@@ -267,12 +267,45 @@ export class AdventureRenderer {
   good(kind,x,y,scale=1){
     const a=this.art,c=a.c,color=GOODS[kind].color;c.save();c.translate(x,y);c.scale(scale,scale);
     a.ellipse(0,10,22,7,'#10295344');
-    if(kind==='key'){a.ellipse(-7,-17,13,13,color);a.stud(-7,-17,5.5,5.5,2.5,'#c93b5b','#ffd0da');a.line([[3,-10],[20,7],[15,12]],color,8);}
-    if(kind==='star'){a.star(0,-11,26,color);a.stud(0,-11,7,7,3,'#3c95c9','#e0f8ff');}
-    if(kind==='gem'){a.poly([[0,-37],[23,-17],[13,10],[-13,10],[-23,-17]],color,'#e8fff4',3);a.stud(0,-15,7.5,4,3.5,'#35b899','#dcfff4');}
-    if(kind==='book'){a.block(-20,-29,38,43,6,color,'#f1d7ff','#756293');a.star(0,-10,11,'#fff4a7');}
-    if(kind==='console'){a.rect(-26,-24,52,34,color,9);a.stud(-12,-25,6,2.5,3,'#d99a3d','#fff1b8');a.stud(12,-25,6,2.5,3,'#d99a3d','#fff1b8');a.rect(-12,-20,24,23,'#344775',4);a.line([[-21,-12],[-15,-12]],'#5a4f6d',3);a.ellipse(19,-10,4,4,'#e47792');}
-    if(kind==='bomb'){a.ellipse(0,-11,22,24,'#4c5c82');a.stud(0,-30,6,2.8,3,'#374569','#9cb3de');a.line([[5,-34],[14,-43],[20,-35]],'#e5c08a',4);a.star(22,-34,6,'#ffcb80');}
+    if(kind==='key'){
+      a.line([[3,-10],[20,7],[15,12]],'#0b132b',13);
+      a.line([[3,-10],[20,7],[15,12]],color,8);
+      a.ellipse(-7,-17,16,16,'#0b132b');
+      a.ellipse(-7,-17,13,13,color);
+      a.ellipse(-7,-17,5.5,5.5,'#0b132b');
+    }
+    if(kind==='star'){
+      a.star(0,-11,30,'#0b132b');
+      a.star(0,-11,25,color);
+      a.ellipse(0,-11,7,7,'#ffffff');
+    }
+    if(kind==='gem'){
+      a.poly([[0,-38],[24,-17],[14,11],[-14,11],[-24,-17]],color,'#0b132b',4);
+      a.poly([[0,-28],[12,-14],[0,2],[-12,-14]],'#ffffff88');
+    }
+    if(kind==='book'){
+      a.rect(-23,-32,46,48,'#0b132b',10);
+      a.rect(-19,-28,38,40,color,8,'#ffffff88');
+      a.star(0,-8,13,'#0b132b');
+      a.star(0,-8,10,'#ffbe0b');
+    }
+    if(kind==='console'){
+      a.rect(-29,-27,58,40,'#0b132b',11);
+      a.rect(-26,-24,52,34,color,9);
+      a.rect(-13,-20,26,24,'#0b132b',6,'#00f5d4');
+      a.line([[-21,-12],[-15,-12]],'#0b132b',3.5);
+      a.ellipse(19,-10,5,5,'#0b132b');
+      a.ellipse(19,-10,3.5,3.5,'#ff2a6d');
+    }
+    if(kind==='bomb'){
+      a.line([[5,-34],[14,-43],[20,-35]],'#0b132b',8);
+      a.line([[5,-34],[14,-43],[20,-35]],'#ffbe0b',4);
+      a.ellipse(0,-11,25,27,'#0b132b');
+      a.ellipse(0,-11,21,23,'#475569');
+      a.ellipse(-6,-17,7,5,'#ffffff66');
+      a.star(22,-34,9,'#ff2a6d');
+      a.star(22,-34,6,'#ffbe0b');
+    }
     c.restore();
   }
   robot(x,y){
@@ -456,14 +489,14 @@ export class AdventureRenderer {
       }
     }
     this.effects();
-    // Render flying 3D engine parts arcing from the workbench straight into the Starlight Express engine dock!
+    // Render flying Cel-Shaded engine core modules arcing from the workbench straight into the Starlight Express engine dock!
     for(const f of this.flyingCargo){
       if(f.life<=0)continue;
       const prog=1-f.life/f.duration,fx=f.sx+(f.tx-f.sx)*prog,fy=f.sy+(f.ty-f.sy)*prog-Math.sin(prog*Math.PI)*130;
-      a.line([[f.sx,f.sy],[fx,fy]],'#7effe888',4);
+      a.line([[f.sx,f.sy],[fx,fy]],'#00f5d488',4);
       a.ellipse(fx,fy,22,22,'#fff4a866');
-      a.block(fx-12,fy-12,24,24,7,'#5be8d8','#d6fffb','#237a78');
-      a.star(fx,fy,12,'#fff7c2');
+      a.poly([[fx,fy-16],[fx+16,fy],[fx,fy+16],[fx-16,fy]],'#00f5d4','#0b132b',3.5);
+      a.star(fx,fy,11,'#ffbe0b');
     }
     this.header('작전 4 · 기차 엔진 조립',canHome);
     a.rect(33,151,654,137,'#172f57eb',26,'#c5cbf077');

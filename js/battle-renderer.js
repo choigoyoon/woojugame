@@ -192,14 +192,16 @@ export class BattleRenderer {
   }
   supply(entity) {
     const a=this.art,c=a.c,p=this.project(entity.x,entity.z),s=p.s;
-    const shield=entity.rewardKind==='shield',crew=entity.rewardKind==='crew',color=shield?'#9bdfff':crew?'#ffe391':CONFIG.campaign.weapons[entity.weapon].color;
+    const shield=entity.rewardKind==='shield',crew=entity.rewardKind==='crew',color=shield?'#00f5d4':crew?'#ffbe0b':CONFIG.campaign.weapons[entity.weapon].color;
     c.save();c.translate(p.x,p.y);c.scale(s,s);
-    a.ellipse(0,5,120,22,'#103e5544');a.block(-111,-232,222,220,16,'#245875',color,'#183f61');
-    a.rect(-98,-214,196,172,a.gradient(-98,-214,98,-42,['#102f53','#31688a']),16,color);
-    if(crew){for(const dx of[-38,0,38])a.toy(dx,-75,.38,{time:this.time,run:!this.reduced,back:true,palette:this.profile.palette});a.label('+5',0,-166,38,'#fff3b5','#193752');}
-    else if(shield){a.poly([[0,-195],[49,-177],[40,-118],[0,-91],[-40,-118],[-49,-177]],'#7cdce9','#dcfff1',5);a.star(0,-151,25,'#f1ffdb');a.label('+2',0,-69,29,'#ddfff4','#173b64');}
+    a.ellipse(0,5,120,22,'#103e5544');
+    a.rect(-115,-236,230,228,'#0b132b',28);
+    a.rect(-109,-230,218,216,'#1e3a8a',24,color);
+    a.rect(-98,-214,196,172,a.gradient(-98,-214,98,-42,['#0b132b','#1d4ed8']),18,color);
+    if(crew){for(const dx of[-38,0,38])a.toy(dx,-75,.38,{time:this.time,run:!this.reduced,back:true,palette:this.profile.palette});a.label('+5',0,-166,38,'#fff3b5','#0b132b');}
+    else if(shield){a.poly([[0,-195],[49,-177],[40,-118],[0,-91],[-40,-118],[-49,-177]],'#00f5d4','#0b132b',5);a.star(0,-151,25,'#ffffff');a.label('+2',0,-69,29,'#ddfff4','#0b132b');}
     else{c.save();c.scale(.65,.65);this.weaponIcon(entity.weapon,0,-130);c.restore();}
-    a.rect(-111,-280,222,42,'#153552',12,color);a.label(crew?'지원병':shield?'실드':CONFIG.campaign.weapons[entity.weapon].name,0,-259,30,'#fff6d3','#123453');
+    a.rect(-111,-282,222,44,'#0b132b',14,color);a.label(crew?'지원병':shield?'실드':CONFIG.campaign.weapons[entity.weapon].name,0,-260,30,'#fff6d3','#0b132b');
     a.line([[-17,20],[0,35],[17,20]],color,7);c.restore();
   }
   crane(entity) {
@@ -322,22 +324,22 @@ export class BattleRenderer {
     const impact=(entity.hitMs??0)/CONFIG.battle.hitMs,dent=this.reduced?0:Math.sin(impact*Math.PI)*.18;
     const ratio=Math.max(0,Math.min(1,entity.hp/Math.max(1,entity.maxHp)));
     const bob=this.reduced?0:Math.sin(this.time/140)*5*s;
-    a.ellipse(p.x,p.y+5*s,93*s,21*s,'#3df6e93b');
+    a.ellipse(p.x,p.y+5*s,93*s,21*s,'#00f5d43b');
     c.save();c.translate(p.x,p.y-bob);
     if(!this.reduced&&impact>0)c.rotate(Math.sin(impact*10)*.07);
     c.scale(s*(1+dent),s*(1-dent*.75));
-    a.block(-80,-160,160,150,22,impact>.25?'#9bfff0':'#187cad','#9bfff0','#174675');
-    a.rect(-65,-140,131,116,'#153b69',13,ratio<.5?'#ffe685':'#64f6ee');
-    if(ratio<.7)a.line([[-58,-126],[-18,-92],[-42,-54]],'#ffe885',5);
-    if(ratio<.4)a.line([[56,-118],[14,-82],[44,-44]],'#7effe7',5);
-    a.poly([[10,-132],[-35,-72],[-5,-72],[-19,-31],[40,-94],[9,-94]],'#ffeb8d','#fffadd',3);
-    a.text(Math.ceil(entity.hp),0,-82,34,'#ffffff');
-    a.rect(-78,-16,157*ratio,11,'#fff09d',2);
-    if(entity.hitMs>0){c.globalAlpha=impact*.45;a.rect(-80,-160,160,150,'#fff',8);}
+    a.rect(-84,-164,168,158,'#0b132b',24);
+    a.rect(-78,-158,156,146,impact>.25?'#00f5d4':'#0284c7',20,'#4cc9f0');
+    a.rect(-65,-140,131,116,'#0b132b',14,ratio<.5?'#ffbe0b':'#00f5d4');
+    if(ratio<.7)a.line([[-58,-126],[-18,-92],[-42,-54]],'#ffbe0b',5);
+    if(ratio<.4)a.line([[56,-118],[14,-82],[44,-44]],'#00f5d4',5);
+    a.poly([[10,-132],[-35,-72],[-5,-72],[-19,-31],[40,-94],[9,-94]],'#ffbe0b','#0b132b',3.5);
+    a.label(Math.ceil(entity.hp),0,-82,34,'#ffffff','#0b132b');
+    a.rect(-78,-16,157*ratio,11,'#ffbe0b',4);
     c.restore();
   }
   enemy(entity) {
-    // Pirate Spider-Walker Mech Drone (Distinct from player! 4 spider legs, obsidian dome, glowing red Cyclops laser eye!)
+    // Pirate Spider-Walker Mech Drone with Bold #0b132b Cel-Shaded Ink Contours
     const a=this.art,c=a.c,p=this.project(entity.x,entity.z),s=p.s;
     const impact=(entity.hitMs??0)/CONFIG.battle.hitMs;
     const ratio=Math.max(0,Math.min(1,entity.hp/Math.max(1,entity.maxHp)));
@@ -346,39 +348,43 @@ export class BattleRenderer {
     const walk=this.reduced?0:Math.sin(this.time/80+entity.id)*10;
     c.save();c.translate(p.x,p.y+bounce);c.scale(s*(1+impact*.18),s*(1-impact*.14));
     a.ellipse(0,4,46,13,'#08182e55');
-    // 4 Articulated Mechanical Spider-Walker Legs
+    // 4 Articulated Mechanical Spider-Walker Legs with #0b132b Ink Outlines
     for(const side of[-1,1]){
       const liftA=side>0?walk:-walk,liftB=side>0?-walk:walk;
-      a.line([[side*22,-26],[side*46,-38+liftA],[side*52,-4+liftA*.5]],'#2a1f3d',7);
-      a.line([[side*18,-18],[side*38,-22+liftB],[side*42,4+liftB*.5]],'#e83e62',5);
+      a.line([[side*22,-26],[side*46,-38+liftA],[side*52,-4+liftA*.5]],'#0b132b',11);
+      a.line([[side*22,-26],[side*46,-38+liftA],[side*52,-4+liftA*.5]],'#4a356b',6);
+      a.line([[side*18,-18],[side*38,-22+liftB],[side*42,4+liftB*.5]],'#0b132b',10);
+      a.line([[side*18,-18],[side*38,-22+liftB],[side*42,4+liftB*.5]],'#ff2a6d',5);
     }
-    // Spider-Drone Main Armored Pod
-    a.ellipse(0,-42,38,32,impact>.2?'#fff2c2':'#281e3d');
+    // Spider-Drone Main Armored Pod with Bold #0b132b Silhouette
+    a.ellipse(0,-42,43,37,'#0b132b');
+    a.ellipse(0,-42,38,32,'#281e3d');
     if(!damaged){
       // Upper Crimson Armor Cowl & Spiked Horns (shatters below 55% HP!)
-      a.poly([[-38,-46],[-24,-78],[24,-78],[38,-46]],'#e83e62','#ffb0c2',2.5);
-      a.poly([[-24,-74],[-36,-98],[-12,-78]],'#ffd86b');
-      a.poly([[24,-74],[36,-98],[12,-78]],'#ffd86b');
+      a.poly([[-38,-46],[-24,-78],[24,-78],[38,-46]],'#ff2a6d','#0b132b',3.5);
+      a.poly([[-24,-74],[-36,-98],[-12,-78]],'#ffbe0b','#0b132b',3);
+      a.poly([[24,-74],[36,-98],[12,-78]],'#ffbe0b','#0b132b',3);
     }else{
-      // Armor Broken! Exposed Sparking Copper Reactor Coil on Top!
-      a.ellipse(0,-72,18,9,'#d97b2c');
-      a.ellipse(0,-78,11,11,'#ffe875');
+      // Armor Broken! Exposed Sparking Reactor Coil on Top!
+      a.ellipse(0,-72,20,11,'#0b132b');
+      a.ellipse(0,-72,17,8,'#fb5607');
+      a.ellipse(0,-78,12,12,'#ffbe0b');
       a.star(0,-78,9,'#ffffff');
     }
     // Cyclops Laser Visor Slit & Tracking Glowing Red Optic
-    a.rect(-28,-54,56,20,'#090e1c',10,'#ff4f79');
+    a.rect(-28,-54,56,20,'#0b132b',10,'#ff2a6d');
     const scanX=Math.sin(this.time/180+entity.id)*11;
     if(impact>.15||damaged){
-      a.star(scanX,-44,11,'#ffe875');
-      a.ellipse(scanX,-44,5,5,'#ff2e55');
+      a.star(scanX,-44,12,'#ffbe0b');
+      a.ellipse(scanX,-44,5,5,'#ff2a6d');
     }else{
-      a.ellipse(scanX,-44,9,9,'#ff2e55');
-      a.ellipse(scanX,-44,4,4,'#ffe875');
+      a.ellipse(scanX,-44,9,9,'#ff2a6d');
+      a.ellipse(scanX,-44,4,4,'#ffbe0b');
       a.ellipse(scanX-2,-46,2,2,'#ffffff');
     }
     // HP Bar
-    a.rect(-30,-112,60,9,'#162238',4);
-    a.rect(-30,-112,60*ratio,9,damaged?'#ff3b5c':'#ff9e75',4);
+    a.rect(-32,-113,64,11,'#0b132b',5);
+    a.rect(-30,-111,60*ratio,7,damaged?'#ff2a6d':'#ffbe0b',3.5);
     c.restore();
   }
   squad() {
@@ -417,7 +423,14 @@ export class BattleRenderer {
     for(const link of this.links){if(link.life<=0)continue;c.save();c.globalAlpha=link.life/140;const f=link.from,t=link.to;const path=[[f.x,f.y],[(f.x+t.x)/2-10,(f.y+t.y)/2-12],[(f.x+t.x)/2+10,(f.y+t.y)/2+12],[t.x,t.y]];a.line(path,'#77caff',8);a.line(path,'#e6ffff',3);c.restore();}
     for(const ring of this.rings){if(ring.life<=0)continue;const t=1-ring.life/500;c.save();c.globalAlpha=(1-t)*.7;c.strokeStyle='#fff4ab';c.lineWidth=7*(1-t)+1;c.beginPath();c.ellipse(ring.x,ring.y,(15+t*(ring.boss?240:100)),(10+t*60),0,0,Math.PI*2);c.stroke();c.restore();}
     for(const p of this.particles){if(p.life<=0)continue;c.save();c.globalAlpha=Math.min(1,p.life/240);c.translate(p.x,p.y);c.rotate(p.angle);a.rect(-p.size/2,-p.size/2,p.size,p.size,p.color,1);a.rect(-p.size/2,-p.size/2,p.size,2,'#fff7',1);c.restore();}
-    for(const p of this.debris){if(p.life<=0)continue;c.save();c.globalAlpha=Math.min(1,p.life/260);c.translate(p.x,p.y);c.rotate(this.reduced?0:p.angle);a.block(-p.size/2,-p.size/2,p.size,p.size*.7,p.size*.24,p.color,'#ffeac7','#713b53');c.restore();}
+    for(const p of this.debris){
+      if(p.life<=0)continue;
+      c.save();c.globalAlpha=Math.min(1,p.life/260);
+      c.translate(p.x,p.y);c.rotate(this.reduced?0:p.angle);
+      const r=p.size*.55;
+      a.poly([[0,-r],[r*.85,0],[0,r],[-r*.85,0]],p.color,'#0b132b',2.5);
+      c.restore();
+    }
     for(const p of this.impacts){
       if(p.life<=0)continue;const t=1-p.life/360,size=(p.boss?31:26)*(1+Math.sin(Math.min(1,t*4)*Math.PI)*.35);
       c.save();c.globalAlpha=Math.min(1,p.life/100);

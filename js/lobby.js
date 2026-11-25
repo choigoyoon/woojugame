@@ -73,46 +73,51 @@ export class Lobby {
     const a=this.art,c=a.c; const t=this.motion?.matches?0:this.time;
     c.save();c.translate(x,y);
     if(mode==='stairs') {
-      // LEGO Cloud Lighthouse Tower in background + studded stair plates
-      a.block(56,-84,32,68,7,'#e8eef7','#ffffff','#8ca4c2');
-      a.rect(56,-68,32,12,'#e3685c',2);a.rect(56,-42,32,12,'#e3685c',2);
-      a.stud(72,-88,12,4,5,'#ffcf5c','#fff7c2');
-      a.poly([[72,-88],[18,-102],[18,-74]],'#fff5b538');
+      // Cel-Shaded Cloud Lighthouse Tower + Isometric Blocks
+      a.rect(54,-86,36,72,'#0b132b',8);
+      a.rect(57,-83,30,66,'#ffffff',6);
+      a.rect(57,-68,30,12,'#ff2a6d',2);a.rect(57,-42,30,12,'#ff2a6d',2);
+      a.ellipse(72,-88,12,6,'#ffbe0b');
+      a.poly([[72,-88],[18,-102],[18,-74]],'#fff5b548');
       for(let i=0;i<4;i++){
         const sx=-75+i*46,sy=56-i*29;
-        a.poly([[sx-38,sy],[sx,sy-15],[sx+38,sy],[sx,sy+15]],i===0?'#ffe499':'#b3fff1');
-        a.poly([[sx-38,sy],[sx,sy+15],[sx+38,sy],[sx+38,sy+22],[sx,sy+37],[sx-38,sy+22]],'#4cb5b4');
-        a.stud(sx-12,sy-2,6,2.5,3,'#3ca1a3','#e3fff9');a.stud(sx+12,sy-2,6,2.5,3,'#3ca1a3','#e3fff9');
+        a.poly([[sx-38,sy],[sx,sy+15],[sx+38,sy],[sx+38,sy+22],[sx,sy+37],[sx-38,sy+22]],i===0?'#ffbe0b':'#00b4d8','#0b132b',2.5);
+        a.poly([[sx-38,sy],[sx,sy-15],[sx+38,sy],[sx,sy+15]],i===0?'#ffe66d':'#90e0ef','#0b132b',2.5);
       }
       const jump=Math.max(0,Math.sin(t/510));a.toy(-38,53-jump*27,.55,{time:t,run:false,jump,palette:this.profile.palette});
       a.coin(36,-56+Math.sin(t/330)*5,.52);
     } else if(mode==='battle') {
-      a.poly([[-118,94],[-42,-95],[42,-95],[118,94]],'#b9c6df');
-      a.line([[-24,94],[-10,-94]],'#58728c88',3);a.line([[24,94],[10,-94]],'#58728c88',3);
+      a.poly([[-118,94],[-42,-95],[42,-95],[118,94]],'#94a3b8','#0b132b',2.5);
+      a.line([[-24,94],[-10,-94]],'#475569',3);a.line([[24,94],[10,-94]],'#475569',3);
       for(const side of [-1,1]) {
-        a.line([[side*108,94],[side*35,-94]],'#ff8c87',7);
-        a.rect(side*64-5,-89,10,102,'#ff6f74',2);
-        a.line([[-64,-87],[64,-87]],'#ffc2ad',7);
-        for(let j=0;j<3;j++)a.line([[side*(44+j*17),-45+j*31],[side*(44+j*17),12+j*26]],'#ffd2bc',2);
+        a.line([[side*108,94],[side*35,-94]],'#ff2a6d',7);
+        a.rect(side*64-5,-89,10,102,'#ff2a6d',2);
+        a.line([[-64,-87],[64,-87]],'#ffbe0b',7);
       }
-      // Mini LEGO Claw Mech Boss & Target Bolts
-      a.block(-32,-76,64,46,9,'#d4734a','#ffd89c','#8a4349');
-      a.stud(-14,-80,7,2.8,3.5,'#c45f39','#ffe7b3');a.stud(14,-80,7,2.8,3.5,'#c45f39','#ffe7b3');
-      a.rect(-24,-66,48,22,'#1d3854',6,'#ffe6a3');
-      a.ellipse(-36,-42,9,9,'#ffd978');a.ellipse(36,-42,9,9,'#ffd978');
-      a.block(-20,-24,40,38,7,'#df8660','#ffcf8a','#ab535b');a.text('30',0,-4,21,'#fff2c7');
+      // Mini Cel-Shaded Dreadnought Kraken-Claw Mecha Boss!
+      for(const side of[-1,1]){
+        a.line([[side*36,-54],[side*64,-34],[side*52,2]],'#0b132b',11);
+        a.line([[side*36,-54],[side*64,-34],[side*52,2]],'#ff2a6d',6);
+      }
+      a.poly([[-48,-54],[-36,-82],[36,-82],[48,-54],[38,-24],[-38,-24]],'#1f2d50','#0b132b',3.5);
+      a.poly([[-34,-66],[0,-60],[34,-66],[28,-44],[0,-40],[-28,-44]],'#081021','#ff2a6d',2);
+      a.ellipse(-16,-54,5,3,'#ffbe0b');a.ellipse(16,-54,5,3,'#ffbe0b');
       for(const [px,py] of [[-22,88],[23,91],[0,65]])a.toy(px,py,.38,{time:t+px,run:true,back:true,palette:this.profile.palette});
-      for(let i=0;i<4;i++){const yy=45-(t/5+i*27)%85;a.line([[0,yy],[0,yy-11]],'#fff7a6',4);}
+      for(let i=0;i<4;i++){const yy=45-(t/5+i*27)%85;a.line([[0,yy],[0,yy-14]],'#00f5d4',5);}
     } else if(mode==='runner') {
-      for(let i=0;i<4;i++)a.block(-112+i*58,51,53,35,7,'#54ad89','#bce5a9','#2c7379');
+      a.rect(-122,50,244,24,'#00f5d4',6,'#0b132b');
+      a.rect(-122,72,244,18,'#0f3847',4,'#0b132b');
       wagon(a,72,50,.48,t,true);
-      a.block(-8,-76,58,48,8,'#e7b35f','#ffe49c','#9f774d');a.text('⚡',21,-52,28,'#fff5be');
+      a.rect(-12,-78,64,46,'#ffbe0b',14,'#0b132b');
+      a.label('⚡',20,-55,26,'#ffffff','#0b132b');
       const jump=Math.max(0,Math.sin(t/660));a.toy(-52,54-jump*29,.54,{time:t,run:jump<.15,jump,palette:this.profile.palette});
-      a.ellipse(-75,-80,32,13,'#d1f2e66b');
     } else {
-      a.poly([[-115,35],[0,-36],[115,35],[0,103]],'#a89ed8');
-      for(const [sx,sy]of[[-45,25],[45,25],[0,-4],[0,56]])a.stud(sx,sy,8,3.2,3.5,'#897ec2','#dfd8ff');
-      for(const px of [-65,60]){a.ellipse(px,25,17,6,'#625e9a');a.star(px,8+Math.sin(t/350+px)*6,16,px<0?'#ffb28a':'#a7edff');}
+      a.poly([[-115,35],[0,-36],[115,35],[0,103]],'#4cc9f0','#0b132b',3);
+      a.poly([[-85,35],[0,-18],[85,35],[0,85]],'#caf0f8','#1d3557',2);
+      for(const px of [-65,60]){
+        a.ellipse(px,25,18,7,'#0b132b');
+        a.star(px,8+Math.sin(t/350+px)*6,16,px<0?'#ffbe0b':'#00f5d4');
+      }
       picoToy(a,48,-36,.58,t);
       a.toy(-14,74,.64,{time:t,palette:this.profile.palette});
     }

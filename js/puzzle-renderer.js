@@ -104,10 +104,8 @@ export class PuzzleRenderer {
     a.rect(74,194,46,46,'#ffffff8c',16);a.text('?',97,217,32,'#746392');
     const elapsed=p.solved?CONFIG.puzzle.celebrationMs-p.celebrationMs:0;
     const island=(x)=>{
-      a.poly([[x-110,716],[x,678],[x+110,716],[x,755]],'#b3bde9');
-      a.poly([[x-110,716],[x,755],[x+110,716],[x+90,779],[x,813],[x-88,777]],'#645a96');
-      a.line([[x-106,717],[x,754],[x+106,717]],'#e0ddff',4);
-      for(const dx of[-45,0,45])a.stud(x+dx,706,10,3.8,4,'#7e74b8','#e5e0ff');
+      a.poly([[x-110,716],[x,755],[x+110,716],[x+90,779],[x,813],[x-88,777]],'#3b1d6e','#0b132b',3.5);
+      a.poly([[x-110,716],[x,678],[x+110,716],[x,755]],'#a8dadc','#0b132b',3.5);
     };
     island(123);island(596);
     picoToy(a,68,706,.48,this.time);
@@ -116,17 +114,20 @@ export class PuzzleRenderer {
     for(let i=0;i<3;i++){
       const built=p.solved&&elapsed>i*170;
       const x=262+i*70+bridgeShake,y=711+(built?Math.max(0,1-(elapsed-i*170)/240)*85:105);
-      c.save();c.globalAlpha=built?1:.28;a.block(x-28,y-12,57,26,10,built?'#9ce2db':'#8a5275','#e9ffe0','#459ca7');c.restore();
+      c.save();c.globalAlpha=built?1:.28;
+      a.rect(x-30,y-14,60,28,built?'#00f5d4':'#6b21a8',8,'#0b132b');
+      c.restore();
     }
     if(p.wrongMs>0){
-      a.rect(115,596,490,40,'#3b234de8',14,'#ffb5c2');
+      a.rect(115,596,490,40,'#0b132bf0',14,'#ff2a6d');
       a.text('앗, 다리 판자가 흔들려! 옆 브릭 카드로 다시 조립하자!',360,616,17.5,'#ffe6ec');
     }
     const travel=p.solved?Math.max(0,Math.min(1,(elapsed-570)/950)):0;
     this.person(123+travel*443,709-Math.sin(travel*Math.PI)*18,.72,travel>0&&travel<1);
     const lid=p.solved&&elapsed>1100;
-    a.block(558,662,81,49,12,'#ffc565','#fff0a1','#b8794f');a.rect(590,671,14,28,'#754d5c',3);a.star(597,681,7,'#fff1b7');
-    c.save();c.translate(558,662);if(lid)c.rotate(-.7);a.block(0,-16,81,19,12,'#eaaa56','#fff0a1','#a96949');c.restore();
+    a.rect(556,660,84,52,'#ffbe0b',10,'#0b132b');
+    a.rect(590,671,14,28,'#0b132b',3);a.star(597,681,7,'#00f5d4');
+    c.save();c.translate(558,662);if(lid)c.rotate(-.7);a.rect(-2,-18,84,22,'#ffe66d',8,'#0b132b');c.restore();
     if(p.solved){
       a.text('+'+CONFIG.puzzle.chestCoins,360,595,58,'#ffe79a');
       a.rect(110,632,500,36,'#132e4ee8',14,'#ffe79999');

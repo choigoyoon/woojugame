@@ -94,15 +94,21 @@ export class Juice {
     c.save();c.beginPath();c.rect(0,132,720,1148);c.rect(tx-28,ty-28,56,56);c.clip();
     for(const p of this.trails){if(p.life<=0)continue;c.save();c.globalAlpha=.11*p.life/210;if(p.sprite)c.drawImage(p.sprite,p.x-115*p.scale,p.y-215*p.scale,230*p.scale,230*p.scale);else a.toy(p.x,p.y,p.scale,{palette:this.profile.palette,run:true,time:this.time-90});c.restore();}
     for(const p of this.rings){if(p.life<=0)continue;const t=1-p.life/p.duration,r=15+t*(p.big?165:65);c.globalAlpha=(1-t)*.7;c.strokeStyle='#fff6c1';c.lineWidth=(p.big?8:3.5)*(1-t)+1;c.beginPath();c.ellipse(p.x,p.y,r,r*.52,0,0,Math.PI*2);c.stroke();}
-    // Render 2D Cel-Shaded Bouncing LEGO Bricks & Studs on the floor plane with ground shadows!
+    // Render 2D Cel-Shaded Bouncing Energy Crystals & Star Shards on the floor plane with ground shadows (no muddy LEGO blocks!)
     for(const b of this.physics.bodies){
       if(b.life<=0)continue;
       c.save();c.globalAlpha=Math.min(1,b.life/180);
       const heightAboveFloor=Math.max(0,b.floorY-b.y),shadowScale=Math.max(.35,1-heightAboveFloor/260);
-      a.ellipse(b.x,b.floorY+3,b.w*.55*shadowScale,4.5*shadowScale,'#07152b55');
+      a.ellipse(b.x,b.floorY+3,b.w*.5*shadowScale,4.5*shadowScale,'#07152b55');
       c.translate(b.x,b.y);c.rotate(b.angle);
-      if(b.kind==='stud')a.stud(0,0,b.w*.55,b.h*.45,b.d,b.front,b.top);
-      else a.block(-b.w/2,-b.h/2,b.w,b.h,b.d,b.front,b.top,b.side);
+      if(b.kind==='stud'){
+        a.star(0,0,b.w*.68,'#0b132b');
+        a.star(0,0,b.w*.52,'#ffbe0b');
+      }else{
+        const rw=b.w*.75,rh=b.h*.65;
+        a.poly([[0,-rh],[rw,0],[0,rh],[-rw,0]],'#00f5d4','#0b132b',3);
+        a.ellipse(0,0,rw*.35,rh*.35,'#ffffff');
+      }
       c.restore();
     }
     for(const p of this.sparks){if(p.life<=0)continue;c.globalAlpha=Math.min(1,p.life/180);a.star(p.x,p.y,p.size*(.7+.3*Math.sin(this.time/70)),p.size>4?'#fff2ad':'#bdfde9');}

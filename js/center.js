@@ -69,28 +69,32 @@ export class Center {
   render(){
     if(this.keypad){this.renderKeypad();return;}
     if(this.stage==='dashboard'){this.dashboard();return;}
-    this.background('레고 아바타 조립 공방');const a=this.art,p=this.part;
-    a.ellipse(190,416,138,38,p.legendary?'#b88932':'#8776bd');
-    a.stud(190,404,118,26,10,p.legendary?'#d99b26':'#7e6bb8',p.legendary?'#fff3b0':'#cbb8f5');
+    this.background('아스트로봇 커스텀 공방');const a=this.art,p=this.part;
+    a.ellipse(190,416,142,40,'#0b132b');
+    a.ellipse(190,412,134,34,p.legendary?'#ffbe0b':'#3b82f6');
+    a.ellipse(190,408,112,24,p.legendary?'#fff3b0':'#00f5d4');
     if(p.legendary){
-      for(let i=0;i<8;i++){const ang=this.time/600+i*Math.PI/4;a.star(190+Math.cos(ang)*115,310+Math.sin(ang)*75,8,'#ffe885');}
+      for(let i=0;i<8;i++){const ang=this.time/600+i*Math.PI/4;a.star(190+Math.cos(ang)*115,310+Math.sin(ang)*75,9,'#ffbe0b');}
     }
     a.toy(186,397,1.34,{time:this.time,run:true,gold:p.legendary,glow:p.legendary?1:.4,palette:paletteFor({...this.profile.equipped,[this.slot]:p.id})});
-    a.rect(356,152,324,78,'#0f1b39',24,'#b7c7f555');a.coin(398,191,.75);a.counter(this.profile.coins,442,193,210,32,'#ffdd8b','left');
-    a.text(p.name,516,268,31,'#fff6d6');
-    a.rect(356,294,320,36,p.legendary?'#4a3219':'#173354',12,p.legendary?'#ffd86b':'#7ed8ff66');
+    a.rect(356,152,324,78,'#0b132b',24,'#4cc9f0');a.coin(398,191,.75);a.counter(this.profile.coins,442,193,210,32,'#ffbe0b','left');
+    a.label(p.name,516,268,31,'#fff6d6','#0b132b');
+    a.rect(356,294,320,36,p.legendary?'#4a3219':'#173354',12,p.legendary?'#ffbe0b':'#00f5d4');
     a.text(p.legendary?'★ 전설 등급 · 특수 오라 발동':'★ 커스텀 등급 · 인게임 외형 & 이펙트',516,312,15.5,p.legendary?'#ffe694':'#9beeff');
-    a.rect(356,342,320,44,'#102544',14,'#8ec5e844');
-    a.counter(PERKS[p.id]??'모든 작전에 즉시 반영',516,364,296,15.5,'#c8fff0');
-    for(const [i,slot]of ['head','body','back'].entries()){a.rect(40+i*224,450,208,62,this.slot===slot?'#ffd86b':'#2d4367',20,this.slot===slot?'#fff6c4':'#7698bd44');a.text(['머리 브릭','몸통 슈트','등 부스터'][i],144+i*224,482,23,this.slot===slot?'#1b354f':'#c9dced');}
+    a.rect(356,342,320,44,'#0b132b',14,'#4cc9f0');
+    a.counter(PERKS[p.id]??'모든 작전에 즉시 반영',516,364,296,15.5,'#00f5d4');
+    for(const [i,slot]of ['head','body','back'].entries()){
+      a.rect(40+i*224,450,208,62,this.slot===slot?'#ffbe0b':'#1e3a8a',20,'#0b132b');
+      a.label(['헤드 기어','바디 아머','윙 부스터'][i],144+i*224,482,23,this.slot===slot?'#ffffff':'#c9dced','#0b132b');
+    }
     this.parts.forEach((part,i)=>{
       const x=36+i%2*342,y=540+Math.floor(i/2)*263,selected=part.id===this.selected,owned=this.profile.data.owned.includes(part.id);
-      a.rect(x,y+9,306,238,'#0a1833',24);a.rect(x,y,306,238,selected?'#3d567f':part.legendary?'#332b54':'#233a60',24,selected?'#ffdf99':part.legendary?'#ffd57388':'#88a9cf66');
-      for(let sIdx=0;sIdx<3;sIdx++)a.stud(x+78+sIdx*75,y+2,13,4,4.5,selected?'#5678ad':'#304d7a',selected?'#ffe8a8':'#8fb4de');
-      a.toy(x+86,y+158,.72,{time:this.time,run:selected,gold:part.legendary&&selected,palette:paletteFor({...this.profile.equipped,[this.slot]:part.id})});
-      if(part.legendary)a.star(x+268,y+34,15,'#ffdb86');
-      a.text(part.name,x+212,y+72,20,'#fff5db');
-      a.text(owned?'✓ 보유 중':part.price+' 코인',x+212,y+112,23,owned?'#8effd8':'#ffdc91');
+      a.rect(x,y+9,306,238,'#0b132b',24);
+      a.rect(x,y,306,238,selected?'#1d4ed8':part.legendary?'#3b1d6e':'#172a4f',24,selected?'#ffbe0b':part.legendary?'#ffbe0b':'#0b132b');
+      a.toy(x+86,y+162,.72,{time:this.time,run:selected,gold:part.legendary&&selected,palette:paletteFor({...this.profile.equipped,[this.slot]:part.id})});
+      if(part.legendary){a.star(x+268,y+34,18,'#0b132b');a.star(x+268,y+34,14,'#ffbe0b');}
+      a.label(part.name,x+212,y+72,20,'#fff5db','#0b132b');
+      a.label(owned?'✓ 보유 중':part.price+' 코인',x+212,y+112,23,owned?'#00f5d4':'#ffbe0b','#0b132b');
       a.counter((PERKS[part.id]??'').replace(/^[^\s]+\s/,''),x+212,y+152,158,13,'#b8e4f5');
       a.text(this.profile.data.equipped[this.slot]===part.id?'★ 현재 장착 중':part.legendary?'전설 파츠 (보호자 PIN)':'탭하여 미리보기',x+153,y+208,15.5,this.profile.data.equipped[this.slot]===part.id?'#ffe885':'#bacde3');
     });

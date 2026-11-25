@@ -29,6 +29,11 @@ export class AdventureRenderer {
       const x=(i*310-d*(.12+layer*.12))%1600-310,y=550+layer*100;
       a.poly([[x,y+220],[x+160,y-70],[x+320,y+220]],[['#89d4d2','#53b9b6','#398c9c'],['#9a93d8','#6d67b5','#4a468c'],['#4d7fb8','#325c91','#1f3d68']][zone][layer]);
     }
+    // Shared Harbor World landmarks on the horizon: Cloud Lighthouse (Stairs) & Bridge Tower (Battle)
+    const parts=trainParts(this.profile.data);
+    a.rect(112,545,22,75,'#e8f1fa88',3);a.rect(112,562,22,14,'#e0675a88',2);a.rect(112,590,22,14,'#e0675a88',2);
+    a.stud(123,542,9,3,4,'#e39d3b','#fff5bd');
+    if(parts.beacon)a.poly([[123,542],[240,505+Math.sin(t/700)*18],[240,565+Math.sin(t/700)*18]],'#fff6b538');
     for(let i=0;i<5;i++){const x=((i*251-d*.08)%1200+1200)%1200-220,y=365+(i%3)*65;a.ellipse(x,y,70,16,'#e8fff2bb');a.ellipse(x+20,y-14,35,25,'#f1fff3bb');}
     // Track distance markers & overhead railway gantries
     for(let i=0;i<3;i++){
@@ -52,12 +57,11 @@ export class AdventureRenderer {
     for(const item of this.runner.items.active){
       if(item.kind==='word'){
         const text=SENTENCES[item.sentence][item.slot],icon=item.slot===0?SYMBOLS[SENTENCES[item.sentence][3]]:item.slot===1?SYMBOLS[SENTENCES[item.sentence][4]]:'✦';
-        const match=item.sentence===s.sentence&&item.slot===s.slot;
         a.line([[item.x,item.y-67],[item.x,item.y-12]],'#e5ffef99',3);
         a.ellipse(item.x,item.y-73,31,37,['#efadc6','#9ce4d4','#bec1ff'][item.slot]);
-        // Hover Drone LEGO Brick Capsule
+        // Hover Drone LEGO Brick Capsule — never color-spoil the answer; let the child read the word & symbol!
         a.ellipse(item.x-58,item.y-8,18,5,'#88fff288');a.ellipse(item.x+58,item.y-8,18,5,'#88fff288');
-        a.block(item.x-80,item.y-4,160,62,10,match?'#eab85c':'#8a9bb8',match?'#fff4b5':'#d8e4f5',match?'#9c6d3e':'#566682');
+        a.block(item.x-80,item.y-4,160,62,10,'#e8ba66','#fff3ad','#9c7045');
         a.label(text,item.x,item.y+27,29,'#fff9e8','#40345d');a.text(icon,item.x,item.y-75,30,'#fff');
       }else if(item.kind==='coin')a.coin(item.x,item.y+Math.sin(t/180+item.x)*5,.65);
       else{
@@ -137,38 +141,28 @@ export class AdventureRenderer {
     for(const h of this.plaza.hazards.active)this.scene.push(h);
     this.player??={kind:'player',x:0,z:0};this.player.x=s.x;this.player.z=s.z;this.scene.push(this.player);
     this.captain??={kind:'captain',x:0,z:3.15};this.scene.push(this.captain);this.scene.sort((x,y)=>(x.x+x.z)-(y.x+y.z));
-    // Find nearest needed target (or captain when ready) to draw a compass guide arrow
-    let guideTarget=this.plaza.ready?{x:0,z:3.15}:null,bestDist=Infinity;
-    if(!guideTarget){
-      for(const item of this.plaza.items.active){
-        if(item.collected)continue;
-        const mIdx=this.plaza.mission.findIndex(m=>m.kind===item.kind);
-        const needed=mIdx===0?s.collectedA<this.plaza.mission[0].count:mIdx===1?s.collectedB<this.plaza.mission[1].count:false;
-        if(needed){const dist=Math.hypot(item.x-s.x,item.z-s.z);if(dist<bestDist){bestDist=dist;guideTarget=item;}}
-      }
-    }
     for(const o of this.scene){const p=this.iso(o.x,o.z);
       if(o.kind==='player'){
         a.ellipse(p.x,p.y,29,13,'#c4fff0');
-        if(guideTarget&&s.phase==='active'){
-          const gp=this.iso(guideTarget.x,guideTarget.z),ang=Math.atan2(gp.y-p.y,gp.x-p.x);
+        // Only point the return arrow once working-memory collection is complete (ready === true)!
+        if(this.plaza.ready&&s.phase==='active'){
+          const ang=Math.atan2(captain.y-p.y,captain.x-p.x);
           c.save();c.translate(p.x+Math.cos(ang)*42,p.y-12+Math.sin(ang)*24);c.rotate(ang);
-          a.poly([[10,0],[-6,-7],[-3,0],[-6,7]],this.plaza.ready?'#ffe875':'#72ffe8','#143252',1.5);
+          a.poly([[12,0],[-6,-8],[-3,0],[-6,8]],'#ffe875','#143252',1.5);
           c.restore();
         }
         c.save();c.globalAlpha=s.flashMs&&Math.floor(t/80)%2?.5:1;a.toy(p.x,p.y,.72,{time:t,run:Math.hypot(s.vx,s.vz)>.08,turn:s.vx-s.vz,pitch:(s.vx+s.vz)*.05,squash:s.stunMs?Math.sin(s.stunMs/120)*.4:0,palette:this.profile.palette});c.restore();
       }
       else if(o.kind==='captain')this.robot(p.x,p.y);
       else if(o.kind){
-        const mIdx=this.plaza.mission.findIndex(m=>m.kind===o.kind);
-        const needed=mIdx===0?s.collectedA<this.plaza.mission[0].count:mIdx===1?s.collectedB<this.plaza.mission[1].count:false;
-        if(needed){
-          a.ellipse(p.x,p.y+2,28,11,'#67ffe844');
-          this.good(o.kind,p.x,p.y-9-Math.sin(t/260+o.x)*5);
-          a.star(p.x+21,p.y-42,5+Math.sin(t/180+o.z)*2,'#fff3b8');
-        }else{
-          a.ellipse(p.x,p.y+2,24,9,'#ff5e7a38');
-          this.good(o.kind,p.x,p.y-7);
+        // Preserve memory challenge: all items share neutral pedestals, but approaching shows a nearby name tag so icons are never ambiguous!
+        const dist=Math.hypot(o.x-s.x,o.z-s.z),near=s.phase==='active'&&dist<1.25;
+        if(near)a.ellipse(p.x,p.y+2,27,10,'#fff3b044');
+        this.good(o.kind,p.x,p.y-9-Math.sin(t/300+o.x)*4);
+        a.star(p.x+21,p.y-42,4+Math.sin(t/200+o.z)*2,'#fff3b8');
+        if(near){
+          a.rect(p.x-48,p.y-68,96,22,'#102648e6',8,'#9ed8ff77');
+          a.text(GOODS[o.kind].name,p.x,p.y-57,13,'#fff4c8');
         }
       }
       else{a.ellipse(p.x,p.y,25,10,'#34497177');a.block(p.x-24,p.y-39,48,33,8,'#e88996','#ffd0b2','#945b88');a.rect(p.x-14,p.y-29,8,7,'#704f74',2);a.rect(p.x+5,p.y-29,8,7,'#704f74',2);}
@@ -176,12 +170,25 @@ export class AdventureRenderer {
     this.effects();this.header('작전 4 · 기차 엔진 조립',canHome);
     a.rect(33,151,654,137,'#172f57eb',26,'#c5cbf077');
     a.text(this.plaza.ready?'⚡ 코어 완성! 대장 로봇에게 합체!':`🔧 별빛특급 코어 수송 (STAGE ${s.round+1})`,310,183,24,'#f2edcc');
-    // Always display target brick icons and live counts in the HUD so the player never has to guess blindly!
-    for(let i=0;i<2;i++){
-      const m=this.plaza.mission[i],count=i?s.collectedB:s.collectedA,done=count>=m.count;
-      a.rect(86+i*250,210,224,62,done?'#1f5463':'#102342',16,done?'#8effd8':'#688cb855');
-      this.good(m.kind,132+i*250,248,.62);
-      a.text(`${GOODS[m.kind].name} ${count}/${m.count}`,222+i*250,241,19,done?'#b8ffe6':'#fff2c2');
+    // During briefing or ♪ remind: show target items. During active movement: show collected cargo slots so working memory is genuinely engaged!
+    if(s.phase==='briefing'||s.remindMs>0){
+      for(let i=0;i<2;i++){
+        const m=this.plaza.mission[i],count=i?s.collectedB:s.collectedA;
+        this.good(m.kind,195+i*260,244,.7);a.text(count+' / '+m.count,264+i*260,239,30,'#bbffe1');
+      }
+    }else{
+      a.bag(128,240,.65);
+      let slotIdx=0;
+      this.plaza.mission.forEach((m,mi)=>{
+        const got=mi?s.collectedB:s.collectedA;
+        for(let n=0;n<m.count;n++){
+          const sx=206+slotIdx*72,filled=n<got;
+          a.rect(sx-28,212,56,56,filled?'#215768':'#102342',14,filled?'#8effd8':'#688cb855');
+          if(filled)this.good(m.kind,sx,248,.52);else a.text('?',sx,241,24,'#7aa2c4');
+          slotIdx++;
+        }
+      });
+      a.text(`${collectedTotal}/${totalNeeded}`,532,240,26,'#bbffe1');
     }
     a.rect(604,164,62,52,'#435f89',15);a.text('♪',635,191,30,'#e9faff');
     if(s.phase==='briefing'||s.remindMs>0){

@@ -148,16 +148,18 @@ export class Lobby {
       if(done)a.star(x,277,8,'#fff6c9');else a.text(i+1,x,278,12,'#9bb8c8');
       a.text(op.short,x,307,11,done?'#fff0b8':'#9ab5c7');
     });
-    // Zone C (x: 386..538): Clipped LEGO Train Assembly Dock so the train never overlaps Zone B or medals
+    // Zone C (x: 386..538): Clipped LEGO Train Assembly Dock; shows earned beacon/coach/reactor even before loco rescue!
     c.save();c.beginPath();c.roundRect(388,201,148,103,20);c.clip();
     const hasCars=parts.harborCars>0||parts.coach;
-    if(parts.loco){
+    if(parts.doneCount>0){
+      c.save();if(!parts.loco)c.globalAlpha=.68;
       train(a,hasCars?488:466,294,hasCars?.25:.29,{time:t+(this.pressed==='train'?this.pressMs*5:0),cars:parts.harborCars,beacon:parts.beacon,coach:parts.coach,reactor:parts.reactor,complete:parts.complete});
+      c.restore();
     }else{
       c.save();c.globalAlpha=.32;train(a,466,294,.28,{time:0,cars:0});c.restore();
     }
     c.restore();
-    a.text(parts.complete?'★ 별빛특급 출동 준비 끝!':parts.loco?`조립 도크 (${parts.doneCount}/4 파츠)`:'기관차 탈환 대기',462,214,11.5,parts.complete?'#ffe898':'#9fe6f8');
+    a.text(parts.complete?'★ 별빛특급 출동 준비 끝!':parts.doneCount>0?`조립 도크 (${parts.doneCount}/4 파츠)`:'기관차 탈환 대기',462,214,11.5,parts.complete?'#ffe898':'#9fe6f8');
     picoToy(a,54,361,.36,t);
     a.rect(78,337,604,31,'#112947e6',12,'#7ed8ef55');
     const nextOp=!parts.loco?'삐코: "대장! [작전 1] 다리 배틀 런에서 기관차와 코코부터 구출하자!"'

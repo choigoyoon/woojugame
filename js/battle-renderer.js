@@ -110,6 +110,11 @@ export class BattleRenderer {
     }
     a.poly([[0,373],[58,337],[117,362],[167,379]],'#3ea5ab');a.poly([[567,378],[633,344],[720,368],[720,395]],'#58b7bc');
     a.poly([[0,395],[84,369],[148,395]],'#7ed8c5');
+    // Cloud Lighthouse from Operation 2 (Stairs) on the harbor headland; lights up once 50F bridge is cleared!
+    const parts=trainParts(this.profile?.data);
+    a.rect(72,292,18,58,'#e8f1fa',2);a.rect(72,306,18,11,'#e0675a',1);a.rect(72,328,18,11,'#e0675a',1);
+    a.stud(81,290,7,2.5,3.5,'#e39d3b','#fff5bd');
+    if(parts.beacon)a.poly([[81,290],[210,255+Math.sin(this.time/700)*15],[210,310+Math.sin(this.time/700)*15]],'#fff6b538');
   }
   deck() {
     const a=this.art,c=a.c;const distance=this.game.state.distance;

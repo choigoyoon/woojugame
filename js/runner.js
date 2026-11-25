@@ -43,7 +43,13 @@ export class Runner extends Adventure {
       if(s.goldMs){for(let i=0;i<3;i++)this.spawn('coin',{x:820+i*64,y:750-Math.sin(i/2*Math.PI)*85});s.spawnMs=950;}
       else{const correct=s.serial%3!==1;const slot=correct?s.slot:(s.slot+1)%3;const sentence=correct?s.sentence:(s.sentence+3)%SENTENCES.length;this.spawn('word',{slot,sentence});s.serial++;s.spawnMs=c.spawnMs;}
     }
-    if(s.obstacleMs<=0){this.spawn('obstacle');s.obstacleMs=Math.max(2600,4700-s.round*60);}
+    if(s.obstacleMs<=0){
+      this.spawn('obstacle');
+      if(!s.goldMs&&this.items.active.length<=c.itemLimit-4){
+        for(const [dx,y]of[[-55,735],[0,678],[55,735]])this.spawn('coin',{x:850+dx,y});
+      }
+      s.obstacleMs=Math.max(2600,4700-s.round*60);
+    }
     for(const item of this.items.active){
       item.x-=speed*dt;item.bounce=Math.max(0,item.bounce-ms);
       if(item.kind==='word'){

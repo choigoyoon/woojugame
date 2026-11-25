@@ -328,10 +328,19 @@ export class Renderer {
     if (y < CONFIG.motion.clipTop - 100 || y > CONFIG.view.height) return;
     const next = step.id === state.step + 1;
     const current = step.id === state.step;
-    const palette = current ? ['#ffe888', '#e5aa47', '#ad7135'] : step.id % 4 === 0
-      ? ['#c7bdff', '#9376dc', '#6559b0'] : ['#a9f6e6', '#4ebebc', '#318f9f'];
+    const bridgeGate = step.id > 0 && step.id % CONFIG.puzzle.everySteps === 0;
+    const milestone = step.id > 0 && step.id % 10 === 0;
+    const palette = bridgeGate ? ['#fff199', '#f2a93b', '#ad5d28']
+      : current || milestone ? ['#ffe888', '#e5aa47', '#ad7135']
+      : step.id % 4 === 0 ? ['#c7bdff', '#9376dc', '#6559b0'] : ['#a9f6e6', '#4ebebc', '#318f9f'];
     this.cachedLayer('tile:'+palette[0]+':'+next,x,y,[-110,-50,220,155],()=>this.platformBody(0,0,palette,next));
-    if (step.id > state.step && step.id <= state.step + 6) {
+    if (bridgeGate) {
+      this.rect(x - 66, y - 74, 132, 30, '#133154e6', 11, '#ffe885');
+      this.text('★ ' + step.id + 'F 등대 다리', x, y - 59, 15, '#fff3b0', 'center');
+    } else if (milestone && step.id !== state.step) {
+      this.rect(x - 36, y - 62, 72, 24, '#163458cc', 9, '#ffd87588');
+      this.text(step.id + 'F', x, y - 50, 14, '#ffe89c', 'center');
+    } else if (step.id > state.step && step.id <= state.step + 6) {
       const bob = this.reducedMotion ? 0 : Math.sin(this.time / 330 + step.id) * 4;
       this.ellipse(x, y - 2, 16, 5, '#26325514');
       this.coin(x, y - 53 + bob, next ? 0.9 : 0.66);
@@ -520,6 +529,12 @@ export class Renderer {
     this.rect(140, 202, 440, 22, '#102549cc', 11, '#8be9ff4d');
     this.rect(144, 206, Math.max(14, 432 * bridgeProgress), 14, '#58e6d0', 7);
     this.text('등대 레고 브릿지까지 ' + bridgeLeft + '층 (+50 코인)', 360, 213, 13.5, '#fff7cc', 'center');
+    // Vertical Lighthouse Altitude Gauge on the right edge
+    this.rect(672, 280, 24, 300, '#102549b8', 12, '#8be9ff44');
+    const fillH = Math.max(14, Math.round(288 * bridgeProgress));
+    this.rect(676, 574 - fillH, 16, fillH, '#ffd86b', 8);
+    this.star(684, 266, 11, '#ffe885');
+    this.text(state.nextPuzzle + 'F', 684, 246, 12, '#fff4b8', 'center');
     if (state.combo > 1) {
       c.save(); c.translate(360, 258);
       const elapsed = CONFIG.motion.auraMs - this.aura;

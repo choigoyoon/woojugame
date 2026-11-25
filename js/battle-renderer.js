@@ -309,8 +309,9 @@ export class BattleRenderer {
       if(i===Math.floor(Math.min(5,count)/2))a.toy(p.x,p.y-bob,scale*1.1,{time:this.time,run:true,back:true,turn:this.squadLean*3,jump:s.recoilMs/65*.28,palette:this.profile.palette});
       else c.drawImage(this.troopSprites[phase],p.x-104*scale,p.y-bob-210*scale,208*scale,224*scale);
       if(this.glow>0)a.star(p.x+39*scale,p.y-bob-156*scale,10*scale,'#fff4a5');
-      const powered=s.powerMs>0;
-      a.block(p.x+16*p.s,p.y-57*p.s+s.recoilMs/65*4,14*p.s,29*p.s,4*p.s,powered?'#29dce3':CONFIG.campaign.weapons[s.weapon]?.color??'#2e4b66',powered?'#c7fff3':'#b4dfe4','#173550');
+      const powered=s.powerMs>0,weaponId=s.weapon??'pulse',wColor=powered?'#29dce3':CONFIG.campaign.weapons[weaponId]?.color??'#2e4b66';
+      a.block(p.x+16*p.s,p.y-57*p.s+s.recoilMs/65*4,(weaponId==='spread'?20:14)*p.s,(weaponId==='pierce'?36:29)*p.s,4*p.s,wColor,powered?'#c7fff3':'#b4dfe4','#173550');
+      if(weaponId==='arc')a.ellipse(p.x+23*p.s,p.y-60*p.s,7*p.s,7*p.s,'#96f7ff');
       if(s.recoilMs>34&&i<Math.min(5,count)){
         a.star(p.x+23*p.s,p.y-66*p.s,(powered?23:17)*p.s,powered?'#81fff5':'#ffca66');
         a.star(p.x+23*p.s,p.y-66*p.s,11*p.s,'#fffde0');
@@ -380,7 +381,17 @@ export class BattleRenderer {
       const section=at.reduce((found,point,index)=>route>=point?index:found,0);
       a.label(CONFIG.campaign.sectionNames[section]+' · 보스까지 '+Math.max(0,Math.ceil((this.game.rules.bossAtMs-s.waveMs)/1000))+'초',360,308,18,'#d8f6e9','#18375b');
     }
-    if(boss)a.label(this.game.harbor?['1-1 철통 집게 크레인','1-2 쌍둥이 자석 집게','1-3 항구 수호 거인'][s.round]:this.game.campaign?this.game.round.boss+(boss.rage?' !':''):boss.rage?'BOSS • RAGE':'BOSS',360,310,22,boss.rage?'#ffbd87':'#fff1d3','#18375b');
+    if(boss){
+      const locksBroken=this.game.harbor?.state.locksBroken??2;
+      a.label(this.game.harbor?['1-1 철통 집게 크레인','1-2 쌍둥이 자석 집게','1-3 항구 수호 거인'][s.round]:this.game.campaign?this.game.round.boss+(boss.rage?' !':''):boss.rage?'BOSS • RAGE':'BOSS',360,310,22,boss.rage?'#ffbd87':'#fff1d3','#18375b');
+      if(this.game.harbor){
+        for(const [idx,lx]of[[0,118],[1,602]]){
+          const intact=locksBroken<=idx;
+          a.rect(lx-18,266,36,24,intact?'#d98648':'#233c54',8,intact?'#fff0a8':'#637d96');
+          a.text(intact?'🔩':'✓',lx,278,15,intact?'#fff8d6':'#95ffd8');
+        }
+      }
+    }
     const mission=this.game.harbor?.state;
     if(mission?.signalMs>0&&s.bannerMs<=0){
       a.rect(64,337,592,62,'#133450f0',22,'#9bdcc9');

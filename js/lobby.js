@@ -167,10 +167,15 @@ export class Lobby {
       :cleared<3?`삐코: "4대 파츠 장착! 이제 배틀 런 남은 구간(${cleared}/3)을 돌파하자!"`
       :'삐코: "별빛특급 4대 파츠 & 항구 3구간 완전 정복! 최고 기록에 도전하자!"';
     a.counter(nextOp,90,353,580,15,'#fff2b8','left');
+    const targetMode=!parts.loco?'battle':!parts.beacon?'stairs':!parts.coach?'runner':!parts.reactor?'plaza':cleared<3?'battle':'';
     for(const card of CARTRIDGES){
-      const {x,y}=card,w=306;
+      const {x,y}=card,w=306,recommended=card.id===targetMode;
       this.cabinet(card);
-      a.text(card.tag,x+28,y+26,17,'#102c45','left');
+      if(recommended){
+        c.save();c.strokeStyle='#fff099';c.lineWidth=4;c.beginPath();c.roundRect(x-3,y-3,w+4,370,32);c.stroke();c.restore();
+        a.rect(x+198,y+10,92,28,'#ffe375',11,'#fff9ce');a.text('★ 추천 작전',x+244,y+24,13.5,'#19324a');
+      }
+      a.text(card.tag,x+24,y+26,16.5,'#102c45','left');
       c.save();c.beginPath();c.roundRect(x+20,y+54,w-44,204,16);c.clip();
       this.mini(card.id,x+w/2,y+158);c.restore();
       a.text(card.title,x+w/2,y+288,card.id==='plaza'?24:26,'#fff5dc');

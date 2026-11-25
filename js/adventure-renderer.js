@@ -21,27 +21,44 @@ export class AdventureRenderer {
   header(title,canHome){const a=this.art;a.cached('header',[0,0,720,132],()=>{a.rect(0,0,720,130,'#10264ce8');a.text(title,340,65,30,'#fff0c7');a.rect(528,32,170,67,'#091a38',22,'#a2c9f44d');a.coin(557,64,.6);},title);a.home(canHome);a.counter(this.profile.coins,584,66,99,23,'#ffe6a6','left');}
   runnerView(canHome,pressed=false){
     const a=this.art,c=a.c,s=this.runner.state,t=this.reduced?0:this.time,d=s.distance;
-    c.fillStyle=a.gradient(0,0,0,1280,['#3769b5','#75d5dc','#f5ecb6']);c.fillRect(0,0,720,1280);
-    a.ellipse(590,367,64,64,'#fff2bc');
+    const zone=s.round%3;
+    const skies=[['#3769b5','#75d5dc','#f5ecb6'],['#3f4b9c','#8b7fd6','#ffd6b0'],['#16244f','#355a96','#8ee8e2']][zone];
+    c.fillStyle=a.gradient(0,0,0,1280,skies);c.fillRect(0,0,720,1280);
+    a.ellipse(590,367,64,64,zone===2?'#b9fff5':'#fff2bc');
     for(let layer=0;layer<3;layer++)for(let i=0;i<6;i++){
       const x=(i*310-d*(.12+layer*.12))%1600-310,y=550+layer*100;
-      a.poly([[x,y+220],[x+160,y-70],[x+320,y+220]],['#89d4d2','#53b9b6','#398c9c'][layer]);
+      a.poly([[x,y+220],[x+160,y-70],[x+320,y+220]],[['#89d4d2','#53b9b6','#398c9c'],['#9a93d8','#6d67b5','#4a468c'],['#4d7fb8','#325c91','#1f3d68']][zone][layer]);
     }
     for(let i=0;i<5;i++){const x=((i*251-d*.08)%1200+1200)%1200-220,y=365+(i%3)*65;a.ellipse(x,y,70,16,'#e8fff2bb');a.ellipse(x+20,y-14,35,25,'#f1fff3bb');}
+    // Track distance markers & overhead railway gantries
+    for(let i=0;i<3;i++){
+      const gx=((i*360-d*.45)%1080+1080)%1080-180;
+      a.rect(gx,640,10,230,'#2b546888',2);a.rect(gx-16,632,42,14,'#498399aa',4);
+      a.ellipse(gx+5,639,4,4,s.goldMs||s.slot>=2?'#7effd8':'#ffd573');
+    }
     a.rect(0,870,720,410,'#1c656a');a.rect(0,870,720,37,'#a4e7a4');a.rect(0,906,720,20,'#4eac8b');
     for(let i=0;i<9;i++){const x=i*112-(d%112);a.line([[x,925],[x+50,996],[x+50,1280]],'#328083',4);a.stud(x+32,870,13,4,4.5,'#57b982','#d7ffbe');a.rect(x+15,951,18,10,'#47979b',3);}
     // Runaway Starlight Express LEGO wagon with Coco on top cheering the player on!
-    const wagonX=s.goldMs?550:640-s.slot*36+Math.sin(t/210)*8;
+    const wagonX=s.goldMs?540:642-s.slot*38+Math.sin(t/210)*8;
     wagon(a,wagonX,866,.68,t,true);
     cocoToy(a,wagonX-6,818,.46,t);
-    a.rect(wagonX-96,742,174,28,'#132e4ee6',10,'#ffe79988');
-    a.text(s.goldMs?'코코: "황금 합체 성공!"':'코코: "브릭 '+(3-s.slot)+'개 더!"',wagonX-9,756,14,'#fff3bd');
-    if(s.goldMs)a.line([[CONFIG.runner.playerX+35,795],[wagonX-45,825]],'#fff39e',6);
+    a.rect(wagonX-98,740,178,28,'#132e4ee6',10,'#ffe79988');
+    a.text(s.goldMs?'★ 도킹 완료! 황금 질주!':'객차 거리 '+Math.max(10,(3-s.slot)*40)+'m · 브릭 '+(3-s.slot)+'개!',wagonX-9,754,13.5,'#fff3bd');
+    if(s.goldMs||s.slot>0){
+      c.save();c.globalAlpha=s.goldMs?.9:.35+s.slot*.2;
+      a.line([[CONFIG.runner.playerX+35,795],[wagonX-45,825]],s.goldMs?'#fff39e':'#7effe7',s.goldMs?7:3+s.slot);
+      c.restore();
+    }
     for(const item of this.runner.items.active){
       if(item.kind==='word'){
         const text=SENTENCES[item.sentence][item.slot],icon=item.slot===0?SYMBOLS[SENTENCES[item.sentence][3]]:item.slot===1?SYMBOLS[SENTENCES[item.sentence][4]]:'✦';
-        a.line([[item.x,item.y-67],[item.x,item.y-12]],'#e5ffef99',3);a.ellipse(item.x,item.y-73,31,37,['#efadc6','#9ce4d4','#bec1ff'][item.slot]);
-        a.block(item.x-80,item.y-4,160,62,10,'#e8ba66','#fff3ad','#9c7045');a.label(text,item.x,item.y+27,29,'#fff9e8','#40345d');a.text(icon,item.x,item.y-75,30,'#fff');
+        const match=item.sentence===s.sentence&&item.slot===s.slot;
+        a.line([[item.x,item.y-67],[item.x,item.y-12]],'#e5ffef99',3);
+        a.ellipse(item.x,item.y-73,31,37,['#efadc6','#9ce4d4','#bec1ff'][item.slot]);
+        // Hover Drone LEGO Brick Capsule
+        a.ellipse(item.x-58,item.y-8,18,5,'#88fff288');a.ellipse(item.x+58,item.y-8,18,5,'#88fff288');
+        a.block(item.x-80,item.y-4,160,62,10,match?'#eab85c':'#8a9bb8',match?'#fff4b5':'#d8e4f5',match?'#9c6d3e':'#566682');
+        a.label(text,item.x,item.y+27,29,'#fff9e8','#40345d');a.text(icon,item.x,item.y-75,30,'#fff');
       }else if(item.kind==='coin')a.coin(item.x,item.y+Math.sin(t/180+item.x)*5,.65);
       else{
         a.block(item.x-28,815,56,55,12,'#b96881','#efacac','#683e62');
@@ -52,9 +69,15 @@ export class AdventureRenderer {
     const squash=s.squashMs?Math.sin(s.squashMs/200*Math.PI):0,scale=s.goldMs?1.38:.86;
     const jumpFactor=Math.min(1.15,s.y/82),pitch=this.reduced?0:Math.max(-.22,Math.min(.24,-s.vy/2300));
     c.save();c.translate(CONFIG.runner.playerX,870-s.y);
-    if(s.goldMs){const glow=c.createRadialGradient(0,-90,10,0,-90,165);glow.addColorStop(0,'#fff5ae99');glow.addColorStop(1,'#ffe18c00');c.fillStyle=glow;c.fillRect(-170,-260,340,340);for(let i=0;i<5;i++)a.star(Math.sin(t/260+i)*105,-105+Math.cos(t/260+i)*95,8,'#fff6c0');}
+    if(s.goldMs||s.slot>0){
+      const auraR=s.goldMs?165:75+s.slot*22;
+      const glow=c.createRadialGradient(0,-90,10,0,-90,auraR);
+      glow.addColorStop(0,s.goldMs?'#fff5ae99':s.slot===2?'#c7b3ff77':'#7effe866');
+      glow.addColorStop(1,'#ffe18c00');c.fillStyle=glow;c.fillRect(-170,-260,340,340);
+      if(s.goldMs)for(let i=0;i<5;i++)a.star(Math.sin(t/260+i)*105,-105+Math.cos(t/260+i)*95,8,'#fff6c0');
+    }
     c.globalAlpha=s.invulnerableMs&&Math.floor(t/90)%2?.45:1;
-    a.toy(0,0,scale,{time:t,run:s.y<=0,jump:jumpFactor,pitch,squash,gold:s.goldMs>0,palette:this.profile.palette});
+    a.toy(0,0,scale,{time:t,run:s.y<=0,jump:jumpFactor,pitch,squash,gold:s.goldMs>0,glow:s.slot/3,palette:this.profile.palette});
     c.restore();
     this.effects();this.header('작전 3 · 폭주 기차칸 추격',canHome);
     a.cached('sentence-slots',[22,144,676,154],()=>{const labels=['1단 파워 브릭','2단 연결 브릭','3단 부스터 점화'];
@@ -92,26 +115,74 @@ export class AdventureRenderer {
     a.poly(corners.map(p=>[p.x,p.y+28]),'#364872','#97c1d8',3);
     for(let x=-4;x<4;x++)for(let z=-4;z<4;z++){const points=[this.iso(x,z),this.iso(x+1,z),this.iso(x+1,z+1),this.iso(x,z+1)];a.poly(points.map(p=>[p.x,p.y]),(x+z)%2?'#aacacb':'#bed8cf','#86abbc',1);const center=this.iso(x+.5,z+.5);a.ellipse(center.x,center.y-2,7,3.2,'#ffffff38');}
     });
-    const dock=this.iso(-2.2,3.4),parts=trainParts(this.profile.data);
+    const dock=this.iso(-2.2,3.4),parts=trainParts(this.profile.data),captain=this.iso(0,3.15);
+    const totalNeeded=this.plaza.mission.reduce((n,m)=>n+m.count,0),collectedTotal=s.collectedA+s.collectedB;
+    // Power conduits connecting the Captain Dock to the Starlight Express as core bricks are gathered
+    for(let i=0;i<3;i++){
+      const lit=collectedTotal>i||s.phase==='success';
+      a.line([[captain.x-18,captain.y-6+i*6],[dock.x+35,dock.y-12+i*6]],lit?'#6effe8':'#32517877',lit?4:2);
+    }
     train(a,dock.x,dock.y-18,.42,{time:t,cars:parts.harborCars,beacon:parts.beacon,coach:parts.coach,reactor:parts.reactor||s.phase==='success',complete:parts.complete});
     cocoToy(a,dock.x+56,dock.y-8,.42,t);
-    const captain=this.iso(0,3.15);a.ellipse(captain.x,captain.y,46,22,this.plaza.ready?'#fff0a4':'#6d95b7');
+    a.ellipse(captain.x,captain.y,46,22,this.plaza.ready?'#fff0a4':'#6d95b7');
+    if(this.plaza.ready){
+      const pulse=(Math.sin(t/150)+1)*6;
+      c.save();c.strokeStyle='#ffe885';c.lineWidth=4;c.beginPath();c.ellipse(captain.x,captain.y,52+pulse,25+pulse*.4,0,0,Math.PI*2);c.stroke();c.restore();
+      a.rect(captain.x-62,captain.y-178,124,28,'#133454f0',10,'#ffe885');
+      a.text('▼ 엔진 도킹!',captain.x,captain.y-164,15,'#fff3a8');
+    }
     // Fixed tiny scene: sort stable references in reusable scratch storage by floor depth.
     this.scene??=[];this.scene.length=0;
     for(const i of this.plaza.items.active)if(!i.collected)this.scene.push(i);
     for(const h of this.plaza.hazards.active)this.scene.push(h);
     this.player??={kind:'player',x:0,z:0};this.player.x=s.x;this.player.z=s.z;this.scene.push(this.player);
     this.captain??={kind:'captain',x:0,z:3.15};this.scene.push(this.captain);this.scene.sort((x,y)=>(x.x+x.z)-(y.x+y.z));
+    // Find nearest needed target (or captain when ready) to draw a compass guide arrow
+    let guideTarget=this.plaza.ready?{x:0,z:3.15}:null,bestDist=Infinity;
+    if(!guideTarget){
+      for(const item of this.plaza.items.active){
+        if(item.collected)continue;
+        const mIdx=this.plaza.mission.findIndex(m=>m.kind===item.kind);
+        const needed=mIdx===0?s.collectedA<this.plaza.mission[0].count:mIdx===1?s.collectedB<this.plaza.mission[1].count:false;
+        if(needed){const dist=Math.hypot(item.x-s.x,item.z-s.z);if(dist<bestDist){bestDist=dist;guideTarget=item;}}
+      }
+    }
     for(const o of this.scene){const p=this.iso(o.x,o.z);
-      if(o.kind==='player'){a.ellipse(p.x,p.y,29,13,'#c4fff0');c.save();c.globalAlpha=s.flashMs&&Math.floor(t/80)%2?.5:1;a.toy(p.x,p.y,.72,{time:t,run:Math.hypot(s.vx,s.vz)>.08,turn:s.vx-s.vz,pitch:(s.vx+s.vz)*.05,squash:s.stunMs?Math.sin(s.stunMs/120)*.4:0,palette:this.profile.palette});c.restore();}
+      if(o.kind==='player'){
+        a.ellipse(p.x,p.y,29,13,'#c4fff0');
+        if(guideTarget&&s.phase==='active'){
+          const gp=this.iso(guideTarget.x,guideTarget.z),ang=Math.atan2(gp.y-p.y,gp.x-p.x);
+          c.save();c.translate(p.x+Math.cos(ang)*42,p.y-12+Math.sin(ang)*24);c.rotate(ang);
+          a.poly([[10,0],[-6,-7],[-3,0],[-6,7]],this.plaza.ready?'#ffe875':'#72ffe8','#143252',1.5);
+          c.restore();
+        }
+        c.save();c.globalAlpha=s.flashMs&&Math.floor(t/80)%2?.5:1;a.toy(p.x,p.y,.72,{time:t,run:Math.hypot(s.vx,s.vz)>.08,turn:s.vx-s.vz,pitch:(s.vx+s.vz)*.05,squash:s.stunMs?Math.sin(s.stunMs/120)*.4:0,palette:this.profile.palette});c.restore();
+      }
       else if(o.kind==='captain')this.robot(p.x,p.y);
-      else if(o.kind){this.good(o.kind,p.x,p.y-9-Math.sin(t/300+o.x)*4);a.star(p.x+21,p.y-42,4+Math.sin(t/200+o.z)*2,'#fff3b8');}
+      else if(o.kind){
+        const mIdx=this.plaza.mission.findIndex(m=>m.kind===o.kind);
+        const needed=mIdx===0?s.collectedA<this.plaza.mission[0].count:mIdx===1?s.collectedB<this.plaza.mission[1].count:false;
+        if(needed){
+          a.ellipse(p.x,p.y+2,28,11,'#67ffe844');
+          this.good(o.kind,p.x,p.y-9-Math.sin(t/260+o.x)*5);
+          a.star(p.x+21,p.y-42,5+Math.sin(t/180+o.z)*2,'#fff3b8');
+        }else{
+          a.ellipse(p.x,p.y+2,24,9,'#ff5e7a38');
+          this.good(o.kind,p.x,p.y-7);
+        }
+      }
       else{a.ellipse(p.x,p.y,25,10,'#34497177');a.block(p.x-24,p.y-39,48,33,8,'#e88996','#ffd0b2','#945b88');a.rect(p.x-14,p.y-29,8,7,'#704f74',2);a.rect(p.x+5,p.y-29,8,7,'#704f74',2);}
     }
     this.effects();this.header('작전 4 · 기차 엔진 조립',canHome);
     a.rect(33,151,654,137,'#172f57eb',26,'#c5cbf077');
-    a.text(this.plaza.ready?'⚡ 코어 완성! 대장 로봇에게 합체!':'🔧 별빛특급 출발 코어 브릭 수송',310,187,25,'#f2edcc');
-    if(s.phase==='briefing'||s.remindMs>0){for(let i=0;i<2;i++){const m=this.plaza.mission[i],count=i?s.collectedB:s.collectedA;this.good(m.kind,195+i*260,244,.7);a.text(count+' / '+m.count,264+i*260,239,30,'#bbffe1');}}else{a.bag(205,240,.65);a.text('코어 가방  '+(s.collectedA+s.collectedB)+' / '+this.plaza.mission.reduce((n,m)=>n+m.count,0),375,239,30,'#bbffe1');}
+    a.text(this.plaza.ready?'⚡ 코어 완성! 대장 로봇에게 합체!':`🔧 별빛특급 코어 수송 (STAGE ${s.round+1})`,310,183,24,'#f2edcc');
+    // Always display target brick icons and live counts in the HUD so the player never has to guess blindly!
+    for(let i=0;i<2;i++){
+      const m=this.plaza.mission[i],count=i?s.collectedB:s.collectedA,done=count>=m.count;
+      a.rect(86+i*250,210,224,62,done?'#1f5463':'#102342',16,done?'#8effd8':'#688cb855');
+      this.good(m.kind,132+i*250,248,.62);
+      a.text(`${GOODS[m.kind].name} ${count}/${m.count}`,222+i*250,241,19,done?'#b8ffe6':'#fff2c2');
+    }
     a.rect(604,164,62,52,'#435f89',15);a.text('♪',635,191,30,'#e9faff');
     if(s.phase==='briefing'||s.remindMs>0){
       a.rect(54,310,612,236,'#122b53f5',27,'#9dceef');a.text('⚡ 기차 엔진에 조립할 레고 코어!',360,350,28,'#fff0b8');

@@ -3,6 +3,7 @@ import { CONFIG } from './config.js';
 import { SYMBOLS, SENTENCES } from './sentences.js';
 import { GOODS } from './plaza.js';
 import { train, wagon, picoToy, cocoToy, trainParts } from './harbor-art.js';
+import { webglStage } from './webgl-stage.js';
 
 export class AdventureRenderer {
   constructor(ctx,runner,plaza,profile){
@@ -211,6 +212,17 @@ export class AdventureRenderer {
       a.line([[6,-6],[16,4]],'#fff2a6',3);a.line([[16,-6],[6,4]],'#fff2a6',3);
       c.restore();
     }
+    // Composite OGL v1.0.11 3D WebGL meshes for Train Coach, 3D Hover Crates, 3D Patrol Crawlers & 3D Powerups!
+    webglStage.renderRunner(this,wagonX,hitReaction);
+    cocoToy(a,wagonX-6,804-hitReaction*14,.46,t);
+    for(const item of this.runner.items.active){
+      if(item.kind==='word'){
+        const stageIdx=s.slot%3,title=['⚡ 1단 연결기','🪽 2단 부스터','🚀 3단 스타제트'][stageIdx];
+        const bob=this.reduced?0:Math.sin(t/140+item.x*.02)*6,iy=item.y+bob;
+        a.rect(item.x-56,iy,112,42,'#132d52e8',12,'#88f5ffaa');
+        a.label(title,item.x,iy+22,19,'#fff8d6','#0f223d');
+      }
+    }
     const squash=s.squashMs?Math.sin(s.squashMs/200*Math.PI):0,scale=s.goldMs?1.38:.86;
     const jumpFactor=Math.min(1.15,s.y/82),pitch=this.reduced?0:Math.max(-.22,Math.min(.24,-s.vy/2300));
     c.save();c.translate(CONFIG.runner.playerX,870-s.y);
@@ -312,6 +324,7 @@ export class AdventureRenderer {
     }
     if(dockPulse>0){c.globalAlpha=dockPulse;a.star(12,-28,28,'#fff6b8');}
     c.restore();
+    webglStage.renderPlaza(this,dock,collectedTotal);
     cocoToy(a,dock.x+56,dock.y-8-dockPulse*10,.42,t);
     a.ellipse(captain.x,captain.y,46,22,this.plaza.ready?'#fff0a4':'#6d95b7');
     if(this.plaza.ready){

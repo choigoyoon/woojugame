@@ -1,6 +1,7 @@
 import { CONFIG } from './config.js';
 import { Art } from './art.js';
 import { train, wagon, lockToy, cargoToy, picoToy, cocoToy, trainParts } from './harbor-art.js';
+import { webglStage } from './webgl-stage.js';
 
 export class BattleRenderer {
   constructor(ctx,battle,profile) {
@@ -567,9 +568,18 @@ export class BattleRenderer {
       a.line([[tail.x,tail.y],[p.x,p.y]],bullet.powered?'#54ffe855':'#ffbb5855',Math.max(8,26*p.s));
       a.line([[tail.x,tail.y],[p.x,p.y]],wColor,Math.max(4,(bullet.weapon==='pierce'?18:13)*p.s));
       a.line([[tail.x,tail.y],[p.x,p.y]],'#fffde0',Math.max(2,6*p.s));
-      // Chunky 3D LEGO Energy Stud Projectile head!
       a.ellipse(p.x,p.y,8*p.s,11*p.s,wColor);
       a.ellipse(p.x,p.y,4.5*p.s,6.5*p.s,'#ffffff');
+    }
+    webglStage.renderBattle(this);
+    // Crisp 2D readable HP & Gate math overlays on top of the 3D WebGL meshes
+    for(const {object,kind} of objects){
+      if(kind==='gate'){
+        for(let i=0;i<2;i++){const p=this.project(i===0?-.55:.55,object.z),s=p.s;if(s>.24)a.label(object.labels[i],p.x,p.y-108*s,Math.max(14,56*s),'#ffffff','#0f2544');}
+      }else if(object.hp>0){
+        const p=this.project(object.x,object.z),s=p.s;
+        if(s>.25)a.label(String(Math.ceil(object.hp)),p.x,p.y-(kind==='boss'?112:52)*s,Math.max(13,(kind==='boss'?34:24)*s),'#fff7c8','#102442');
+      }
     }
     this.danger();this.squad();this.effects();
     if(this.game.harbor&&this.game.state.clearingMs){const t=1-this.game.state.clearingMs/CONFIG.battle.waveBreakMs;train(a,360+Math.sin(t*Math.PI)*80,620+Math.sin(t*Math.PI)*95,.8,{time:this.time,cars:this.game.state.round});}c.restore();this.hud(canHome);this.lootEffects();

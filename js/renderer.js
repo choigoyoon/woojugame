@@ -1,6 +1,7 @@
 import { ACTION, CONFIG, MODE } from './config.js';
 import { Art } from './art.js';
 import { AVATAR_PALETTE } from './profile.js';
+import { webglStage } from './webgl-stage.js';
 
 const mix = (a, b, t) => a + (b - a) * t;
 const smooth = (t) => t * t * (3 - 2 * t);
@@ -664,6 +665,7 @@ export class Renderer {
       c.translate(Math.sin(this.time * 0.11) * amplitude * this.shake / CONFIG.motion.shakeMs, Math.cos(this.time * 0.08) * amplitude * this.shake / CONFIG.motion.shakeMs);
     }
     for (let i = this.game.steps.length - 1; i >= 0; i -= 1) this.platform(this.game.steps[i]);
+    webglStage.renderStairs(this);
     // Hyper-Climb Speed Lines when combo >= 5 or rocket auto-climbing!
     if (!this.reducedMotion && (this.game.state.combo >= 5 || this.game.state.mode === MODE.AUTO_CLIMB)) {
       c.save();

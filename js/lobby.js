@@ -1,5 +1,6 @@
 import { Art } from './art.js';
 import { train, wagon, picoToy, cocoToy, trainParts } from './harbor-art.js';
+import { webglStage } from './webgl-stage.js';
 
 export const CARTRIDGES = Object.freeze([
   { id:'stairs', title:'블록 계단 점프', tag:'작전 2 · 등대 신호탑', x:36,y:374, colors:['#42d2bc','#156d85'], accent:'#b8ffe5' },
@@ -192,6 +193,7 @@ export class Lobby {
       a.text(card.id==='battle'&&cleared>0?'계속':'출동',x+226,y+327+dy,17,'#18334b');
       a.poly([[x+258,y+321+dy],[x+266,y+327+dy],[x+258,y+333+dy]],'#24465a');
     }
+    webglStage.renderLobby(this,CARTRIDGES);
     const note=this.profile.status==='memory'?'이번 실행에서만 보관':this.profile.status==='update-required'?'새 버전으로 열어 주세요':parts.complete?'★ 4대 레고 파츠가 모두 합체된 별빛특급 대장!':`조립 완료 파츠 ${parts.doneCount}/4 · 각 게임을 깨면 내 기차가 진화해요`;
     a.text(note,38,1222,18,this.profile.status==='memory'?'#ffbf9e':'#a8c6d6','left',650);
     a.rect(538,1190,145,65,'#25415c',20,'#a6c6da55');a.text('보호자',610,1223,23,'#d0e5e9');

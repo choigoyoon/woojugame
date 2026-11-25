@@ -1,5 +1,6 @@
 // Open-Source OGL v1.0.11 WebGL 3D Math/Shader Engine + ABS LEGO Plastic Geometry Pre-baker.
 import { Color, Vec3, Mat4, Renderer, Camera, Transform, Mesh, Program, Box, Cylinder } from './ogl.js';
+import { webglStage } from './webgl-stage.js';
 
 const tones=new Map(),blocks=new Map();
 let blockBuilds=0;
@@ -74,4 +75,4 @@ export function blockSprite(w,h,d,front,top,side){
   const out={surface,width,height,ox:-margin,oy:-margin-d*.6-studLift};
   if(blocks.size>=256)blocks.delete(blocks.keys().next().value);blocks.set(key,out);return out;
 }
-export function materialStats(){return{blocks:blocks.size,tones:tones.size,blockBuilds,engine:'OGL-1.0.11',oglClasses:Boolean(Renderer&&Camera&&Transform&&Mesh&&Program&&Box&&Cylinder&&Mat4)};}
+export function materialStats(){return{blocks:blocks.size,tones:tones.size,blockBuilds,engine:'OGL-1.0.11',oglClasses:Boolean(Renderer&&Camera&&Transform&&Mesh&&Program&&Box&&Cylinder&&Mat4),webgl:webglStage.stats()};}

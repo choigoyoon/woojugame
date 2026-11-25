@@ -158,13 +158,14 @@ export class AdventureRenderer {
     }
     for(const item of this.runner.items.active){
       if(item.kind==='word'){
-        const text=SENTENCES[item.sentence][item.slot],icon=item.slot===0?SYMBOLS[SENTENCES[item.sentence][3]]:item.slot===1?SYMBOLS[SENTENCES[item.sentence][4]]:'✦';
-        a.line([[item.x,item.y-67],[item.x,item.y-12]],'#e5ffef99',3);
-        a.ellipse(item.x,item.y-73,31,37,['#efadc6','#9ce4d4','#bec1ff'][item.slot]);
-        // Hover Drone LEGO Brick Capsule — never color-spoil the answer; let the child read the word & symbol!
-        a.ellipse(item.x-58,item.y-8,18,5,'#88fff288');a.ellipse(item.x+58,item.y-8,18,5,'#88fff288');
-        a.block(item.x-80,item.y-4,160,62,10,'#e8ba66','#fff3ad','#9c7045');
-        a.label(text,item.x,item.y+27,29,'#fff9e8','#40345d');a.text(icon,item.x,item.y-75,30,'#fff');
+        const text=SENTENCES[item.sentence][item.slot],icon=['⚡','⚙️','🚀'][item.slot]??SYMBOLS[SENTENCES[item.sentence][3]];
+        // Hover Drone LEGO Power-Up Crate — commercial arcade power block look!
+        a.ellipse(item.x-54,item.y-6,18,6,'#7effe8aa');a.ellipse(item.x+54,item.y-6,18,6,'#7effe8aa');
+        a.block(item.x-64,item.y-8,128,62,12,'#f0b849','#fff3ad','#9c6828');
+        for(const sx of[-36,0,36])a.stud(item.x+sx,item.y-12,10,3.8,4.5,'#d99526','#fff7c4');
+        a.rect(item.x-52,item.y+2,104,42,'#163254eb',10,'#8eeeff88');
+        a.text(icon,item.x-32,item.y+23,24,'#ffe885');
+        a.label(text,item.x+14,item.y+24,21,'#fff9e8','#152c4a');
       }else if(item.kind==='coin')a.coin(item.x,item.y+Math.sin(t/180+item.x)*5,.65);
       else{
         // Animated LEGO Patrol Mech-Crawler with stompable yellow top bounce-pad!

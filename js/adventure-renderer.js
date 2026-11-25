@@ -8,18 +8,47 @@ export class AdventureRenderer {
   constructor(ctx,runner,plaza,profile){
     this.art=new Art(ctx);this.runner=runner;this.plaza=plaza;this.profile=profile;this.time=0;this.particles=Array.from({length:96},()=>({life:0}));this.cursor=0;this.joystick=null;
     this.wagonHitMs=0;this.dockPulseMs=0;
+    // Physical world state changes when hitting blocks, stomping enemies, or collecting parts:
+    this.spentBlocks=Array.from({length:8},()=>({life:0}));this.sbCursor=0;
+    this.powerups=Array.from({length:8},()=>({life:0}));this.puCursor=0;
+    this.crushedMechs=Array.from({length:8},()=>({life:0}));this.cmCursor=0;
+    this.flyingCargo=Array.from({length:6},()=>({life:0}));this.fcCursor=0;
     const media=window.matchMedia('(prefers-reduced-motion: reduce)');this.reduced=media.matches;media.addEventListener('change',e=>this.reduced=e.matches);
   }
   update(ms){
     this.time+=ms;this.wagonHitMs=Math.max(0,this.wagonHitMs-ms);this.dockPulseMs=Math.max(0,this.dockPulseMs-ms);
-    for(const p of this.particles){if(p.life<=0)continue;p.life=Math.max(0,p.life-ms);p.x+=p.vx*ms/1000;p.y+=p.vy*ms/1000;p.vy+=560*ms/1000;p.angle+=ms*.004;}
+    const dt=ms/1000,speed=230;
+    for(const p of this.particles){if(p.life<=0)continue;p.life=Math.max(0,p.life-ms);p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=560*dt;p.angle+=ms*.004;}
+    for(const b of this.spentBlocks){if(b.life<=0)continue;b.life=Math.max(0,b.life-ms);b.x-=speed*dt;b.bumpY+=b.vy*dt;b.vy+=980*dt;if(b.bumpY>0){b.bumpY=0;b.vy=0;}}
+    for(const u of this.powerups){if(u.life<=0)continue;u.life=Math.max(0,u.life-ms);const t=1-u.life/u.duration;u.x=u.sx+(u.tx-u.sx)*t;u.y=u.sy+(u.ty-u.sy)*t-Math.sin(t*Math.PI)*135;}
+    for(const m of this.crushedMechs){if(m.life<=0)continue;m.life=Math.max(0,m.life-ms);m.x+=m.vx*dt;m.y+=m.vy*dt;m.vy+=1100*dt;m.angle+=m.spin*dt;}
+    for(const f of this.flyingCargo){if(f.life<=0)continue;f.life=Math.max(0,f.life-ms);}
   }
   handle(e,mode){
     if(['word','sentence','smash'].includes(e.type))this.wagonHitMs=420;
     if(['pickup','mission-win','mission-miss'].includes(e.type))this.dockPulseMs=480;
-    if(!['word','word-miss','sentence','pickup','smash','bump','mission-win','mission-miss','land'].includes(e.type))return;
     let x=e.x??180,y=e.y??800;
-    if(mode==='plaza'){const p=this.iso(e.x??this.plaza.state.x,e.z??this.plaza.state.z);x=p.x;y=p.y-40;}
+    if(mode==='plaza'){
+      const p=this.iso(e.x??this.plaza.state.x,e.z??this.plaza.state.z);x=p.x;y=p.y-40;
+      if(e.type==='pickup'){
+        const dock=this.iso(-2.2,3.4);
+        Object.assign(this.flyingCargo[this.fcCursor++%this.flyingCargo.length],{sx:x,sy:y,tx:dock.x,ty:dock.y-36,life:460,duration:460});
+      }
+    }
+    if(mode==='runner'){
+      if(e.type==='word'||e.type==='word-miss'){
+        // Physical block transformation: hit block bounces up, turns into a solid riveted steel block, and pops out a physical star core!
+        Object.assign(this.spentBlocks[this.sbCursor++%this.spentBlocks.length],{x:e.x??240,y:e.y??590,bumpY:-6,vy:-240,life:2200,good:e.type==='word',word:e.word??'!'});
+        if(e.type==='word'){
+          Object.assign(this.powerups[this.puCursor++%this.powerups.length],{sx:e.x??240,sy:(e.y??590)-30,tx:560,ty:815,life:520,duration:520});
+        }
+      }
+      if(e.type==='smash'){
+        // Stomped or smashed enemy mech gets flattened and knocked tumbling off the track!
+        Object.assign(this.crushedMechs[this.cmCursor++%this.crushedMechs.length],{x:e.x??260,y:e.y??835,vx:e.stomp?95:280,vy:e.stomp?-220:-340,angle:0,spin:e.stomp?6:11,stomp:!!e.stomp,life:750});
+      }
+    }
+    if(!['word','word-miss','sentence','pickup','smash','bump','mission-win','mission-miss','land'].includes(e.type))return;
     const big=['sentence','mission-win'].includes(e.type),brick=['word','word-miss','smash','bump','pickup','mission-miss'].includes(e.type);
     const count=this.reduced?4:big?48:brick?18:10;
     for(let i=0;i<count;i++){const p=this.particles[this.cursor++%this.particles.length],a=i*2.4;Object.assign(p,{x,y,vx:Math.cos(a)*(big?260:155),vy:-140-Math.abs(Math.sin(a))*280,life:750,angle:a,brick:brick&&i%2===0,color:['#fff3ad','#ff7888','#8cffe5','#c3b5ff'][i%4]});}
@@ -92,10 +121,47 @@ export class AdventureRenderer {
         a.label(text,item.x,item.y+27,29,'#fff9e8','#40345d');a.text(icon,item.x,item.y-75,30,'#fff');
       }else if(item.kind==='coin')a.coin(item.x,item.y+Math.sin(t/180+item.x)*5,.65);
       else{
-        a.block(item.x-28,815,56,55,12,'#b96881','#efacac','#683e62');
-        a.rect(item.x-22,848,44,12,'#ffd86b',2);a.line([[item.x-16,848],[item.x-8,860]],'#4a2c48',4);a.line([[item.x+4,848],[item.x+12,860]],'#4a2c48',4);
-        a.rect(item.x-18,828,12,8,'#fff3a5',2);a.rect(item.x+6,828,12,8,'#fff3a5',2);
+        // Animated LEGO Patrol Mech-Crawler with stompable yellow top bounce-pad!
+        const walk=this.reduced?0:Math.sin(t/75+item.x*.05)*6;
+        a.ellipse(item.x,872,34,10,'#0d263855');
+        for(const side of[-1,1]){
+          a.rect(item.x+side*18-6,856+(side>0?walk:-walk)*.4,12,16,'#3a2846',3);
+        }
+        a.block(item.x-30,814,60,48,12,'#c84b68','#ff9eb2','#6e2540');
+        // Stompable yellow spring top-plate!
+        a.stud(item.x,806,18,6,6,'#e39d36','#fff5bd');
+        a.rect(item.x-22,846,44,11,'#ffd86b',2);
+        a.rect(item.x-19,825,13,9,'#fff3a5',2);a.rect(item.x+6,825,13,9,'#fff3a5',2);
+        a.rect(item.x-14,827,6,6,'#3b1d36',1);a.rect(item.x+9,827,6,6,'#3b1d36',1);
       }
+    }
+    // Render spent/transformed solid blocks that were headbutted (bouncing up & turning into riveted steel blocks!)
+    for(const b of this.spentBlocks){
+      if(b.life<=0)continue;
+      c.save();c.globalAlpha=Math.min(1,b.life/350);
+      const by=b.y+b.bumpY;
+      a.block(b.x-78,by-4,156,60,10,b.good?'#56738f':'#6e536b',b.good?'#9ebbd4':'#b593b2','#334659');
+      for(const dx of[-58,58])a.ellipse(b.x+dx,by+26,5,5,'#263747');
+      a.text(b.good?'✓ 작동 완료':b.word,b.x,by+26,22,'#d8eeff');
+      c.restore();
+    }
+    // Render physical ejected Star Core powerups flying from the hit block into the runaway train car!
+    for(const u of this.powerups){
+      if(u.life<=0)continue;
+      a.ellipse(u.x,u.y,24,24,'#fff4a366');
+      a.star(u.x,u.y,19,'#ffe875');
+      a.stud(u.x,u.y-4,8,3.5,4,'#e39d36','#fff9d6');
+    }
+    // Render stomped / flattened enemy mechs tumbling off the track!
+    for(const m of this.crushedMechs){
+      if(m.life<=0)continue;
+      c.save();c.globalAlpha=Math.min(1,m.life/220);
+      c.translate(m.x,m.y);c.rotate(m.angle);
+      c.scale(m.stomp?1.35:1,m.stomp?.48:.85);
+      a.block(-30,-24,60,44,10,'#8f3850','#ffaec0','#4d1c2e');
+      a.line([[-16,-6],[-6,4]],'#fff2a6',3);a.line([[-6,-6],[-16,4]],'#fff2a6',3);
+      a.line([[6,-6],[16,4]],'#fff2a6',3);a.line([[16,-6],[6,4]],'#fff2a6',3);
+      c.restore();
     }
     const squash=s.squashMs?Math.sin(s.squashMs/200*Math.PI):0,scale=s.goldMs?1.38:.86;
     const jumpFactor=Math.min(1.15,s.y/82),pitch=this.reduced?0:Math.max(-.22,Math.min(.24,-s.vy/2300));
@@ -212,7 +278,17 @@ export class AdventureRenderer {
       }
       else{a.ellipse(p.x,p.y,25,10,'#34497177');a.block(p.x-24,p.y-39,48,33,8,'#e88996','#ffd0b2','#945b88');a.rect(p.x-14,p.y-29,8,7,'#704f74',2);a.rect(p.x+5,p.y-29,8,7,'#704f74',2);}
     }
-    this.effects();this.header('작전 4 · 기차 엔진 조립',canHome);
+    this.effects();
+    // Render flying 3D engine parts arcing from the workbench straight into the Starlight Express engine dock!
+    for(const f of this.flyingCargo){
+      if(f.life<=0)continue;
+      const prog=1-f.life/f.duration,fx=f.sx+(f.tx-f.sx)*prog,fy=f.sy+(f.ty-f.sy)*prog-Math.sin(prog*Math.PI)*130;
+      a.line([[f.sx,f.sy],[fx,fy]],'#7effe888',4);
+      a.ellipse(fx,fy,22,22,'#fff4a866');
+      a.block(fx-12,fy-12,24,24,7,'#5be8d8','#d6fffb','#237a78');
+      a.star(fx,fy,12,'#fff7c2');
+    }
+    this.header('작전 4 · 기차 엔진 조립',canHome);
     a.rect(33,151,654,137,'#172f57eb',26,'#c5cbf077');
     a.text(this.plaza.ready?'⚡ 코어 완성! 대장 로봇에게 합체!':`🔧 별빛특급 코어 수송 (STAGE ${s.round+1})`,310,183,24,'#f2edcc');
     // During briefing or ♪ remind: show target items. During active movement: show collected cargo slots so working memory is genuinely engaged!

@@ -58,6 +58,11 @@ export class Runner extends Adventure {
         if(s.vy>0&&Math.abs(item.x-c.playerX)<half&&before>=bottom&&head<=bottom)this.hitWord(item);
       }else if(item.kind==='coin'){
         if(Math.abs(item.x-c.playerX)<52*CONFIG.engine.collectScale&&Math.abs(item.y-(c.groundY-s.y-70))<95*CONFIG.engine.collectScale){item.dead=true;this.reward(1);this.emit({type:'pickup',x:item.x,y:item.y});}
+      }else if(s.vy<0&&s.y>=32&&s.y<=98&&Math.abs(item.x-c.playerX)<(c.playerWidth/2+34)*CONFIG.engine.collectScale){
+        // Real platformer stomp-and-bounce: landing on top of an enemy mech crushes it and bounces the player high!
+        item.dead=true;s.vy=c.jumpVelocity*.86;s.coyoteMs=0;s.squashMs=180;
+        this.reward(2);s.message='밟기 점프! +2';s.messageMs=700;
+        this.emit({type:'smash',stomp:true,x:item.x,y:item.y});
       }else if(Math.abs(item.x-c.playerX)<(c.playerWidth/2+28)*CONFIG.engine.hurtScale&&s.y<55*CONFIG.engine.hurtScale){
         if(s.goldMs){item.dead=true;this.reward(3);this.emit({type:'smash',x:item.x,y:item.y});}
         else if(!s.invulnerableMs){s.invulnerableMs=1000;s.shakeMs=180;s.message='다시 폴짝!';s.messageMs=650;this.emit({type:'bump'});}

@@ -410,8 +410,13 @@ export class BattleRenderer {
       a.text('집게 낙하! 옆 선로로!',p.x,p.y-102,13.5,'#fff2bd');
     }else{
       c.save();c.globalAlpha=attack.remainingMs/CONFIG.battle.bossSlamMs;
-      const t=1-c.globalAlpha;const front=this.project(attack.lane===2?0:attack.lane===0?-.55:.55,2);
-      a.ellipse(front.x,front.y,45+t*160,16+t*60,'#fff0ad80');c.restore();
+      const t=1-c.globalAlpha;const front=this.project(attack.lane===2?0:attack.lane===0?-.55:.55,2.2);
+      // Physical Boss Crane Claw smashing down onto the bridge deck!
+      a.ellipse(front.x,front.y,55+t*170,20+t*65,'#ff6e5499');
+      a.block(front.x-48*front.s,front.y-115*front.s,96*front.s,82*front.s,16*front.s,'#d95b43','#ffd29e','#782834');
+      a.line([[front.x-42*front.s,front.y-33*front.s],[front.x-22*front.s,front.y+8*front.s]],'#ffe39e',12*front.s);
+      a.line([[front.x+42*front.s,front.y-33*front.s],[front.x+22*front.s,front.y+8*front.s]],'#ffe39e',12*front.s);
+      c.restore();
     }
   }
   lootEffects() {
@@ -549,10 +554,14 @@ export class BattleRenderer {
     const objects=this.drawList;objects.length=0;let entryIndex=0;for(const object of this.game.gates){const entry=this.drawEntries[entryIndex++];entry.object=object;entry.kind='gate';objects.push(entry);}for(const object of this.game.entities){const entry=this.drawEntries[entryIndex++];entry.object=object;entry.kind=object.kind;objects.push(entry);}objects.sort((a,b)=>b.object.z-a.object.z);
     for(const {object,kind} of objects){if(kind==='gate')this.gate(object);else if(kind==='enemy')this.enemy(object);else if(kind==='crate')this.crate(object);else if(kind==='supply')this.supply(object);else if(kind==='lock'){const p=this.project(object.x,object.z,48);lockToy(a,p.x,p.y,p.s,this.time,object.hitMs/CONFIG.battle.hitMs,object.hp,object.maxHp);}else if(kind==='boss'&&this.game.harbor)this.crane(object);else if(object.cargo){const p=this.project(object.x,object.z);cargoToy(a,p.x,p.y,p.s,object);}else this.barrel(object);}
     for(const bullet of this.game.bullets){
-      const p=this.project(bullet.x,bullet.z,56),tail=this.project(bullet.x,bullet.z-(bullet.powered?1.7:1.15),56);
-      a.line([[tail.x,tail.y],[p.x,p.y]],bullet.powered?'#54ffe833':'#ffbb5838',Math.max(5,19*p.s));
-      a.line([[tail.x,tail.y],[p.x,p.y]],bullet.powered?'#61ffe6':CONFIG.campaign.weapons[bullet.weapon]?.color??'#ffb43e',Math.max(3,(bullet.weapon==='pierce'?15:10)*p.s));
-      a.line([[tail.x,tail.y],[p.x,p.y]],'#fffde0',Math.max(2,4*p.s));a.ellipse(p.x,p.y,3*p.s,6*p.s,'#fff');
+      const p=this.project(bullet.x,bullet.z,56),tail=this.project(bullet.x,bullet.z-(bullet.powered?2.1:1.45),56);
+      const wColor=bullet.powered?'#61ffe6':CONFIG.campaign.weapons[bullet.weapon]?.color??'#ffb43e';
+      a.line([[tail.x,tail.y],[p.x,p.y]],bullet.powered?'#54ffe855':'#ffbb5855',Math.max(8,26*p.s));
+      a.line([[tail.x,tail.y],[p.x,p.y]],wColor,Math.max(4,(bullet.weapon==='pierce'?18:13)*p.s));
+      a.line([[tail.x,tail.y],[p.x,p.y]],'#fffde0',Math.max(2,6*p.s));
+      // Chunky 3D LEGO Energy Stud Projectile head!
+      a.ellipse(p.x,p.y,8*p.s,11*p.s,wColor);
+      a.ellipse(p.x,p.y,4.5*p.s,6.5*p.s,'#ffffff');
     }
     this.danger();this.squad();this.effects();
     if(this.game.harbor&&this.game.state.clearingMs){const t=1-this.game.state.clearingMs/CONFIG.battle.waveBreakMs;train(a,360+Math.sin(t*Math.PI)*80,620+Math.sin(t*Math.PI)*95,.8,{time:this.time,cars:this.game.state.round});}c.restore();this.hud(canHome);this.lootEffects();

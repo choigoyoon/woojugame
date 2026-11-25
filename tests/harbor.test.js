@@ -157,4 +157,11 @@ test('all four modes use Sky Harbor rescue narratives, valid symbol mappings, an
   runner.hitWord(wrong);
   assert.ok(runner.state.message.includes('코코:'),runner.state.message);
   assert.ok(runner.state.spawnMs<=750);
+  // Falling from above onto an enemy mech stomps it flat and bounces the player upward instead of hurting them.
+  const mech=runner.spawn('obstacle',{x:CONFIG.runner.playerX+12});
+  runner.state.y=64;runner.state.vy=-320;
+  runner.advance(5);
+  assert.equal(mech.dead,true);
+  assert.ok(runner.state.vy>500,'stomp bounced player upward');
+  assert.equal(runner.state.invulnerableMs,0);
 });

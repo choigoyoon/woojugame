@@ -203,77 +203,68 @@ export class BattleRenderer {
     a.line([[-17,20],[0,35],[17,20]],color,7);c.restore();
   }
   crane(entity) {
+    // Dreadnought Kraken-Claw Mecha Boss (Angular Battleship Hull, Chest Turbine Core & Dual Plasma Claws!)
     const a=this.art,c=a.c,p=this.project(0,entity.z),s=p.s,m=this.game.harbor.state,round=this.game.state.round??0;
-    const warning=this.game.state.attack?.phase==='warning',lift=warning?18+Math.sin(this.time/90)*5:0;
+    const warning=this.game.state.attack?.phase==='warning',lift=warning?20+Math.sin(this.time/80)*6:0;
     const impact=(entity.hitMs??0)/CONFIG.battle.hitMs,dent=this.reduced?0:Math.sin(impact*Math.PI)*.14;
     const ratio=Math.max(0,Math.min(1,entity.hp/Math.max(1,entity.maxHp)));
     const stage=ratio<.34?3:ratio<.67?2:ratio<.92?1:0;
-    const palettes=[['#c77c57','#ffe0a0','#8b4e57','#ffc37b'],['#b84867','#ffc2d4','#6e2948','#79f2ff'],['#6a459c','#e0c7ff','#3e2666','#ffd86b']];
-    const [hull,hullTop,hullSide,clawColor]=palettes[round]??palettes[0];
+    const palettes=[['#2b3954','#e84a5f','#ffd86b'],['#342654','#ff4f8b','#63ffee'],['#1f2d4a','#ff6b4a','#ffe875']];
+    const [hull,accent,coreCol]=palettes[round]??palettes[0];
     c.save();c.translate(p.x,p.y);
     if(!this.reduced&&impact>0)c.rotate(Math.sin(impact*10)*impact*.05);
     c.scale(s*(1+dent),s*(1-dent*.72));
-    a.ellipse(0,8,250,35,'#18324740');
-    // Progressive smoke & sparks rising from damaged crane hull
+    a.ellipse(0,8,255,36,'#091b3255');
     if(stage>=1){
       for(let i=0;i<stage+1;i++){
-        const f=((this.time/650)+i*.33)%1,sx=(i%2?82:-82)+(i-1)*24;
-        a.ellipse(sx,-385-lift-f*75,16+f*22,12+f*15,stage>=3?`rgba(255,110,95,${(1-f)*.55})`:`rgba(55,68,92,${(1-f)*.5})`);
+        const f=((this.time/600)+i*.33)%1,sx=(i%2?86:-86)+(i-1)*24;
+        a.ellipse(sx,-390-lift-f*75,16+f*22,12+f*15,stage>=3?`rgba(255,85,110,${(1-f)*.6})`:`rgba(60,78,108,${(1-f)*.5})`);
       }
     }
+    // Articulated Dual Hydraulic Plasma Pincer Claws
     for(const side of[-1,1]){
       const broken=m.locksBroken>=(side<0?1:2);
-      const jitter=!this.reduced&&(broken||stage>=2)?Math.sin(this.time/55+side)*6:0;
-      a.line([[side*104,-302-lift],[side*220+jitter,-232-lift],[side*187+jitter,-62]],'#334964',37);
-      a.line([[side*104-5,-308-lift],[side*215+jitter,-237-lift],[side*182+jitter,-68]],broken?'#6d7f94':clawColor,22);
-      a.ellipse(side*218+jitter,-236-lift,24,24,broken?'#55687d':'#e5915c');a.ellipse(side*218+jitter,-239-lift,13,13,broken?'#93a5b8':'#ffe7a4');
-      a.line([[side*187+jitter,-61],[side*156+jitter,-32],[side*134,-63]],broken?'#7a8ca0':'#e6ab72',19);
+      const jitter=!this.reduced&&(broken||stage>=2)?Math.sin(this.time/50+side)*7:0;
+      a.line([[side*112,-310-lift],[side*226+jitter,-236-lift],[side*190+jitter,-66]],'#1b2a42',38);
+      a.line([[side*112,-310-lift],[side*222+jitter,-238-lift],[side*186+jitter,-68]],broken?'#55687d':accent,20);
+      a.ellipse(side*224+jitter,-236-lift,26,26,'#132238');
+      a.ellipse(side*224+jitter,-236-lift,14,14,broken?'#7a8ca0':coreCol);
+      // Plasma Pincer Blades
+      a.poly([[side*190+jitter,-72],[side*146+jitter,-24],[side*166+jitter,-82]],broken?'#7a8ca0':coreCol,'#ffffff',2);
+      a.poly([[side*190+jitter,-72],[side*218+jitter,-22],[side*208+jitter,-82]],broken?'#7a8ca0':accent,'#ffffff',2);
     }
-    a.block(-142,-382-lift,284,127,27,impact>.3?'#fff2c2':hull,hullTop,hullSide);
-    // Roof LEGO studs pop off one by one as HP drops!
-    const studsLeft=Math.ceil(ratio*4);
-    [-96,-32,32,96].forEach((sx,idx)=>{
-      if(idx<studsLeft)a.stud(sx,-392-lift,16,5.5,7,hull,hullTop);
-      else{a.ellipse(sx,-386-lift,13,4.5,'#231829');if(idx===studsLeft&&!this.reduced)a.star(sx,-392-lift,10,'#ffe680');}
-    });
-    if(round===0){
-      if(stage<3)a.block(-48,-422-lift,96,34,12,'#e09a48','#fff1b5','#945b36');
-      a.ellipse(0,-428-lift,14,14,warning||stage>=2?'#ff3b4e':'#ffe37e');
-    }else if(round===1){
-      for(const side of[-1,1])if(side<0||stage<2){a.block(side*84-26,-426-lift,52,38,12,'#34789e','#a8f7ff','#1e4968');a.ellipse(side*84,-407-lift,11,11,'#7effef');}
-    }else{
-      a.poly([[-68,-382-lift],[-86,-432-lift],[-32,-408-lift],[0,-448-lift],[32,-408-lift],[86,-432-lift],[68,-382-lift]],stage>=2?'#ff756b':'#ffd86b','#fff5c0',4);
-      a.star(0,-412-lift,16+stage*3,'#ff647c');
-    }
-    a.rect(-119,-357-lift,238,77,'#203e5c',19,stage>=2?'#ff7b7b':'#fff0bb');
+    // Angular Dreadnought Battleship Hull (Hexagonal Mecha Cowl)
+    a.poly([[-158,-340-lift],[-118,-412-lift],[118,-412-lift],[158,-340-lift],[132,-242-lift],[-132,-242-lift]],impact>.3?'#fff2c2':hull,accent,5);
+    // Detachable Shoulder Missile Pods (shatter below 67% HP)
     for(const side of[-1,1]){
-      const eyeColor=m.weakMs?'#a5ffe6':warning||stage>=2?'#ff4f64':'#ffbd83';
+      if(stage<2||side<0&&stage<3){
+        a.poly([[side*118,-412-lift],[side*168,-436-lift],[side*174,-364-lift],[side*142,-346-lift]],accent,'#fff4b8',3);
+        a.ellipse(side*148,-392-lift,12,12,coreCol);
+      }
+    }
+    // Menacing V-Shaped Cyber-Visor & Glowing Tactical Optics
+    a.poly([[-118,-376-lift],[0,-356-lift],[118,-376-lift],[102,-316-lift],[0,-302-lift],[-102,-316-lift]],'#091528',coreCol,3);
+    for(const side of[-1,1]){
+      const eyeColor=m.weakMs?'#63ffee':warning||stage>=2?'#ff3b5c':coreCol;
       if(stage>=2||impact>.2){
-        // Glitching X-eyes when heavily damaged or hit!
-        a.line([[side*66-20,-338-lift],[side*66+20,-318-lift]],eyeColor,6);
-        a.line([[side*66+20,-338-lift],[side*66-20,-318-lift]],eyeColor,6);
+        a.line([[side*58-20,-352-lift],[side*58+20,-328-lift]],eyeColor,6);
+        a.line([[side*58+20,-352-lift],[side*58-20,-328-lift]],eyeColor,6);
       }else{
-        a.rect(side*66-26,-339-lift,52,23,eyeColor,8);a.rect(side*66-5,-339-lift,10,23,'#254054',2);
+        a.poly([[side*32,-344-lift],[side*88,-358-lift],[side*82,-330-lift],[side*32,-326-lift]],eyeColor);
+        a.ellipse(side*58,-340-lift,6,6,'#ffffff');
       }
     }
-    // Exposed glowing reactor core & Live HP counter on the boss hull as armor breaks!
-    a.rect(-56,-314-lift,112,32,stage>=2?'#4d1628':'#14293f',10,stage>=1?'#ff9872':'#7ec8e3');
-    a.text(Math.ceil(entity.hp),0,-298-lift,24*(1+impact*.18),stage>=2?'#ffccd2':'#fff4c2');
-    for(let i=0;i<5;i++)if(i%2===0||stage<2)a.poly([[-111+i*49,-258-lift],[-91+i*49,-258-lift],[-105+i*49,-240-lift],[-125+i*49,-240-lift]],'#593f50');
-    if(stage>=1||entity.crack>0){
-      a.line([[-115,-368-lift],[-62,-332-lift],[-84,-295-lift]],'#ffe291',5);
-      if(stage>=2||entity.crack>1){
-        a.line([[112,-362-lift],[58,-324-lift],[82,-288-lift]],'#ff7b6b',5);
-        a.star(-78,-328-lift,12,'#ffe885');a.star(76,-318-lift,14,'#ff8c6b');
-      }
-    }
+    // Central Spinning Chest Turbine Reactor Core & HP Readout
+    a.ellipse(0,-276-lift,44,24,'#0a172b');
+    a.ellipse(0,-276-lift,34,18,stage>=2?'#ff3b5c':'#63ffee');
+    a.rect(-54,-292-lift,108,32,'#0c1d36e6',12,coreCol);
+    a.text(Math.ceil(entity.hp),0,-276-lift,25*(1+impact*.18),'#fff8d6');
     const trainY=-52+Math.sin(this.time/350)*5;
     if(round===0)train(a,0,trainY,.82,{time:this.time,held:m.locksBroken<2});
     else wagon(a,0,trainY,1.6,this.time,round===2);
-    if(m.locksBroken<2)for(const side of[-1,1])if(side>0||m.locksBroken===0)a.line([[side*86,-252],[side*86,trainY-125]],'#d5eeef',5);
-    a.rect(-145,-468,290,34,'#183450',12,m.weakMs?'#7effd8':'#e2c38a');
-    a.text(m.locksBroken<2?'레고 연결 볼트  '+(2-m.locksBroken)+'개 남음':m.weakMs?'⚡ 장갑 파손! 본체 집중 사격!':stage>=2?'🔥 보스 장갑 붕괴 직전!':'볼트 해제 완료! 본체를 밀어내!',0,-451,20,m.weakMs?'#abffe8':'#ffefbc');
-    if(entity.hitMs){c.globalAlpha=impact*.35;a.rect(-142,-382-lift,284,127,'#fff8d6',18);}
+    if(m.locksBroken<2)for(const side of[-1,1])if(side>0||m.locksBroken===0)a.line([[side*86,-248],[side*86,trainY-115]],'#63ffee',5);
+    a.rect(-150,-474,300,36,'#0e2442f0',14,m.weakMs?'#63ffee':'#ffd86b');
+    a.text(m.locksBroken<2?'레고 연결 볼트  '+(2-m.locksBroken)+'개 남음':m.weakMs?'⚡ 장갑 파손! 본체 집중 사격!':stage>=2?'🔥 보스 코어 과열 직전!':'볼트 해제 완료! 본체를 밀어내!',0,-456,20,m.weakMs?'#9efff0':'#fff2bd');
     c.restore();
   }
   barrel(entity) {
@@ -343,18 +334,49 @@ export class BattleRenderer {
     c.restore();
   }
   enemy(entity) {
-    const a=this.art,p=this.project(entity.x,entity.z);
+    // Pirate Spider-Walker Mech Drone (Distinct from player! 4 spider legs, obsidian dome, glowing red Cyclops laser eye!)
+    const a=this.art,c=a.c,p=this.project(entity.x,entity.z),s=p.s;
     const impact=(entity.hitMs??0)/CONFIG.battle.hitMs;
     const ratio=Math.max(0,Math.min(1,entity.hp/Math.max(1,entity.maxHp)));
     const damaged=ratio<.55;
-    const bounce=Math.sin(this.time/100+entity.id)*3*p.s-(this.reduced?0:Math.sin(impact*Math.PI)*22*p.s);
-    a.toy(p.x,p.y+bounce,.58*p.s,{
-      time:this.time,run:!this.reduced,
-      pitch:-impact*.38,squash:impact*.55,hurt:impact>0||damaged,helmetOff:damaged,flash:impact,
-      palette:{helmet:'#ee6679',helmetTop:'#ffb4aa',helmetSide:'#ae3e60',shirt:damaged?'#9e4b6c':'#704975',shirtTop:'#a77d9b',shirtSide:'#453457'}
-    });
-    a.rect(p.x-28*p.s,p.y-115*p.s,56*p.s,8*p.s,'#25304b',3*p.s);a.rect(p.x-28*p.s,p.y-115*p.s,56*p.s*ratio,8*p.s,damaged?'#ff5e6c':'#ffa794',3*p.s);
-    if(entity.hitMs>0)a.star(p.x,p.y-65*p.s,(22+impact*16)*p.s,'#fff7be');
+    const bounce=Math.sin(this.time/95+entity.id)*3.5*s-(this.reduced?0:Math.sin(impact*Math.PI)*20*s);
+    const walk=this.reduced?0:Math.sin(this.time/80+entity.id)*10;
+    c.save();c.translate(p.x,p.y+bounce);c.scale(s*(1+impact*.18),s*(1-impact*.14));
+    a.ellipse(0,4,46,13,'#08182e55');
+    // 4 Articulated Mechanical Spider-Walker Legs
+    for(const side of[-1,1]){
+      const liftA=side>0?walk:-walk,liftB=side>0?-walk:walk;
+      a.line([[side*22,-26],[side*46,-38+liftA],[side*52,-4+liftA*.5]],'#2a1f3d',7);
+      a.line([[side*18,-18],[side*38,-22+liftB],[side*42,4+liftB*.5]],'#e83e62',5);
+    }
+    // Spider-Drone Main Armored Pod
+    a.ellipse(0,-42,38,32,impact>.2?'#fff2c2':'#281e3d');
+    if(!damaged){
+      // Upper Crimson Armor Cowl & Spiked Horns (shatters below 55% HP!)
+      a.poly([[-38,-46],[-24,-78],[24,-78],[38,-46]],'#e83e62','#ffb0c2',2.5);
+      a.poly([[-24,-74],[-36,-98],[-12,-78]],'#ffd86b');
+      a.poly([[24,-74],[36,-98],[12,-78]],'#ffd86b');
+    }else{
+      // Armor Broken! Exposed Sparking Copper Reactor Coil on Top!
+      a.ellipse(0,-72,18,9,'#d97b2c');
+      a.ellipse(0,-78,11,11,'#ffe875');
+      a.star(0,-78,9,'#ffffff');
+    }
+    // Cyclops Laser Visor Slit & Tracking Glowing Red Optic
+    a.rect(-28,-54,56,20,'#090e1c',10,'#ff4f79');
+    const scanX=Math.sin(this.time/180+entity.id)*11;
+    if(impact>.15||damaged){
+      a.star(scanX,-44,11,'#ffe875');
+      a.ellipse(scanX,-44,5,5,'#ff2e55');
+    }else{
+      a.ellipse(scanX,-44,9,9,'#ff2e55');
+      a.ellipse(scanX,-44,4,4,'#ffe875');
+      a.ellipse(scanX-2,-46,2,2,'#ffffff');
+    }
+    // HP Bar
+    a.rect(-30,-112,60,9,'#162238',4);
+    a.rect(-30,-112,60*ratio,9,damaged?'#ff3b5c':'#ff9e75',4);
+    c.restore();
   }
   squad() {
     const a=this.art,c=a.c,s=this.game.state;
@@ -560,6 +582,7 @@ export class BattleRenderer {
     if(!this.reduced&&this.kick>0){const scale=1+Math.min(1,this.kick/180)*.018;c.translate(360,760);c.scale(scale,scale);c.translate(-360,-760);}
     if(!this.reduced&&this.game.state.shakeMs>0){const amp=Math.min(7,this.game.state.shakeMs/40);c.translate(Math.sin(this.time*.11)*amp,Math.cos(this.time*.13)*amp*.6);}
     this.deck();
+    webglStage.renderBattle(this);
     const objects=this.drawList;objects.length=0;let entryIndex=0;for(const object of this.game.gates){const entry=this.drawEntries[entryIndex++];entry.object=object;entry.kind='gate';objects.push(entry);}for(const object of this.game.entities){const entry=this.drawEntries[entryIndex++];entry.object=object;entry.kind=object.kind;objects.push(entry);}objects.sort((a,b)=>b.object.z-a.object.z);
     for(const {object,kind} of objects){if(kind==='gate')this.gate(object);else if(kind==='enemy')this.enemy(object);else if(kind==='crate')this.crate(object);else if(kind==='supply')this.supply(object);else if(kind==='lock'){const p=this.project(object.x,object.z,48);lockToy(a,p.x,p.y,p.s,this.time,object.hitMs/CONFIG.battle.hitMs,object.hp,object.maxHp);}else if(kind==='boss'&&this.game.harbor)this.crane(object);else if(object.cargo){const p=this.project(object.x,object.z);cargoToy(a,p.x,p.y,p.s,object);}else this.barrel(object);}
     for(const bullet of this.game.bullets){
@@ -570,16 +593,6 @@ export class BattleRenderer {
       a.line([[tail.x,tail.y],[p.x,p.y]],'#fffde0',Math.max(2,6*p.s));
       a.ellipse(p.x,p.y,8*p.s,11*p.s,wColor);
       a.ellipse(p.x,p.y,4.5*p.s,6.5*p.s,'#ffffff');
-    }
-    webglStage.renderBattle(this);
-    // Crisp 2D readable HP & Gate math overlays on top of the 3D WebGL meshes
-    for(const {object,kind} of objects){
-      if(kind==='gate'){
-        for(let i=0;i<2;i++){const p=this.project(i===0?-.55:.55,object.z),s=p.s;if(s>.24)a.label(object.labels[i],p.x,p.y-108*s,Math.max(14,56*s),'#ffffff','#0f2544');}
-      }else if(object.hp>0){
-        const p=this.project(object.x,object.z),s=p.s;
-        if(s>.25)a.label(String(Math.ceil(object.hp)),p.x,p.y-(kind==='boss'?112:52)*s,Math.max(13,(kind==='boss'?34:24)*s),'#fff7c8','#102442');
-      }
     }
     this.danger();this.squad();this.effects();
     if(this.game.harbor&&this.game.state.clearingMs){const t=1-this.game.state.clearingMs/CONFIG.battle.waveBreakMs;train(a,360+Math.sin(t*Math.PI)*80,620+Math.sin(t*Math.PI)*95,.8,{time:this.time,cars:this.game.state.round});}c.restore();this.hud(canHome);this.lootEffects();

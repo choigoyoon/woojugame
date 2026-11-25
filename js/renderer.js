@@ -382,95 +382,16 @@ export class Renderer {
   }
 
   platformBody(x,y,palette,next,stepped=false) {
-    this.ellipse(x+10,y+83,82,17,'#1a2d5830');
-    if (next) {
-      this.ctx.save(); this.ctx.globalAlpha = 0.34;
-      this.polygon([[x - 102, y], [x, y - 40], [x + 102, y], [x, y + 40]], '#fffdd5');
+    // Sleek Sci-Fi Hover Platform Base (pairs cleanly with OGL 3D LEGO Brick & Star Crystal!)
+    this.ellipse(x+4,y+52,72,16,'#091b3844');
+    if (next || stepped) {
+      this.ctx.save(); this.ctx.globalAlpha = stepped ? 0.45 : 0.35;
+      this.ellipse(x, y + 18, 76, 26, stepped ? '#ffe875' : '#63ffee');
       this.ctx.restore();
     }
-    this.polygon([[x - 88, y], [x, y + 32], [x, y + 80], [x - 88, y + 48]], palette[1], '#245066', 2);
-    this.polygon([[x, y + 32], [x + 88, y], [x + 88, y + 48], [x, y + 80]], palette[2], '#245066', 2);
-    this.polygon([[x - 88, y], [x, y - 32], [x + 88, y], [x, y + 32]], palette[0], stepped ? '#fff7b2' : next ? '#ffffed' : '#dcfff2', stepped || next ? 4 : 2);
-    this.polygon([[x - 88, y + 6], [x, y + 38], [x, y + 44], [x - 88, y + 12]], '#ffffff26');
-    this.polygon([[x + 8, y + 42], [x + 78, y + 17], [x + 78, y + 22], [x + 8, y + 47]], '#00072b12');
-    const studH = stepped ? 3.5 : 7;
-    for (const [dx, dy] of [[-33, 0], [0, -12], [33, 0], [0, 12]]) {
-      this.ellipse(x + dx, y + dy + 2, 13, 5, '#19374838');
-      this.rect(x + dx - 12, y + dy - studH, 24, studH, stepped ? '#72f2e0' : palette[1], 2);
-      this.ellipse(x + dx, y + dy, 12, 4.6, stepped ? '#4bc9ba' : palette[1]);
-      this.ellipse(x + dx, y + dy - studH, 12, 4.6, stepped ? '#c8fff6' : palette[0]);
-      this.ellipse(x + dx, y + dy - studH - 0.5, 8.5, 3, '#ffffff88');
-    }
-    if (stepped) this.star(x, y, 11, '#fff9d2');
-  }
-
-  limb(kind, side, stride, crouch, flight) {
-    const c = this.ctx;
-    const arm = kind === 'arm';
-    const idle = this.reducedMotion || this.jump ? 0 : Math.sin(this.time / 280 + side * 0.8);
-    const swing = this.jump ? stride * side * (arm ? 0.98 : -0.78) * (0.35 + flight * 0.85) : idle * (arm ? 0.14 : 0.06);
-    c.save(); c.translate(side * (arm ? 48 : 20), arm ? -146 : -73);
-    c.rotate(swing + (arm ? side * (0.11 + crouch * 0.32 - flight * 0.28) : side * crouch * 0.34 - flight * side * 0.18));
-    if (arm) {
-      this.box(-13, 0, 26, 27, 7, ['#f67962', '#ffa18a', '#ba4f5d']);
-      c.translate(0, 29);
-      c.rotate(-side * (0.14 + flight * 0.52 + crouch * 0.25) - Math.abs(swing) * 0.35);
-      this.box(-12, 0, 24, 25, 7, ['#ffd18b', '#ffe6b2', '#c99a64']);
-      this.rect(-6, 22, 12, 6, '#d9a461', 2);
-      c.beginPath(); c.arc(0, 33, 9.5, -0.25 * Math.PI, 1.25 * Math.PI);
-      c.strokeStyle = '#ffcf6e'; c.lineWidth = 6; c.lineCap = 'round'; c.stroke();
-      c.beginPath(); c.arc(0, 33, 9.5, 0.1 * Math.PI, 0.9 * Math.PI);
-      c.strokeStyle = '#fff4c2'; c.lineWidth = 2.2; c.stroke();
-    } else {
-      this.box(-14, 0, 28, 31, 8, ['#385b85', '#6686b0', '#253b61']);
-      c.translate(0, 32);
-      const knee = side * crouch * -0.72 + (this.jump ? (stride * side > 0 ? 0.58 : -0.24) * flight : Math.max(0, idle) * 0.12);
-      c.rotate(knee);
-      this.box(-14, 0, 28, 27, 8, ['#2d466c', '#496e99', '#203455']);
-      this.rect(-9, 5, 18, 8, '#50749c', 2);
-      c.translate(0, 27); c.rotate(flight * 0.22 - crouch * 0.18);
-      this.box(-17, 0, 34, 12, 9, ['#effbff', '#fff', '#a5bfd5']);
-      this.rect(-15, 9, 30, 4, '#49c8cf', 1);
-    }
-    c.restore();
-  }
-
-  face(expression) {
-    const c = this.ctx; const look = this.game.state.facing * 3;
-    const blink = this.blink > 0 ? Math.sin(this.blink / CONFIG.motion.blinkMs * Math.PI) : 0;
-    for (const eye of [-15, 13]) {
-      const x = eye + look;
-      if (expression === 'dizzy') {
-        c.strokeStyle = '#333758'; c.lineWidth = 2.6; c.lineCap = 'round'; c.beginPath();
-        for (let i = 0; i <= 50; i += 1) {
-          const angle = i / 50 * TAU * 2.2 + this.time / 200;
-          const r = 0.8 + i / 50 * 7.5;
-          const px = x + Math.cos(angle) * r; const py = -181 + Math.sin(angle) * r;
-          if (i === 0) c.moveTo(px, py); else c.lineTo(px, py);
-        }
-        c.stroke();
-      } else if (blink > 0.75) {
-        this.rect(x - 5, -182, 10, 3, '#30334b', 2);
-      } else if (expression === 'star') {
-        this.star(x, -182, 11, '#c97b27'); this.star(x, -183, 8.5, '#fff65f');
-        this.ellipse(x - 2, -186, 2, 2, '#fff');
-      } else {
-        this.rect(x - 4, -188, 8, 13 * (1 - blink * 0.65), '#2c354b', 4);
-        this.ellipse(x - 1, -185, 1.8, 2.2, '#fff');
-        c.strokeStyle = '#826039'; c.lineWidth = 3; c.lineCap = 'round'; c.beginPath();
-        c.moveTo(x - 6, -196 + (eye < 0 ? 2 : 0)); c.lineTo(x + 5, -196 + (eye < 0 ? 0 : 2)); c.stroke();
-      }
-    }
-    this.ellipse(-23, -172, 6, 3, '#f49c795e'); this.ellipse(24, -172, 6, 3, '#f49c795e');
-    if (expression === 'dizzy') {
-      c.strokeStyle = '#91504b'; c.lineWidth = 3; c.beginPath();
-      c.moveTo(-9, -163); c.quadraticCurveTo(-4, -170, 1, -163); c.quadraticCurveTo(7, -157, 12, -164); c.stroke();
-    } else {
-      c.beginPath(); c.moveTo(-11 + look, -169); c.quadraticCurveTo(1 + look, -151, 14 + look, -170);
-      c.quadraticCurveTo(1 + look, -165, -11 + look, -169); c.fillStyle = '#713c43'; c.fill();
-      c.beginPath(); c.moveTo(-8 + look, -168); c.quadraticCurveTo(2 + look, -158, 11 + look, -168);
-      c.fillStyle = '#fff7e6'; c.fill();
-    }
+    this.ellipse(x, y + 28, 64, 20, '#142b4d');
+    this.ellipse(x, y + 22, 58, 17, stepped ? '#ffd86b' : palette[1]);
+    this.ellipse(x, y + 18, 48, 13, stepped ? '#fff6c4' : palette[0]);
   }
 
   avatar() {
@@ -482,59 +403,38 @@ export class Renderer {
     const flight = this.jump && !this.reducedMotion ? Math.sin(this.jump.elapsed / this.jump.duration * Math.PI) : 0;
     const crouch = this.reducedMotion ? 0 : clamp(this.body.value, -0.25, 1);
     const breath = this.reducedMotion || this.jump ? 0 : Math.sin(this.time / CONFIG.motion.idlePeriodMs * TAU) * CONFIG.motion.idleAmplitude;
-    const stride = this.jump ? (this.jump.step % 2 ? 1 : -1) * this.jump.direction : 0;
     const shadowScale = 1 - Math.min(lift / 160, 0.45);
-    this.ellipse(x + 5, sy + 4, 51 * shadowScale, 17 * shadowScale, '#183b6540');
-    this.ellipse(x + 5, sy + 4, 31 * shadowScale, 9 * shadowScale, '#183b6525');
+    this.ellipse(x + 3, sy + 6, 48 * shadowScale, 15 * shadowScale, '#0d234248');
     if (this.aura > 0) {
       c.save(); const strength = Math.min(1, this.aura / 350);
       c.globalAlpha = strength;
-      const aura = c.createRadialGradient(x, sy - lift - 110, 10, x, sy - lift - 110, 160);
-      aura.addColorStop(0, '#fff7ae50'); aura.addColorStop(0.45, '#ffe37240'); aura.addColorStop(1, '#ffdd5500');
-      c.fillStyle = aura; c.fillRect(x - 170, sy - lift - 280, 340, 340);
-      c.strokeStyle = '#fff2a7'; c.lineWidth = 3;
-      c.beginPath(); c.ellipse(x, sy - lift - 90, 93 + Math.sin(this.time / 100) * 5, 119, -0.25, 0, TAU); c.stroke();
-      for (let i = 0; i < 6; i += 1) {
-        const angle = i * TAU / 6 + (this.reducedMotion ? 0 : this.time / 500);
-        this.star(x + Math.cos(angle) * 112, sy - lift - 110 + Math.sin(angle) * 110, 7, '#fff4b4');
-      }
+      const aura = c.createRadialGradient(x, sy - lift - 105, 10, x, sy - lift - 105, 155);
+      aura.addColorStop(0, '#7effe855'); aura.addColorStop(0.5, '#ffe37238'); aura.addColorStop(1, '#ffdd5500');
+      c.fillStyle = aura; c.fillRect(x - 165, sy - lift - 270, 330, 330);
+      c.strokeStyle = '#7effe8'; c.lineWidth = 3;
+      c.beginPath(); c.ellipse(x, sy - lift - 95, 88 + Math.sin(this.time / 100) * 5, 112, -0.2, 0, TAU); c.stroke();
       c.restore();
     }
     c.save(); c.translate(x, sy - lift + breath);
-    if (state.mode === MODE.STUMBLE && !this.reducedMotion) c.rotate(Math.sin(this.time / 70) * 0.12);
-    else c.rotate(flight * (this.jump?.direction ?? 0) * 0.13 + (this.reducedMotion ? 0 : Math.sin(this.time / 480) * 0.025 * state.facing));
-    c.scale(1 + crouch * 0.16 - flight * 0.08, 1 - crouch * 0.18 + flight * 0.13);
-    this.art.gear(palette.parts,this.time,'back',1.37,false,{run:Boolean(this.jump),jump:flight,stride});
-    const far = -state.facing; const near = state.facing;
-    this.limb('arm', far, stride, crouch, flight);
-    this.limb('leg', far, stride, crouch, flight);
-    this.limb('leg', near, stride, crouch, flight);
-    this.box(-37, -147, 74, 69, 11, [palette.shirt, palette.shirtTop, palette.shirtSide]);
-    this.rect(-28, -140, 12, 52, '#bd515d', 3);
-    this.rect(22, -140, 8, 52, '#ffb897', 2);
-    this.rect(-12, -135, 31, 36, '#fff3d9', 8, '#eab897');
-    this.star(3, -117, 11, '#efb33e');
-    this.rect(-35, -85, 70, 10, '#244364', 3);
-    this.rect(-7, -86, 17, 11, '#ffdc74', 3);
-    this.box(-11, -157, 24, 9, 7, ['#efbb7d', '#ffdfa6', '#b98a5d']);
-    this.box(-33, -211, 66, 56, 10, ['#ffda96', '#ffedbc', '#cba06c']);
-    this.rect(-31, -207, 7, 41, '#eabd7b', 3);
-    // Rounded LEGO block helmet, top LEGO stud, split rim and glossy inset.
-    this.art.stud(0, -230, 16, 5.5, 8, palette.helmet, palette.helmetTop);
-    this.box(-40, -224, 79, 23, 11, [palette.helmet, palette.helmetTop, palette.helmetSide]);
-    this.rect(-32, -219, 61, 6, '#bafff5', 3);
-    this.rect(-42, -202, 12, 26, '#36b5c5', 4, '#25607a');
-    this.rect(34, -202, 11, 26, '#248eab', 4, '#25607a');
-    this.rect(-39, -205, 81, 7, '#52e0de', 3);
-    this.face(this.game.expression);
-    this.art.gear(palette.parts,this.time,'front',1.37);
-    this.limb('arm', near, stride, crouch, flight);
+    this.art.toy(0, 0, 1.32, {
+      time: this.time,
+      run: Boolean(this.jump),
+      jump: flight,
+      squash: crouch * 0.55,
+      turn: state.facing * 0.45,
+      hurt: state.mode === MODE.STUMBLE,
+      gold: state.combo >= 10 || state.mode === MODE.AUTO_CLIMB,
+      glow: this.aura > 0 ? 1 : 0,
+      palette,
+    });
     if (state.mode === MODE.STUMBLE) {
       for (let i = 0; i < 3; i += 1) {
         const angle = (this.reducedMotion ? 0 : this.time / 240) + i * TAU / 3;
-        this.star(Math.cos(angle) * 57, -251 + Math.sin(angle) * 14, 11, '#fff298');
+        this.star(Math.cos(angle) * 56, -242 + Math.sin(angle) * 14, 11, '#fff298');
       }
-    } else this.arrow(state.facing * 89, -112, state.facing, 0.58, '#fff5a8');
+    } else {
+      this.arrow(state.facing * 86, -112, state.facing, 0.58, '#7effe8');
+    }
     c.restore();
   }
 
@@ -664,8 +564,8 @@ export class Renderer {
       const amplitude = this.game.state.mode === MODE.STUMBLE ? CONFIG.motion.stumbleShakePx : CONFIG.motion.shakePx;
       c.translate(Math.sin(this.time * 0.11) * amplitude * this.shake / CONFIG.motion.shakeMs, Math.cos(this.time * 0.08) * amplitude * this.shake / CONFIG.motion.shakeMs);
     }
-    for (let i = this.game.steps.length - 1; i >= 0; i -= 1) this.platform(this.game.steps[i]);
     webglStage.renderStairs(this);
+    for (let i = this.game.steps.length - 1; i >= 0; i -= 1) this.platform(this.game.steps[i]);
     // Hyper-Climb Speed Lines when combo >= 5 or rocket auto-climbing!
     if (!this.reducedMotion && (this.game.state.combo >= 5 || this.game.state.mode === MODE.AUTO_CLIMB)) {
       c.save();

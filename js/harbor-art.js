@@ -13,119 +13,135 @@ export function trainParts(data={}){
 }
 
 export function picoToy(a,x,y,scale=1,time=0){
+  // Sleek Floating Spherical Holo-Navigator Drone (Pico)
   const c=a.c;c.save();c.translate(x,y);c.scale(scale,scale);
-  const bob=Math.sin(time/240)*2.5;c.translate(0,bob);
-  a.ellipse(0,6,26,8,'#091d3a44');
-  a.block(-18,-36,36,30,7,'#5f85c9','#b7dcff','#3b538a');
-  a.rect(-12,-30,24,18,'#1b355c',5,'#9beeff88');a.star(0,-21,7,'#ffe68f');
-  a.block(-22,-74,44,34,8,'#88c2e8','#e4fbff','#517ca8');
-  a.stud?.(0,-78,9,3.5,4.5,'#5f9cc7','#e4fbff');
-  a.line([[0,-82],[0,-96]],'#9ee7f5',3.5);
-  a.ellipse(0,-99,6,6,Math.floor(time/280)%2?'#ffdf78':'#72ffee');
-  a.rect(-16,-67,32,19,'#142f4f',6,'#8eeeff66');
-  const blink=time>0&&time%3400<120;
-  for(const ex of[-8,8]){
-    if(blink)a.line([[ex-4,-58],[ex+4,-58]],'#7effe0',2.5);
-    else{a.rect(ex-3.5,-63,7,9,'#7effe0',2.5);a.ellipse(ex-1,-60,1.3,1.3,'#fff');}
-  }
+  const bob=Math.sin(time/200)*4;c.translate(0,bob);
+  a.ellipse(0,8,24,7,'#07183255');
+  // Anti-gravity glowing cyan hover rings
+  a.ellipse(0,-4,18+Math.sin(time/120)*2,5,'#63ffee88');
+  // Floating magnetic wing-fins
   for(const side of[-1,1]){
-    const wave=side>0?Math.sin(time/150)*8:0;
-    a.line([[side*19,-26],[side*28,-32-wave]],'#88c2e8',5);
-    a.ellipse(side*29,-33-wave,4.5,4.5,'#ffe294');
+    const flap=Math.sin(time/150)*4;
+    a.poly([[side*24,-46],[side*40,-60-flap],[side*36,-36-flap]],'#58d8ff','#e0ffff',2);
   }
+  // Spherical Glossy Drone Hull
+  a.ellipse(0,-46,28,28,'#e8f8ff');
+  a.ellipse(0,-46,26,26,'#79c8f2');
+  a.ellipse(-8,-58,12,7,'#ffffff88');
+  // Curved Dark-Sapphire Visor & Big Cyan Holo-LED Eyes
+  a.rect(-21,-58,42,24,'#0a1931',12,'#7effe8');
+  const blink=time>0&&time%3200<120;
+  for(const ex of[-8,8]){
+    if(blink)a.line([[ex-5,-46],[ex+5,-46]],'#63ffee',3);
+    else{
+      a.ellipse(ex,-46,4.5,6,'#63ffee');
+      a.ellipse(ex-1.5,-48,1.8,2,'#ffffff');
+    }
+  }
+  // Top Radar Dish & Pulsing Beacon
+  a.ellipse(0,-74,10,4,'#ffd86b');
+  a.line([[0,-76],[0,-90]],'#7effe8',3.5);
+  a.ellipse(0,-93,6,6,Math.floor(time/240)%2?'#ffe875':'#63ffee');
   c.restore();
 }
 
 export function cocoToy(a,x,y,scale=1,time=0){
+  // Adorable Round Chibi Mecha-Dragon Engineer (Coco) with Golden Aviator Goggles & Star-Wrench
   const c=a.c;c.save();c.translate(x,y);c.scale(scale,scale);
-  const bob=Math.abs(Math.sin(time/220))*2.5;c.translate(0,-bob);
-  a.ellipse(0,6,34,9,'#091d3a44');
-  // Tail with LEGO studs and attached mini star-stamp box
-  a.poly([[-16,-14],[-48,-24],[-42,-6],[-14,-4]],'#67b875','#3e7a52',2);
-  a.stud?.(-34,-21,4.5,2.2,3,'#58a466','#b9f2b4');
-  a.block(-56,-38,20,18,5,'#d9874c','#ffe19c','#8c4f3e');a.star(-46,-29,5,'#fff1a8');
-  // Dinosaur body & LEGO dorsal plates
-  a.block(-22,-46,44,38,9,'#78c87e','#c5f4be','#468959');
-  a.rect(-12,-38,24,25,'#d8f5b8',6);
-  for(const sy of[-42,-30,-18])a.stud?.(-24,sy,4,2.5,3,'#f0a84b','#ffe7a3');
-  // Head, snout & LEGO engineer cap
-  a.block(-18,-82,42,34,8,'#8ad68c','#d2f9c8','#4f9660');
-  a.block(8,-72,24,20,6,'#9be099','#e0ffd4','#5ba36a');
-  a.stud?.(-2,-86,11,4,5,'#f3b749','#fff1a8');
-  a.rect(-20,-85,36,8,'#f3b749',4);a.rect(-10,-82,34,4,'#257d96',2);
-  a.ellipse(-4,-69,3.5,4.5,'#143852');a.ellipse(10,-69,3.5,4.5,'#143852');
-  a.ellipse(-3,-70,1.2,1.2,'#fff');a.ellipse(11,-70,1.2,1.2,'#fff');
-  a.line([[2,-56],[12,-53],[21,-56]],'#3c6b4b',2.5);
-  const armWave=Math.sin(time/140)*6;
-  a.line([[18,-32],[30,-40-armWave]],'#8ad68c',6);a.ellipse(31,-41-armWave,4.5,4.5,'#ffe39b');
+  const bob=Math.abs(Math.sin(time/190))*3.5;c.translate(0,-bob);
+  a.ellipse(0,7,30,8,'#07183255');
+  // Mecha-Dragon Tail with glowing golden dorsal fin
+  a.poly([[-12,-14],[-44,-26],[-36,-6],[-10,-4]],'#3ec98f','#a8ffe0',2);
+  a.star(-44,-26,8,'#ffe875');
+  // Rounded Chibi Pod Body & Golden Engineer Harness
+  a.ellipse(0,-30,24,22,'#46d89a');
+  a.ellipse(2,-28,16,14,'#d6ffea');
+  a.rect(-18,-32,36,8,'#ffbe45',4,'#fff4b8');
+  a.star(0,-28,6,'#ffffff');
+  // Rounded Chibi Dragon Head & Snout
+  a.ellipse(0,-62,23,20,'#52e3a4');
+  a.ellipse(10,-56,14,11,'#6ef0b6');
+  // Oversized Golden Aviator Goggles on forehead
+  a.rect(-18,-78,34,12,'#e08b2c',6,'#fff2b2');
+  a.ellipse(-7,-72,6,5,'#63ffee');
+  a.ellipse(7,-72,6,5,'#63ffee');
+  // Big expressive eyes & happy grin
+  a.ellipse(-2,-60,4,5,'#0b1e38');
+  a.ellipse(11,-60,4,5,'#0b1e38');
+  a.ellipse(-3,-62,1.6,1.8,'#ffffff');
+  a.ellipse(10,-62,1.6,1.8,'#ffffff');
+  a.line([[5,-49],[11,-46],[17,-49]],'#144d38',2.5);
+  // Waving Star-Wrench Arm
+  const wave=Math.sin(time/130)*7;
+  a.line([[16,-32],[30,-42-wave]],'#52e3a4',6);
+  a.star(33,-45-wave,8,'#ffe875');
   c.restore();
 }
 
 export function wagon(a,x,y,scale=1,time=0,last=false){
+  // Sleek Aerodynamic Galaxy-Liner Booster Coach
   const c=a.c;c.save();c.translate(x,y);c.scale(scale,scale);
-  a.line([[-70,-12],[69,-12]],'#91cbd4',9);
-  a.block(-50,-66,100,64,15,'#a773c6','#ead0ee','#5c508c');
-  for(const sx of[-30,0,30])a.stud?.(sx,-72,8,3.2,4,'#935eb5','#f5e1ff');
-  a.rect(-42,-56,84,42,'#6f4896',8,'#e7c6ff66');
-  a.star(-2,-35,20,'#ffe593');
-  for(const wx of[-30,28]){a.ellipse(wx,0,18,18,'#183c5b');a.ellipse(wx,-2,10,10,'#a9edf0');a.stud?.(wx,-2,4.5,4.5,2,'#367696','#dffeff');const t=time/160;a.line([[wx,-2],[wx+Math.cos(t)*7,-2+Math.sin(t)*7]],'#f7ffdc',3);}
-  if(last){a.line([[-30,-66],[-30,-109]],'#ffe7a6',4);a.poly([[-30,-109],[11,-101],[-30,-84]],'#ffdb8e');}
+  a.line([[-70,-14],[69,-14]],'#63ffee',7);
+  a.rect(-52,-68,104,58,'#28558c',18,'#7ee8ff');
+  a.rect(-44,-58,88,28,'#0d2240',12,'#63ffee88');
+  // Glowing Plasma Windows
+  for(const wx of[-26,0,26])a.rect(wx-9,-52,18,16,'#66fff2',5);
+  a.rect(-48,-24,96,8,'#ffd86b',4);
+  for(const wx of[-30,28]){
+    a.ellipse(wx,-2,16,16,'#0d233f');
+    a.ellipse(wx,-2,11,11,'#63ffee');
+    a.ellipse(wx,-2,5,5,'#ffffff');
+  }
+  if(last){
+    a.poly([[48,-58],[74,-72],[64,-34]],'#ffd86b','#fff6c0',2.5);
+  }
   c.restore();
 }
 
-// Shared, procedural LEGO toy train: visibly upgrades as Battle, Stairs, Runner, and Plaza missions are cleared.
+// Shared Aerodynamic Sci-Fi Bullet-Locomotive ("별빛특급 갤럭시 라이너")
 export function train(a,x,y,scale=1,{time=0,cars=0,held=false,beacon=false,coach=false,reactor=false,complete=false}={}){
   const c=a.c;c.save();c.translate(x,y);c.scale(scale,scale);
-  const bob=held?Math.sin(time/420)*4:Math.sin(time/95)*1.8;c.translate(0,bob);
+  const bob=held?Math.sin(time/420)*4:Math.sin(time/95)*2;c.translate(0,bob);
   const totalCars=Math.max(cars,coach?1:0);
-  a.ellipse(-8,8,132+totalCars*47,17,'#091d3f3d');
+  a.ellipse(-8,8,136+totalCars*48,16,'#07183244');
   for(let i=totalCars;i>0;i--){
-    const wx=-100-i*111;
+    const wx=-104-i*112;
     wagon(a,wx,0,1,time,i===2||complete);
     if(coach&&i===1){
-      // Runner reward: Golden Booster Wings on the recovered passenger/cargo coach
-      a.poly([[wx-38,-56],[wx-76,-88],[wx-58,-34]],'#ffd86b','#fff5bf',3);
-      a.poly([[wx+36,-56],[wx+74,-88],[wx+56,-34]],'#ffd86b','#fff5bf',3);
-      a.stud?.(wx,-80,10,4,5,'#e39d36','#fff6c4');
+      a.poly([[wx-36,-58],[wx-76,-92],[wx-54,-34]],'#ffd86b','#fff5bf',3);
+      a.poly([[wx+36,-58],[wx+76,-92],[wx+54,-34]],'#ffd86b','#fff5bf',3);
     }
   }
-  a.block(-114,-72,219,66,17,'#289ca8','#a2f3dc','#16657b');
-  a.block(-105,-138,91,83,15,'#f2b550','#fff2a7','#b77e43');
-  a.rect(-92,-125,63,50,'#163e63',9,'#fff2b6');a.rect(-85,-119,51,37,a.gradient(-85,-120,-35,-80,['#87d7e6','#3495b1']),6);
-  // Coco watches the player from the LEGO cab, then waves at the station.
-  a.rect(-77,-110,33,32,'#97d692',9);a.rect(-81,-113,41,10,'#23869d',5);
-  a.ellipse(-68,-101,3,4,'#143d59');a.ellipse(-54,-101,3,4,'#143d59');a.rect(-78,-94,36,14,'#b8e5a0',6);a.ellipse(-72,-90,2,2,'#578d64');a.ellipse(-48,-90,2,2,'#578d64');
-  a.line([[-65,-88],[-60,-85],[-55,-88]],'#765949',2);
-  a.line([[-38,-85],[-27+Math.sin(time/120)*5,-95]],'#ffe1a1',7);
-  a.block(-115,-151,111,18,12,'#ea7758','#ffe1a1','#9d5260');
-  for(const sx of[-92,-60,-28])a.stud?.(sx,-157,8.5,3.2,4,'#d95f43','#ffe6b3');
+  // Aerodynamic Bullet-Liner Main Fuselage
+  a.poly([[-115,-14],[-115,-88],[-30,-118],[88,-102],[136,-38],[128,-10]],'#1e578c','#7ee8ff',3);
+  a.poly([[-108,-42],[124,-42],[134,-18],[-108,-18]],'#ffd86b');
+  // Panoramic Curved Cyan Cockpit Canopy
+  a.poly([[-24,-108],[68,-94],[108,-50],[-24,-50]],'#0b1e3b','#63ffee',2.5);
+  a.poly([[-14,-98],[58,-86],[88,-56],[-14,-56]],'#58e8ff66');
+  // Glowing Plasma Drive Reactor Core on Side
+  a.ellipse(-54,-62,24,24,'#0b1e3b');
+  a.ellipse(-54,-62,17,17,reactor?'#63ffee':'#ffd86b');
+  a.star(-54,-62,13,'#ffffff');
   if(beacon){
-    // Stairs 50-step bridge reward: Lighthouse Golden Signal Dish & Searchlight Beam
-    a.block(-68,-182,36,24,8,'#ffcf5c','#fff6bf','#b87d32');
-    a.stud?.(-50,-187,11,4,5,'#e39d36','#fff9d2');
-    a.ellipse(-30,-170,10,13,'#fff7c4');
-    a.poly([[118,-54],[215,-92+Math.sin(time/320)*14],[215,-16+Math.sin(time/320)*14]],'#fff6b544');
+    // Top Holographic Radar Beacon & Searchlight
+    a.ellipse(-18,-126,18,8,'#ffd86b');
+    a.ellipse(-18,-134,9,9,'#63ffee');
+    a.poly([[128,-48],[225,-88+Math.sin(time/300)*14],[225,-12+Math.sin(time/300)*14]],'#7effe844');
   }
-  a.block(-7,-101,89,72,17,'#248da5','#90e2d6','#195b79');a.star(36,-67,23,'#ffe596');
   if(reactor){
-    // Plaza mission reward: Starlight Energy Core Reactor & Turbo Flame Thruster
-    a.ellipse(36,-67,26,26,'#123b5e');
-    a.ellipse(36,-67,18+Math.sin(time/140)*2,18+Math.sin(time/140)*2,'#67fff0');
-    a.star(36,-67,15,'#fff7be');
-    a.poly([[-115,-48],[-154-Math.sin(time/65)*14,-62],[-142,-36],[-158-Math.cos(time/55)*12,-22],[-115,-24]],'#63ffee');
-    a.poly([[-115,-43],[-138-Math.sin(time/50)*8,-48],[-115,-29]],'#fff8c4');
+    // Rear Plasma Afterburner Jet Flame
+    a.poly([[-115,-64],[-168-Math.sin(time/55)*16,-80],[-148,-46],[-172-Math.cos(time/50)*14,-22],[-115,-28]],'#63ffee');
+    a.poly([[-115,-56],[-146-Math.sin(time/45)*10,-58],[-115,-36]],'#fff9d2');
   }
-  a.block(52,-131,24,38,8,'#f1b35f','#fff1b6','#b57951');a.rect(47,-140,40,16,'#ffd78d',6);
-  a.block(91,-76,28,56,12,'#e68b61','#ffdd99','#a96156');a.ellipse(111,-54,13,16,beacon?'#fffce0':'#fff6be');
-  a.poly([[99,-13],[132,-13],[148,4],[92,4]],'#e36f60','#ffbe91',3);
   if(complete){
-    a.poly([[18,-108],[6,-132],[24,-121],[36,-142],[48,-121],[66,-132],[54,-108]],'#ffd75e','#fff6c4',3);
+    a.star(34,-128,18,'#ffe875');
   }
-  for(const wx of[-80,-21,64]){a.ellipse(wx,0,25,25,'#143653');a.ellipse(wx,-2,18,18,'#c5eef0');a.ellipse(wx,-2,11,11,'#478dac');
-    a.stud?.(wx,-2,5.5,5.5,2.5,'#2a6b8a','#e8ffff');
-    const ang=time/160;a.line([[wx,-2],[wx+Math.cos(ang)*12,-2+Math.sin(ang)*12]],'#e8ffea',4);}
-  a.line([[-80,3],[-21,3],[64,3]],'#f4d49d',6);
-  for(let i=0;i<3;i++){const f=(time/900+i*.32)%1;a.ellipse(72-f*34,-158-f*51,10+f*17,8+f*12,reactor?`rgba(135,255,245,${(1-f)*.65})`:`rgba(237,255,244,${(1-f)*.5})`);}
+  // Magnetic Levitation Hover-Wheel Pods
+  for(const wx of[-78,-18,64]){
+    a.ellipse(wx,-2,22,22,'#0b1e3b');
+    a.ellipse(wx,-2,15,15,'#63ffee');
+    a.ellipse(wx,-2,7,7,'#ffffff');
+  }
   c.restore();
 }
 

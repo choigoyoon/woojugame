@@ -122,6 +122,8 @@ export class AdventureRenderer {
     // Runaway Starlight Express LEGO wagon with Coco on top — visibly transforms and jolts with each brick hit!
     const hitReaction=this.wagonHitMs/420,wagonDent=this.reduced?0:Math.sin(hitReaction*Math.PI)*.18;
     const wagonX=s.goldMs?540:642-s.slot*38+Math.sin(t/210)*8-(hitReaction*18);
+    // Composite OGL v1.0.11 3D WebGL meshes for 3D Track Studs, 3D Hover Crates, 3D Boosters & 3D Powerups!
+    webglStage.renderRunner(this,wagonX,hitReaction);
     // Wheel sparks flying from under the high-speed runaway train car!
     if(!this.reduced){
       for(let i=0;i<3;i++){
@@ -170,18 +172,22 @@ export class AdventureRenderer {
         a.label(title,item.x,iy+24,20,'#fff8d6','#0f223d');
       }else if(item.kind==='coin')a.coin(item.x,item.y+Math.sin(t/180+item.x)*5,.65);
       else{
-        // Animated LEGO Patrol Mech-Crawler with stompable yellow top bounce-pad!
-        const walk=this.reduced?0:Math.sin(t/75+item.x*.05)*6;
-        a.ellipse(item.x,872,34,10,'#0d263855');
+        // Horned Cyber-Beetle Tank Bot with Neon Yellow Spring Stomp-Pad!
+        const walk=this.reduced?0:Math.sin(t/65+item.x*.05)*5;
+        a.ellipse(item.x,872,38,10,'#091d3455');
         for(const side of[-1,1]){
-          a.rect(item.x+side*18-6,856+(side>0?walk:-walk)*.4,12,16,'#3a2846',3);
+          a.ellipse(item.x+side*20,862+(side>0?walk:-walk)*.3,11,11,'#17233b');
+          a.ellipse(item.x+side*20,862+(side>0?walk:-walk)*.3,5,5,'#ff4f79');
         }
-        a.block(item.x-30,814,60,48,12,'#c84b68','#ff9eb2','#6e2540');
-        // Stompable yellow spring top-plate!
-        a.stud(item.x,806,18,6,6,'#e39d36','#fff5bd');
-        a.rect(item.x-22,846,44,11,'#ffd86b',2);
-        a.rect(item.x-19,825,13,9,'#fff3a5',2);a.rect(item.x+6,825,13,9,'#fff3a5',2);
-        a.rect(item.x-14,827,6,6,'#3b1d36',1);a.rect(item.x+9,827,6,6,'#3b1d36',1);
+        // Beetle Armored Shell & Front Plasma Horn
+        a.ellipse(item.x,838,34,26,'#281d3d');
+        a.poly([[item.x-32,838],[item.x-48,818],[item.x-22,824]],'#ff4f79');
+        a.rect(item.x-26,828,52,16,'#091020',8,'#ff4f79');
+        a.ellipse(item.x-10+Math.sin(t/120)*8,836,6,6,'#ff2e55');
+        a.ellipse(item.x-10+Math.sin(t/120)*8,836,2.5,2.5,'#ffe875');
+        // Neon Spring-Loaded Top Stomp Target Pad
+        a.ellipse(item.x,810,22,7,'#ffd86b');
+        a.ellipse(item.x,807,16,5,'#7effe8');
       }
     }
     // Render spent/transformed solid blocks that were headbutted (bouncing up & turning into riveted steel blocks!)
@@ -207,21 +213,10 @@ export class AdventureRenderer {
       c.save();c.globalAlpha=Math.min(1,m.life/220);
       c.translate(m.x,m.y);c.rotate(m.angle);
       c.scale(m.stomp?1.35:1,m.stomp?.48:.85);
-      a.block(-30,-24,60,44,10,'#8f3850','#ffaec0','#4d1c2e');
-      a.line([[-16,-6],[-6,4]],'#fff2a6',3);a.line([[-6,-6],[-16,4]],'#fff2a6',3);
-      a.line([[6,-6],[16,4]],'#fff2a6',3);a.line([[16,-6],[6,4]],'#fff2a6',3);
+      a.ellipse(0,0,34,18,'#281d3d');
+      a.line([[-16,-6],[-6,4]],'#ff4f79',3);a.line([[-6,-6],[-16,4]],'#ff4f79',3);
+      a.line([[6,-6],[16,4]],'#ff4f79',3);a.line([[16,-6],[6,4]],'#ff4f79',3);
       c.restore();
-    }
-    // Composite OGL v1.0.11 3D WebGL meshes for Train Coach, 3D Hover Crates, 3D Patrol Crawlers & 3D Powerups!
-    webglStage.renderRunner(this,wagonX,hitReaction);
-    cocoToy(a,wagonX-6,804-hitReaction*14,.46,t);
-    for(const item of this.runner.items.active){
-      if(item.kind==='word'){
-        const stageIdx=s.slot%3,title=['⚡ 1단 연결기','🪽 2단 부스터','🚀 3단 스타제트'][stageIdx];
-        const bob=this.reduced?0:Math.sin(t/140+item.x*.02)*6,iy=item.y+bob;
-        a.rect(item.x-56,iy,112,42,'#132d52e8',12,'#88f5ffaa');
-        a.label(title,item.x,iy+22,19,'#fff8d6','#0f223d');
-      }
     }
     const squash=s.squashMs?Math.sin(s.squashMs/200*Math.PI):0,scale=s.goldMs?1.38:.86;
     const jumpFactor=Math.min(1.15,s.y/82),pitch=this.reduced?0:Math.max(-.22,Math.min(.24,-s.vy/2300));
@@ -270,7 +265,26 @@ export class AdventureRenderer {
     if(kind==='bomb'){a.ellipse(0,-11,22,24,'#4c5c82');a.stud(0,-30,6,2.8,3,'#374569','#9cb3de');a.line([[5,-34],[14,-43],[20,-35]],'#e5c08a',4);a.star(22,-34,6,'#ffcb80');}
     c.restore();
   }
-  robot(x,y){const a=this.art;a.ellipse(x,y,40,13,'#203d6055');a.block(x-31,y-67,62,50,10,'#7c8ecb','#b5d7ff','#4d5897');a.block(x-35,y-120,70,47,9,'#9fcbea','#e6ffff','#627eac');a.stud(x,y-125,13,4.5,5,'#6b9ec7','#e6ffff');a.rect(x-27,y-109,54,24,'#183957',7);a.rect(x-18,y-103,10,8,'#7effd8',3);a.rect(x+8,y-103,10,8,'#7effd8',3);a.star(x,y-42,16,'#ffdc8b');a.line([[x,y-128],[x,y-144]],'#a1d7df',4);a.ellipse(x,y-147,7,7,'#ffc990');}
+  robot(x,y){
+    // Sleek Harbor Commander Mecha-Unit (Captain Dock)
+    const a=this.art,t=this.reduced?0:this.time,bob=Math.sin(t/220)*3;
+    a.ellipse(x,y,42,14,'#0d224055');
+    a.ellipse(x,y-2,30,10,'#63ffee44');
+    // Hover Base & Contoured Commander Torso
+    a.rect(x-28,y-68+bob,56,52,'#264e82',20,'#7ee8ff');
+    a.ellipse(x,y-42+bob,16,16,'#0b1e3b');
+    a.star(x,y-42+bob,13,'#ffe875');
+    // Commander Space-Dome Head & Panoramic Cyan Visor
+    a.rect(x-34,y-124+bob,68,52,'#e8f6ff',24,'#7ee8ff');
+    a.rect(x-26,y-112+bob,52,28,'#09172e',14,'#63ffee');
+    a.ellipse(x-11,y-98+bob,5.5,7,'#63ffee');
+    a.ellipse(x+11,y-98+bob,5.5,7,'#63ffee');
+    a.ellipse(x-12,y-100+bob,2,2,'#ffffff');
+    a.ellipse(x+10,y-100+bob,2,2,'#ffffff');
+    // Golden Commander Crest & Beacon Antenna
+    a.poly([[x-18,y-124+bob],[x,y-142+bob],[x+18,y-124+bob]],'#ffd86b','#fff6c0',2);
+    a.ellipse(x,y-146+bob,6,6,'#63ffee');
+  }
   plazaView(canHome){
     const a=this.art,c=a.c,s=this.plaza.state,t=this.reduced?0:this.time;
     a.cached('plaza-ground',[0,0,720,1280],()=>{
@@ -310,6 +324,7 @@ export class AdventureRenderer {
     const dock=this.iso(-2.2,3.4),parts=trainParts(this.profile.data),captain=this.iso(0,3.15);
     const totalNeeded=this.plaza.mission.reduce((n,m)=>n+m.count,0),collectedTotal=s.collectedA+s.collectedB;
     const dockPulse=this.dockPulseMs/480,dockDent=this.reduced?0:Math.sin(dockPulse*Math.PI)*.14;
+    webglStage.renderPlaza(this,dock,collectedTotal);
     // Power conduits connecting the Captain Dock to the Starlight Express as core bricks are gathered
     for(let i=0;i<3;i++){
       const lit=collectedTotal>i||s.phase==='success';
@@ -324,7 +339,6 @@ export class AdventureRenderer {
     }
     if(dockPulse>0){c.globalAlpha=dockPulse;a.star(12,-28,28,'#fff6b8');}
     c.restore();
-    webglStage.renderPlaza(this,dock,collectedTotal);
     cocoToy(a,dock.x+56,dock.y-8-dockPulse*10,.42,t);
     a.ellipse(captain.x,captain.y,46,22,this.plaza.ready?'#fff0a4':'#6d95b7');
     if(this.plaza.ready){

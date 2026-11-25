@@ -1,5 +1,6 @@
 import { CONFIG } from './config.js';
 import { Sequencer } from './music.js';
+import { ZZFX, ZZFX_PRESETS } from './zzfx.js';
 
 export function noteFrequency(index = 0) {
   const position = Number.isFinite(index) ? Math.max(0, Math.min(CONFIG.audio.noteHz.length - 1, Math.floor(index))) : 0;
@@ -65,6 +66,25 @@ export class Audio {
     }catch{}
   }
   noise(seconds,level=.3){this.percussion(seconds,level,this.context?.currentTime);}
+  zzfx(presetName,level=.32){
+    const preset=ZZFX_PRESETS[presetName];
+    if(!preset||!this.context||this.context.state==='closed'||this.paused||!this.admit('sfx'))return;
+    try{
+      this.zzfxCache??=new Map();
+      let pcm=this.zzfxCache.get(presetName);
+      if(!pcm){pcm=ZZFX.buildSamples(...preset);this.zzfxCache.set(presetName,pcm);}
+      const c=this.context,rate=c.sampleRate||44100,len=Math.max(1,Math.min(pcm.length,Math.ceil(rate*.35)));
+      const buffer=c.createBuffer(1,len,rate),channel=buffer.getChannelData(0);
+      for(let i=0;i<len;i++)channel[i]=pcm[i];
+      const source=c.createBufferSource(),envelope=c.createGain(),start=c.currentTime,seconds=len/rate;
+      source.buffer=buffer;
+      envelope.gain.setValueAtTime(level,start);
+      envelope.gain.exponentialRampToValueAtTime(.0001,start+seconds);
+      source.connect(envelope);envelope.connect(this.master);
+      this.allocate(source,envelope,[source,envelope],start,seconds,'sfx');
+      source.start(start);source.stop(start+seconds);
+    }catch{}
+  }
   diagnostics(){let peak=0,sum=0,finite=true;if(this.analyser){this.analyser.getFloatTimeDomainData(this.samples);for(const v of this.samples){finite&&=Number.isFinite(v);peak=Math.max(peak,Math.abs(v));sum+=v*v;}}return{state:this.context?.state??'locked',voices:this.voices.size,musicVoices:this.musicVoices.size,tails:this.tails.size,nodes:[...this.voices.values(),...this.musicVoices.values(),...this.tails].reduce((n,v)=>n+v.nodes.length,0),created:this.created,ended:this.ended,stolen:this.stolen,dropped:this.dropped,peak,rms:Math.sqrt(sum/2048),finite,mode:this.sequencer.mode,calm:this.sequencer.calm,steps:this.sequencer.step,tracks:{...this.sequencer.counts}};}
 
   play(event) {
@@ -79,7 +99,7 @@ export class Audio {
       this.lastImpact=this.context?.currentTime??0;
       this.tone(530+(event.crack??0)*100,145,.065,'triangle',0,.35);this.noise(.04,.22);
     }
-    if(event.type==='armor-break'){this.noise(.11,.45);this.tone(860,280,.12,'square',0,.19);this.fm(2150,1420,.045,.018,.26);}
+    if(event.type==='armor-break'){this.zzfx('armorBreak',.38);this.tone(860,280,.12,'square',0,.19);}
     if(event.type==='train'){for(const delay of[0,.32]){this.tone(330,330,.24,'triangle',delay,.22);this.tone(440,440,.24,'sine',delay,.2);}this.noise(.12,.08);}
     if(event.type==='shield-block'){this.fm(330,990,.23,0,.3);this.noise(.065,.18);}
     if(['power-up','supply-pickup'].includes(event.type)){
@@ -100,12 +120,12 @@ export class Audio {
       if (event.boss) this.play({ type: 'reward' });
     }
     if (['select','wave'].includes(event.type)){this.tone(523,784,.12,'triangle',0,.4);this.tone(1046,1175,.09,'sine',.025,.17);this.noise(.018,.08);}
-    if(event.type==='word'){this.fm(880,1320,.2,0,.4);this.tone(1320,1760,.18,'sine',.04,.25);this.speak(event.word,'friend');}
+    if(event.type==='word'){this.zzfx('boosterUp',.34);this.fm(880,1320,.2,0,.4);this.tone(1320,1760,.18,'sine',.04,.25);this.speak(event.word,'friend');}
     if(event.type==='sentence'){this.play({type:'round-clear',final:true});this.speak(event.speech,'friend');}
     if(event.type==='mission')this.speak(event.speech,'teacher');
     if(event.type==='mission-win'){this.play({type:'round-clear',final:true});this.noise(.22,.25);}
-    if(event.type==='pickup'){this.fm(1046,1568,.22,0,.33);this.fm(2093,2349,.19,.035,.16);}
-    if(event.type==='smash'){this.noise(.15,.4);this.tone(150,45,.2,'sine',0,.5);this.fm(1920,1280,.05,.015,.28);}
+    if(event.type==='pickup'){this.zzfx('coreLock',.3);this.fm(1046,1568,.22,0,.33);this.fm(2093,2349,.19,.035,.16);}
+    if(event.type==='smash'){this.zzfx(event.stomp?'stompBounce':'armorBreak',.42);this.tone(150,45,.2,'sine',0,.5);}
     if(['word-miss','mission-miss'].includes(event.type)){this.tone(350,260,.15,'triangle',0,.3);this.tone(220,180,.16,'sine',.06,.2);}
     if (['gate-miss', 'bump', 'puzzle-miss', 'locked'].includes(event.type)) this.tone(320, 190, 0.13, 'triangle', 0, 0.4);
     if (['reward', 'gate-win', 'puzzle-win', 'brake-win'].includes(event.type)) {

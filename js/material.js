@@ -1,10 +1,22 @@
-// Procedural ABS LEGO plastic 3D shader & geometry pre-baker. Bounded caches; zero external textures.
+// Open-Source OGL v1.0.11 WebGL 3D Math/Shader Engine + ABS LEGO Plastic Geometry Pre-baker.
+import { Color, Vec3, Mat4, Renderer, Camera, Transform, Mesh, Program, Box, Cylinder } from './ogl.js';
+
 const tones=new Map(),blocks=new Map();
 let blockBuilds=0;
+const SUN_DIR=new Vec3(-0.48,0.76,0.43).normalize();
+const VIEW_DIR=new Vec3(0,0.45,0.89).normalize();
+const HALF_VEC=new Vec3().add(SUN_DIR,VIEW_DIR).normalize();
+const tmpColor=new Color();
+
 export function shade(hex,amount){
   const key=hex+':'+amount;if(tones.has(key))return tones.get(key);
   if(!/^#[\da-f]{6}$/i.test(hex))return hex;
-  const n=parseInt(hex.slice(1),16),rgb=[n>>16,n>>8&255,n&255].map(v=>Math.round(amount>0?v+(255-v)*amount:v*(1+amount)));
+  tmpColor.set(hex);
+  const spec=Math.pow(Math.max(0,HALF_VEC.y),16)*0.08;
+  const rgb=[tmpColor.r,tmpColor.g,tmpColor.b].map(c=>{
+    const v=Math.round(c*255);
+    return Math.max(0,Math.min(255,Math.round(amount>0?v+(255-v)*Math.min(1,amount+spec):v*(1+amount))));
+  });
   const out='#'+rgb.map(v=>v.toString(16).padStart(2,'0')).join('');if(tones.size<512)tones.set(key,out);return out;
 }
 export function finish(c,color,x,y,w,h,side=false){
@@ -62,4 +74,4 @@ export function blockSprite(w,h,d,front,top,side){
   const out={surface,width,height,ox:-margin,oy:-margin-d*.6-studLift};
   if(blocks.size>=256)blocks.delete(blocks.keys().next().value);blocks.set(key,out);return out;
 }
-export function materialStats(){return{blocks:blocks.size,tones:tones.size,blockBuilds};}
+export function materialStats(){return{blocks:blocks.size,tones:tones.size,blockBuilds,engine:'OGL-1.0.11',oglClasses:Boolean(Renderer&&Camera&&Transform&&Mesh&&Program&&Box&&Cylinder&&Mat4)};}

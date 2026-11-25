@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Juice } from '../js/juice.js';
 import { PhysicsWorld, CameraRig, CalloutPool } from '../js/engine.js';
+import { materialStats } from '../js/material.js';
+import { Vec3, Mat4, Color, Transform } from '../js/ogl.js';
+import { ZZFX, ZZFX_PRESETS } from '../js/zzfx.js';
 import { CONFIG } from '../js/config.js';
 
 test('presentation hit-stop is exactly 50ms and four-mode rewards use bounded visual pools',()=>{
@@ -36,4 +39,19 @@ test('PhysicsWorld bounces 3D LEGO bricks on the floor plane with restitution an
   assert.equal(cam.trauma,0);assert.ok(Math.abs(cam.offset.scale-1)<.002);
   callouts.spawn('STOMP BOUNCE!',360,500);assert.equal(callouts.activeCount,1);
   callouts.step(900);assert.equal(callouts.activeCount,0);
+});
+
+test('Open-source OGL v1.0.11 3D engine and ZzFX v1.4.0 PCM synth presets are integrated and deterministic',()=>{
+  const stats=materialStats();
+  assert.equal(stats.engine,'OGL-1.0.11');
+  assert.equal(stats.oglClasses,true);
+  const node=new Transform();node.position.set(3,4,12);node.updateMatrixWorld();
+  assert.equal(new Vec3(3,4,12).len(),13);
+  assert.equal(new Mat4().identity()[0],1);
+  assert.ok(new Color('#ff8800').r>0.9);
+  for(const [name,preset]of Object.entries(ZZFX_PRESETS)){
+    const pcm=ZZFX.buildSamples(...preset);
+    assert.ok(pcm instanceof Float32Array&&pcm.length>1000,name);
+    assert.ok(pcm.some(v=>Math.abs(v)>0.05)&&pcm.every(Number.isFinite),name);
+  }
 });

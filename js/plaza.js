@@ -2,7 +2,7 @@ import { CONFIG } from './config.js';
 import { Pool, clamp, copy } from './engine.js';
 import { Adventure } from './adventure.js';
 
-export const GOODS = Object.freeze({key:{name:'빨간 열쇠',color:'#ff6c83'},star:{name:'파란 별',color:'#77ceff'},gem:{name:'초록 보석',color:'#74efd0'},book:{name:'만화책',color:'#d6a3ff'},console:{name:'게임기',color:'#ffcc6f'},bomb:{name:'폭탄',color:'#8797b8'}});
+export const GOODS = Object.freeze({key:{name:'엔진 시동 키',color:'#ff6c83'},star:{name:'별빛 에너지 셀',color:'#77ceff'},gem:{name:'초록 냉각 코어',color:'#74efd0'},book:{name:'빈 부품 상자',color:'#d6a3ff'},console:{name:'고장 난 계기판',color:'#ffcc6f'},bomb:{name:'과열 증기 통',color:'#8797b8'}});
 export function missionFor(round){const types=['key','star','gem'],a=types[round%3],b=types[(round+1)%3];return[{kind:a,count:round<3?2:round<8?2:3},{kind:b,count:round<5?1:2}];}
 const positions=[[-2.8,-2.5],[.1,-3],[2.9,-2],[-3,.3],[2.9,.5],[-1.9,1.6],[1.5,1.7],[.1,-.9],[-1.5,-1.2],[1.8,-.7],[-2.6,2.7],[2.7,2.7]];
 
@@ -22,7 +22,7 @@ export class Plaza extends Adventure {
   }
   get mission(){return missionFor(this.state.round);}
   get ready(){return this.state.collectedA===this.mission[0].count&&this.state.collectedB===this.mission[1].count;}
-  get speech(){return this.mission.map(m=>GOODS[m.kind].name+' '+m.count+'개').join('랑 ')+'만 가져와! 만화책, 게임기, 폭탄은 두고 와!';}
+  get speech(){return this.mission.map(m=>GOODS[m.kind].name+' '+m.count+'개').join('랑 ')+'를 찾아 기차 도크로 가져와! 고장·과열 부품은 피해 가자!';}
   populate(){
     this.items.clear();this.hazards.clear();let index=0;const offset=this.state.round%positions.length;
     for(const target of this.mission)for(let n=0;n<target.count;n++){const [x,z]=positions[(index+++offset)%positions.length];this.items.acquire({kind:target.kind,x,z,collected:false});}

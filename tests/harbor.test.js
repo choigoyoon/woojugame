@@ -5,8 +5,9 @@ import { Profile } from '../js/profile.js';
 import { CONFIG, ACTION, MODE } from '../js/config.js';
 import { Game } from '../js/game.js';
 import { Runner } from '../js/runner.js';
-import { Plaza } from '../js/plaza.js';
+import { Plaza, GOODS } from '../js/plaza.js';
 import { SCENARIOS } from '../js/scenarios.js';
+import { SENTENCES, SYMBOLS } from '../js/sentences.js';
 import { trainParts } from '../js/harbor-art.js';
 const create=()=>{const data=new Map(),storage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v)},p=new Profile(storage),b=new CampaignBattle(()=>.42,p);b.setPaused(false);return{b,p,storage};};
 const advance=(b,ms)=>{for(let t=0;t<ms;t+=25){b.advance(Math.min(25,ms-t));b.takeEvents();}};
@@ -136,4 +137,24 @@ test('train assembly requires all four modes: brake alone does not clear lightho
   plaza.state.x=0;plaza.state.z=3.15;plaza.advance(5);
   parts=trainParts(new Profile(storage).data);
   assert.equal(parts.reactor,true);assert.equal(parts.doneCount,4);assert.equal(parts.complete,true);
+});
+
+test('all four modes use Sky Harbor rescue narratives, valid symbol mappings, and Coco tactical feedback without classroom moralizing',()=>{
+  const banned=/선생님|칠판|수업 종|복도로|만화책|게임기|폭탄/;
+  for(const s of SCENARIOS){
+    assert.ok(!banned.test(s.speech),s.speech);
+    for(const label of s.labels)assert.ok(!banned.test(label),label);
+  }
+  for(const g of Object.values(GOODS))assert.ok(!banned.test(g.name),g.name);
+  const plaza=new Plaza(new Profile(null));
+  assert.ok(!banned.test(plaza.speech),plaza.speech);
+  for(const s of SENTENCES){
+    assert.ok(SYMBOLS[s[3]],`missing subject symbol ${s[3]}`);
+    assert.ok(SYMBOLS[s[4]],`missing object symbol ${s[4]}`);
+  }
+  const runner=new Runner(new Profile(null));runner.setPaused(false);
+  const wrong=runner.spawn('word',{slot:1,sentence:0});
+  runner.hitWord(wrong);
+  assert.ok(runner.state.message.includes('코코:'),runner.state.message);
+  assert.ok(runner.state.spawnMs<=750);
 });

@@ -527,8 +527,8 @@ export class Renderer {
     const bridgeLeft = Math.max(0, state.nextPuzzle - state.step);
     const bridgeProgress = clamp(1 - bridgeLeft / CONFIG.puzzle.everySteps, 0, 1);
     this.rect(140, 202, 440, 22, '#102549cc', 11, '#8be9ff4d');
-    this.rect(144, 206, Math.max(14, 432 * bridgeProgress), 14, '#58e6d0', 7);
-    this.text('등대 레고 브릿지까지 ' + bridgeLeft + '층 (+50 코인)', 360, 213, 13.5, '#fff7cc', 'center');
+    this.rect(144, 206, Math.max(14, 432 * bridgeProgress), 14, state.step >= CONFIG.sky.stratosphereStep ? '#ffd86b' : '#58e6d0', 7);
+    this.text(state.step >= CONFIG.sky.stratosphereStep ? '★ 80F 구름 등대 정상 점등! 다음 브릿지 ' + bridgeLeft + '층' : '구름 등대 브릿지까지 ' + bridgeLeft + '층 (+50 코인)', 360, 213, 13.5, '#fff7cc', 'center');
     // Vertical Lighthouse Altitude Gauge on the right edge
     this.rect(672, 280, 24, 300, '#102549b8', 12, '#8be9ff44');
     const fillH = Math.max(14, Math.round(288 * bridgeProgress));

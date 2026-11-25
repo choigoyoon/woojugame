@@ -47,8 +47,8 @@ export class AdventureRenderer {
     const wagonX=s.goldMs?540:642-s.slot*38+Math.sin(t/210)*8;
     wagon(a,wagonX,866,.68,t,true);
     cocoToy(a,wagonX-6,818,.46,t);
-    a.rect(wagonX-98,740,178,28,'#132e4ee6',10,'#ffe79988');
-    a.text(s.goldMs?'★ 도킹 완료! 황금 질주!':'객차 거리 '+Math.max(10,(3-s.slot)*40)+'m · 브릭 '+(3-s.slot)+'개!',wagonX-9,754,13.5,'#fff3bd');
+    a.rect(wagonX-106,736,194,32,'#132e4ee6',10,'#ffe79988');
+    a.text(s.goldMs?'★ 도킹 완료! 황금 질주!':`코코: "${this.runner.sentence[s.slot]}" 브릭 (${Math.max(10,(3-s.slot)*40)}m)`,wagonX-9,752,13.5,'#fff3bd');
     if(s.goldMs||s.slot>0){
       c.save();c.globalAlpha=s.goldMs?.9:.35+s.slot*.2;
       a.line([[CONFIG.runner.playerX+35,795],[wagonX-45,825]],s.goldMs?'#fff39e':'#7effe7',s.goldMs?7:3+s.slot);
@@ -156,13 +156,13 @@ export class AdventureRenderer {
       else if(o.kind==='captain')this.robot(p.x,p.y);
       else if(o.kind){
         // Preserve memory challenge: all items share neutral pedestals, but approaching shows a nearby name tag so icons are never ambiguous!
-        const dist=Math.hypot(o.x-s.x,o.z-s.z),near=s.phase==='active'&&dist<1.25;
-        if(near)a.ellipse(p.x,p.y+2,27,10,'#fff3b044');
+        const dist=Math.hypot(o.x-s.x,o.z-s.z),near=s.phase==='active'&&dist<1.38;
+        if(near)a.ellipse(p.x,p.y+2,29,11,'#fff3b044');
         this.good(o.kind,p.x,p.y-9-Math.sin(t/300+o.x)*4);
         a.star(p.x+21,p.y-42,4+Math.sin(t/200+o.z)*2,'#fff3b8');
         if(near){
-          a.rect(p.x-48,p.y-68,96,22,'#102648e6',8,'#9ed8ff77');
-          a.text(GOODS[o.kind].name,p.x,p.y-57,13,'#fff4c8');
+          a.rect(p.x-56,p.y-70,112,24,'#102648f0',8,'#9ed8ff88');
+          a.text(GOODS[o.kind].name,p.x,p.y-58,13,'#fff4c8');
         }
       }
       else{a.ellipse(p.x,p.y,25,10,'#34497177');a.block(p.x-24,p.y-39,48,33,8,'#e88996','#ffd0b2','#945b88');a.rect(p.x-14,p.y-29,8,7,'#704f74',2);a.rect(p.x+5,p.y-29,8,7,'#704f74',2);}
@@ -192,11 +192,11 @@ export class AdventureRenderer {
     }
     a.rect(604,164,62,52,'#435f89',15);a.text('♪',635,191,30,'#e9faff');
     if(s.phase==='briefing'||s.remindMs>0){
-      a.rect(54,310,612,236,'#122b53f5',27,'#9dceef');a.text('⚡ 기차 엔진에 조립할 레고 코어!',360,350,28,'#fff0b8');
+      a.rect(54,310,612,236,'#122b53f5',27,'#9dceef');a.text('⚡ 기차 엔진에 조립할 레고 코어 도면!',360,350,27,'#fff0b8');
       this.plaza.mission.forEach((m,i)=>{this.good(m.kind,220+i*270,411,.95);a.text(m.count+'개',280+i*270,403,29,'#d5ffef');a.text(GOODS[m.kind].name,225+i*270,453,20,'#d8edff');});
-      a.text('가짜 방해 브릭(만화책·게임기·폭탄)은 피해서 수거!',360,507,20,'#c9c4e8');
+      a.text('가까이 다가가 이름표를 확인하고, 고장·과열 부품은 피해 수거!',360,507,18.5,'#c9c4e8');
     }
-    if(s.phase==='retry'){a.rect(120,381,480,135,'#392d5ce8',28);a.text('앗! 방해 브릭이야, 다시 조립!',360,435,28,'#ffe0ba');}
+    if(s.phase==='retry'){a.rect(110,381,500,135,'#392d5ce8',28);a.text('앗! 고장·과열 부품이야! 도면을 다시 확인하자!',360,435,24,'#ffe0ba');}
     if(s.phase==='success'){
       a.rect(64,344,592,319,'#192e56f5',32,'#fff0a5');a.text('★ 별빛 엔진 코어 장착 완료!',360,392,33,'#ffe79b');
       a.text('로비의 별빛특급에 터보 원자로가 조립되었습니다!',360,432,19,'#b6ffe8');

@@ -351,10 +351,13 @@ export class BattleRenderer {
     a.poly([corner(left,15),corner(right,15),corner(right,-1),corner(left,-1)],warning?'#ff614c55':'#ffc77dbb','#ffc27a',3);
     for(let z=0;z<15;z+=2){const l=this.project(left,z),r=this.project(right,z+.6);a.line([[l.x,l.y],[r.x,r.y]],warning?'#ffe9a776':'#fff1bd',4);}
     const p=this.project(attack.lane===2?0:attack.lane===0?-.55:.55,4,12);
+    a.ellipse(p.x,p.y+12,68*p.s,20*p.s,warning?'#ff3b3066':'#fff0ad88');
     a.rect(p.x-31,p.y-80,62,62,'#78364cd9',15,'#ffd59b');a.text('!',p.x,p.y-48,47,'#ffefae');
     if(warning){
       for(const direction of attack.lane===2?[-1,1]:[attack.lane===0?1:-1])a.line([[p.x,p.y+4],[p.x+direction*100,p.y+4],[p.x+direction*82,p.y-10]],'#fff3bd',7);
       a.rect(p.x-30,p.y-10,60*(attack.remainingMs/this.game.rules.bossWarningMs),5,'#ffe693',2);
+      a.rect(p.x-78,p.y-116,156,28,'#3a1728e6',10,'#ffd59b');
+      a.text('집게 낙하! 옆 선로로!',p.x,p.y-102,13.5,'#fff2bd');
     }else{
       c.save();c.globalAlpha=attack.remainingMs/CONFIG.battle.bossSlamMs;
       const t=1-c.globalAlpha;const front=this.project(attack.lane===2?0:attack.lane===0?-.55:.55,2);

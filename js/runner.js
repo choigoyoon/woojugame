@@ -20,7 +20,7 @@ export class Runner extends Adventure {
   hitWord(item){
     const s=this.state;if(item.dead||s.goldMs)return;
     item.dead=true;const expected=this.sentence[s.slot],word=SENTENCES[item.sentence][item.slot];
-    if(word!==expected){s.misses++;s.message='?';s.messageMs=600;this.emit({type:'word-miss',x:item.x,y:item.y});return;}
+    if(word!==expected){s.misses++;s.message=`코코: "${expected}" 브릭!`;s.messageMs=850;s.spawnMs=Math.min(s.spawnMs,750);this.emit({type:'word-miss',x:item.x,y:item.y});return;}
     s.slot++;this.reward(CONFIG.runner.wordCoins);this.emit({type:'word',word,x:item.x,y:item.y});
     for(const other of this.items.active)if(other.kind==='word')other.dead=true;
     s.spawnMs=1100;

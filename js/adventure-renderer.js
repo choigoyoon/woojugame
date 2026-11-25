@@ -109,9 +109,25 @@ export class AdventureRenderer {
         a.poly([[cx,882],[cx+16,888],[cx,894],[cx+6,888]],s.goldMs?'#fff18a':'#7effe2aa');
       }
     }
+    // High-speed arcade action lines when jumping high or in Gold Rush!
+    if(!this.reduced&&(s.goldMs>0||s.y>45||this.wagonHitMs>0)){
+      c.save();c.globalAlpha=s.goldMs>0?.45:.25;
+      for(let i=0;i<10;i++){
+        const ly=260+(i*67)%580,lx=((720-(t*1.6+i*193)%860));
+        a.line([[lx,ly],[lx+95+(i%3)*45,ly]],s.goldMs>0?'#fff39e':'#9efff0',s.goldMs>0?4:2.5);
+      }
+      c.restore();
+    }
     // Runaway Starlight Express LEGO wagon with Coco on top — visibly transforms and jolts with each brick hit!
     const hitReaction=this.wagonHitMs/420,wagonDent=this.reduced?0:Math.sin(hitReaction*Math.PI)*.18;
     const wagonX=s.goldMs?540:642-s.slot*38+Math.sin(t/210)*8-(hitReaction*18);
+    // Wheel sparks flying from under the high-speed runaway train car!
+    if(!this.reduced){
+      for(let i=0;i<3;i++){
+        const sp=(t/40+i*1.7)%1;
+        a.star(wagonX-34-sp*38,864-sp*14,4+(1-sp)*4,s.goldMs?'#7effe8':'#ffd86b');
+      }
+    }
     c.save();c.translate(wagonX,866);c.scale(1+wagonDent,1-wagonDent*.7);
     wagon(a,0,0,.68,t,true);
     // Stage 1 hit (slot >= 1): Golden Magnetic Docking Hitch snaps onto the front of the wagon!
@@ -311,7 +327,24 @@ export class AdventureRenderer {
     this.captain??={kind:'captain',x:0,z:3.15};this.scene.push(this.captain);this.scene.sort((x,y)=>(x.x+x.z)-(y.x+y.z));
     for(const o of this.scene){const p=this.iso(o.x,o.z);
       if(o.kind==='player'){
+        const moving=Math.hypot(s.vx,s.vz)>.08;
+        const scanR=32+Math.sin(t/160)*5;
+        c.save();c.strokeStyle=this.plaza.ready?'#ffe875':'#7effe888';c.lineWidth=2.5;
+        c.beginPath();c.ellipse(p.x,p.y,scanR,scanR*.45,0,0,Math.PI*2);c.stroke();c.restore();
         a.ellipse(p.x,p.y,29,13,'#c4fff0');
+        // Magnetic Tractor Beam towards nearby target parts!
+        if(s.phase==='active'){
+          for(const item of this.plaza.items.active){
+            if(item.collected)continue;
+            const d=Math.hypot(item.x-s.x,item.z-s.z),isTarget=this.plaza.mission.some(m=>m.kind===item.kind);
+            if(d<1.38){
+              const ip=this.iso(item.x,item.z);
+              c.save();c.globalAlpha=.65;
+              a.line([[p.x,p.y-28],[ip.x,ip.y-18]],isTarget?'#7effe8':'#ff6b7b',isTarget?4:2.5);
+              c.restore();
+            }
+          }
+        }
         // Only point the return arrow once working-memory collection is complete (ready === true)!
         if(this.plaza.ready&&s.phase==='active'){
           const ang=Math.atan2(captain.y-p.y,captain.x-p.x);
@@ -319,7 +352,7 @@ export class AdventureRenderer {
           a.poly([[12,0],[-6,-8],[-3,0],[-6,8]],'#ffe875','#143252',1.5);
           c.restore();
         }
-        c.save();c.globalAlpha=s.flashMs&&Math.floor(t/80)%2?.5:1;a.toy(p.x,p.y,.72,{time:t,run:Math.hypot(s.vx,s.vz)>.08,turn:s.vx-s.vz,pitch:(s.vx+s.vz)*.05,squash:s.stunMs?Math.sin(s.stunMs/120)*.4:0,hurt:s.stunMs>0||s.phase==='retry',palette:this.profile.palette});c.restore();
+        c.save();c.globalAlpha=s.flashMs&&Math.floor(t/80)%2?.5:1;a.toy(p.x,p.y,.72,{time:t,run:moving,turn:s.vx-s.vz,pitch:(s.vx+s.vz)*.05,squash:s.stunMs?Math.sin(s.stunMs/120)*.4:0,hurt:s.stunMs>0||s.phase==='retry',palette:this.profile.palette});c.restore();
       }
       else if(o.kind==='captain')this.robot(p.x,p.y);
       else if(o.kind){

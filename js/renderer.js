@@ -664,6 +664,17 @@ export class Renderer {
       c.translate(Math.sin(this.time * 0.11) * amplitude * this.shake / CONFIG.motion.shakeMs, Math.cos(this.time * 0.08) * amplitude * this.shake / CONFIG.motion.shakeMs);
     }
     for (let i = this.game.steps.length - 1; i >= 0; i -= 1) this.platform(this.game.steps[i]);
+    // Hyper-Climb Speed Lines when combo >= 5 or rocket auto-climbing!
+    if (!this.reducedMotion && (this.game.state.combo >= 5 || this.game.state.mode === MODE.AUTO_CLIMB)) {
+      c.save();
+      c.globalAlpha = this.game.state.mode === MODE.AUTO_CLIMB ? 0.5 : Math.min(0.38, this.game.state.combo * 0.025);
+      for (let i = 0; i < 8; i += 1) {
+        const lx = i < 4 ? 26 + i * 22 : 616 + (i - 4) * 22;
+        const ly = 220 + ((this.time * 1.4 + i * 170) % 680);
+        this.rect(lx, ly, 4, 85, this.game.state.mode === MODE.AUTO_CLIMB ? '#7effe8' : '#ffe885', 2);
+      }
+      c.restore();
+    }
     this.avatar();
     for (const particle of this.particles) {
       if (particle.life <= 0) continue;

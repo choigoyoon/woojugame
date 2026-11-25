@@ -120,6 +120,14 @@ export class BattleRenderer {
     a.rect(72,292,18,58,'#e8f1fa',2);a.rect(72,306,18,11,'#e0675a',1);a.rect(72,328,18,11,'#e0675a',1);
     a.stud(81,290,7,2.5,3.5,'#e39d3b','#fff5bd');
     if(parts.beacon)a.poly([[81,290],[210,255+Math.sin(this.time/700)*15],[210,310+Math.sin(this.time/700)*15]],'#fff6b538');
+    // LEGO Harbor Escort Speedboats & Floating Signal Buoys skimming across the ocean beside the bridge!
+    for(const [side,by,spd]of[[-1,540,22],[1,660,18],[-1,820,26]]){
+      const bx=side<0?48+Math.sin(this.time/900+by)*18:672+Math.cos(this.time/850+by)*18;
+      const sy=390+((by+this.time*spd*.015)%680);
+      a.ellipse(bx,sy+6,22,7,'#ffffff55');
+      a.poly([[bx-16,sy],[bx+16,sy],[bx+11,sy+9],[bx-11,sy+9]],side<0?'#e0675a':'#f2b550');
+      a.stud(bx,sy-4,6,2.5,3,'#256d85','#9efff2');
+    }
   }
   deck() {
     const a=this.art,c=a.c;const distance=this.game.state.distance;

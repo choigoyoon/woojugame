@@ -106,7 +106,7 @@ export class CampaignBattle extends Battle {
   get rules(){return this.roundRules??CONFIG.battle;}
   resetRound() {
     const r=this.round,gateTimes=[];for(let t=CONFIG.campaign.gateFirstMs;t<=r.durationMs-CONFIG.campaign.gateReserveMs;t+=CONFIG.campaign.gateEveryMs)gateTimes.push(t);
-    this.roundRules={...CONFIG.battle,gateTimes,enemyEveryMs:r.enemyEveryMs,bossAtMs:r.durationMs,patterns:r.patterns,bossCombatSeconds:r.bossSeconds,bossWarningMs:r.warningMs};
+    this.roundRules={...CONFIG.battle,gateTimes,enemyEveryMs:r.enemyEveryMs,bossAtMs:r.durationMs,patterns:r.patterns,bossHp:r.bossHp,bossHpPerWave:0,bossCombatSeconds:r.bossSeconds,bossWarningMs:r.warningMs};
     const paused=this.state.paused;
     Object.assign(this.state,{paused,phase:'combat',round:this.progress.round,weapon:this.progress.weapon,rank:this.progress.rank,
       mathLevel:this.progress.skill.level,resultMs:0,roundMs:0,roundCoins:0,roundGates:0,roundCorrect:0,roundMaxSquad:r.squad,
@@ -131,11 +131,12 @@ export class CampaignBattle extends Battle {
     this.dirty=true;
   }
   firepower(powered=this.state.powerMs>0) {
-    const p=super.firepower(powered);if(!this.campaign)return p;
-    const w=this.state.weapon,c=CONFIG.campaign;p.damage*=1+(this.state.rank-1)*c.rankBonus;
-    if(w==='spread'){p.pellets=Math.max(3,p.pellets);p.damage*=c.spreadDamage;p.interval*=c.spreadInterval;}
-    if(w==='arc')p.damage*=c.arcDamage;
-    return p;
+    if(!this.campaign)return super.firepower(powered);
+    const b=CONFIG.battle,c=CONFIG.campaign,w=this.state.weapon;
+    const pellets=Math.min(b.maxPellets,Math.max(powered||w==='spread'?3:1,1+Math.floor(this.state.squad/12)));
+    const dps=Math.min(c.maxDps,c.baseDps+c.memberDps*this.state.squad);
+    const factor=w==='spread'?c.spreadDamage:w==='pierce'?c.pierceDamage:w==='arc'?c.arcDamage:1;
+    return {pellets,damage:dps*b.shotMs/1000/pellets*factor*(1+(this.state.rank-1)*c.rankBonus)*(powered?b.powerDamage:1),interval:(powered?b.powerShotMs:b.shotMs)*(w==='spread'?c.spreadInterval:1)};
   }
   shoot() {
     const before=this.nextId;super.shoot();
@@ -187,6 +188,8 @@ export class CampaignBattle extends Battle {
   tick(ms) {
     if(this.state.phase!=='combat'){this.state.resultMs=Math.min(10000,this.state.resultMs+ms);return;}
     const s=this.state;s.roundMs+=ms;
+    let section=0;for(let i=1;i<CONFIG.campaign.sectionFractions.length;i++)if(s.waveMs>=this.rules.bossAtMs*CONFIG.campaign.sectionFractions[i])section=i;
+    this.roundRules.patterns=CONFIG.campaign.sectionPatterns[section];
     super.tick(ms);
     const lane=s.x<0?0:1;if(lane!==s.lane){s.lane=lane;s.laneSince=s.elapsedMs;}
     s.roundMaxSquad=Math.max(s.roundMaxSquad,s.squad);

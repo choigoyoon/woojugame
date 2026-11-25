@@ -105,6 +105,40 @@ test('center boss attack has safe edges, and storage failures do not stop a camp
   b.hit(b.entities[0],100);b.advance(16);assert.equal(p.status,'memory');assert.ok(p.coins>0);assert.equal(b.state.phase,'combat');
 });
 
+test('fresh boss health is fixed by round, independent of recruited squad and chosen weapon',()=>{
+  for(let round=0;round<3;round++)for(const squad of [5,30,99])for(const weapon of ['pulse','spread','pierce','arc']){
+    const {battle:b}=create();b.progress.round=round;b.resetRound();
+    Object.assign(b.state,{squad,weapon,waveMs:b.round.durationMs,shotClock:10000});
+    b.entities=[];b.bullets=[];b.gateIndex=100;b.advance(5);
+    const boss=b.entities.find(e=>e.kind==='boss');assert.ok(boss);
+    assert.equal(boss.maxHp,CONFIG.campaign.rounds[round].bossHp);
+  }
+});
+
+test('recruiting increases total firepower across pellet thresholds without multiplying the damage budget',()=>{
+  const {battle:b}=create();let previous=0;
+  for(let squad=1;squad<=200;squad++){
+    b.state.squad=squad;const f=b.firepower(false),dps=f.pellets*f.damage*1000/f.interval;
+    assert.ok(Math.abs(dps-Math.min(CONFIG.campaign.maxDps,CONFIG.campaign.baseDps+squad*CONFIG.campaign.memberDps))<1e-9);
+    assert.ok(dps>=previous-1e-9);previous=dps;
+  }
+});
+
+test('a larger squad defeats the same boss sooner, and an existing saved boss retains its health',()=>{
+  const durations=[];
+  for(const squad of [5,30]){
+    const {battle:b}=create();b.entities=[];b.bullets=[];b.gates=[];
+    b.bossSpawned=b.heavySpawned=b.supplySpawned=true;b.gateIndex=100;b.nextEnemy=b.nextSupply=1e8;b.bossAttackClock=1e8;
+    b.state.squad=squad;b.spawn('boss',0,9,600);let elapsed=0;
+    while(!b.state.bosses&&elapsed<60000){b.advance(25);b.takeEvents();elapsed+=25;}
+    assert.equal(b.state.bosses,1);durations.push(elapsed);
+  }
+  assert.ok(durations[1]<durations[0]*.65,JSON.stringify(durations));
+  const {battle:b,storage}=create();b.entities=[];b.spawn('boss',0,9,987);b.entities[0].hp=432;b.bossSpawned=true;b.saveRun();
+  const restored=new CampaignBattle(()=>.9,new Profile(storage));assert.equal(restored.recovered,false);
+  assert.equal(restored.entities[0].hp,432);assert.equal(restored.entities[0].maxHp,987);
+});
+
 test('four simulated hours with minute-by-minute reloads keep campaign rewards and object counts bounded',()=>{
   let {storage,profile,battle:b}=create();let reloads=0,clears=0,firstRewards=0,maxBytes=0;
   for(let time=0;time<4*60*60*1000;time+=200){

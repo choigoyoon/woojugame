@@ -22,13 +22,13 @@ export const CONFIG = freeze({
   parent: { maxAttempts: 5, lockMs: 30000, sessionMs: 5 * 60 * 1000 },
   campaign: {
     checkpointVersion: 1, saveMs: 1000, resultGuardMs: 800, stableChoiceMs: 900, sampleCount: 10,
-    gateEveryMs: 22000, gateFirstMs:5000, gateReserveMs:16000, assistedGateSpeed:.75,
+    gateEveryMs: 30000, gateFirstMs:18000, gateReserveMs:16000, assistedGateSpeed:.75,
     extraSupplyMs: 30000, maxSaveBytes: 262144, bossSafeX:.35,
     math:{maxOperands:[10,20,20],minGaps:[3,3,1],promoteWins:8,demoteWins:5},
     rounds: [
-      {id:'harbor-1',title:'선착장 돌격',boss:'철통 대장',durationMs:120000,enemyEveryMs:6500,patterns:[0,1,0,1],squad:5,reward:40,bossSeconds:8,warningMs:1500,theme:0},
-      {id:'harbor-2',title:'화물선 추격',boss:'쌍둥이 집게',durationMs:130000,enemyEveryMs:6000,patterns:[1,2,0,2],squad:8,reward:60,bossSeconds:10,warningMs:1400,theme:1},
-      {id:'harbor-3',title:'항구를 지켜라',boss:'항구 수호 거인',durationMs:140000,enemyEveryMs:5500,patterns:[2,1,0,2],squad:10,reward:100,bossSeconds:12,warningMs:1300,theme:2},
+      {id:'harbor-1',title:'선착장 돌격',boss:'철통 대장',durationMs:120000,enemyEveryMs:6500,patterns:[0,1,0,1],squad:5,reward:40,bossHp:600,bossSeconds:8,warningMs:1500,theme:0},
+      {id:'harbor-2',title:'화물선 추격',boss:'쌍둥이 집게',durationMs:130000,enemyEveryMs:6000,patterns:[1,2,0,2],squad:8,reward:60,bossHp:900,bossSeconds:10,warningMs:1400,theme:1},
+      {id:'harbor-3',title:'항구를 지켜라',boss:'항구 수호 거인',durationMs:140000,enemyEveryMs:5500,patterns:[2,1,0,2],squad:10,reward:100,bossHp:1200,bossSeconds:12,warningMs:1300,theme:2},
     ],
     weapons: {
       pulse:{name:'펄스포',color:'#ffd277'},
@@ -37,7 +37,10 @@ export const CONFIG = freeze({
       arc:{name:'연쇄포',color:'#9bdcff'},
     },
     spreadDamage:.7, spreadInterval:1.12, spreadWidth:.25,
-    pierceTargets:2, arcDamage:.8, arcSplash:.5, arcRangeX:.75, arcRangeZ:3, rankBonus:.18,
+    pierceTargets:2, pierceDamage:.85, arcDamage:.8, arcSplash:.5, arcRangeX:.75, arcRangeZ:3, rankBonus:.18,
+    baseDps:12, memberDps:2, maxDps:360,
+    sectionFractions:[0,.34,.68], sectionNames:['선착장 진입','수송로 돌파','대장에게 접근'],
+    sectionPatterns:[[0,1],[1,2],[2,0,1]],
   },
   brake: { minSteps: 15, maxSteps: 25, warningMs: 500, holdMs: 2000, coins: 15, autoSteps: 5, autoStepMs: 190 },
   puzzle: { everySteps: 50, brakeExclusionSteps: 3, chestCoins: 50, celebrationMs: 1800, wrongMs: 450 },
@@ -65,6 +68,7 @@ export const CONFIG = freeze({
   rules: { stumbleMs: 1000, stepCoins: 1, comboEvery: 10, comboCoins: 5 },
   rhythm: { chainWindowMs: 480, maxNote: 7 },
   motion: {
+    avatarStrideMs:115, squadFollowMs:70, squadLeanMs:95, squadMaxLean:.12, transitionMs:240,
     anchorY: 866, clipTop: 200, hopMs: 190, minHopMs: 90, hopCadenceRatio: 0.72,
     hopHeight: 54, cameraMs: 85, maxVisualGap: 4,
     shakeMs: 110, shakePx: 4, stumbleShakePx: 8,

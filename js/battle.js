@@ -99,14 +99,15 @@ export class Battle {
     const s = this.state; const index = Math.abs(s.x)<=.4*(CONFIG.engine.collectScale-1)?gate.correct:s.x < 0 ? 0 : 1;
     const selected = gate.options[index]; const good = index === gate.correct;
     const previous = s.squad;
-    if (good) {
+    if (selected.result >= 0) {
       s.squad = Math.min(CONFIG.battle.maxSquad, s.squad + selected.result);
       this.reward(CONFIG.battle.gateCoins);
     } else s.squad = Math.max(1, s.squad - Math.max(1, Math.min(CONFIG.battle.penalty, Math.floor(s.squad * CONFIG.battle.penaltyFraction))));
     s.gatesPassed += 1; s.gateResult = { text: selected.text, result: selected.result, good, change: s.squad - previous };
-    s.banner = (good ? '+' : '−') + Math.abs(s.squad - previous); s.bannerMs = 1400;
-    s.shakeMs = good ? 160 : 90;
-    this.emit({ type: good ? 'gate-win' : 'gate-miss', x: s.x, z: CONFIG.battle.playerZ, change: s.squad - previous });
+    const recruited=selected.result>=0;
+    s.banner = (recruited ? '+' : '−') + Math.abs(s.squad - previous); s.bannerMs = 1400;
+    s.shakeMs = recruited ? 160 : 90;
+    this.emit({ type: recruited ? 'gate-win' : 'gate-miss', x: s.x, z: CONFIG.battle.playerZ, change: s.squad - previous });
   }
   hit(entity, damage, chain = false) {
     if (entity.dead) return;
@@ -181,7 +182,7 @@ export class Battle {
       this.spawn('barrel', this.random() < 0.5 ? -0.5 : 0.5, 32, 150); this.heavySpawned = true;
     }
     if (s.waveMs >= b.bossAtMs && !this.bossSpawned) {
-      const power=this.firepower(false),hp=Math.max(b.bossHp+(s.wave-1)*b.bossHpPerWave,Math.ceil(power.pellets*power.damage*1000/power.interval*b.bossCombatSeconds));
+      const hp=b.bossHp+(s.wave-1)*b.bossHpPerWave;
       this.spawn('boss', 0, b.bossSpawnZ, hp); this.bossSpawned = true;
       s.shakeMs = 150;
       this.emit({ type: 'boss' });

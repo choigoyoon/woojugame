@@ -12,13 +12,14 @@ OUTPUT = ROOT / 'test-results/arcade'
 OUTPUT.mkdir(parents=True, exist_ok=True)
 
 class ArcadeBrowser:
-    def __init__(self, controlled=True):
+    def __init__(self, controlled=True, record_video_dir=None):
         self.server = subprocess.Popen(['node', 'scripts/serve.mjs', '--port', '0', '--base', '/woojugame/'], cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         self.base = re.search(r'http://\S+', self.server.stdout.readline()).group().replace('localhost', '127.0.0.1')
         self.driver = sync_playwright().start()
         executable = os.environ.get('CHROMIUM_PATH') or shutil.which('chromium') or shutil.which('google-chrome')
         self.browser = self.driver.chromium.launch(headless=True, executable_path=executable)
-        self.context = self.browser.new_context(viewport={'width':412,'height':915},device_scale_factor=2,is_mobile=True,has_touch=True)
+        video={'record_video_dir':str(record_video_dir),'record_video_size':{'width':412,'height':916}} if record_video_dir else {}
+        self.context = self.browser.new_context(viewport={'width':412,'height':915},device_scale_factor=2,is_mobile=True,has_touch=True,**video)
         self.page = self.context.new_page()
         self.errors, self.requests, self.failures = [], [], []
         self.page.on('pageerror', lambda error:self.errors.append(str(error)))

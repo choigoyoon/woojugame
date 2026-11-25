@@ -21,8 +21,10 @@ async function boot() {
   await import('./main.js');
   loading?.remove();
 }
-window.__ujuReady=boot().catch(()=>{
+window.__ujuReady=boot().catch(error=>{
   const loading=document.querySelector('#loading');if(!loading)return;
-  loading.textContent='연결을 확인하고 다시 열어 주세요.';
+  loading.textContent=error?.code==='FUTURE_SAVE'?'저장된 기록을 열려면 새 버전이 필요해요. 기록은 그대로 보관하고 있어요.':'연결을 확인하고 다시 열어 주세요.';
+  // Startup stops before main initializes; still offer a waiting update without saving defaults.
+  if(error?.code==='FUTURE_SAVE')import('./pwa.js').then(({setupPWA})=>setupPWA()).catch(()=>{});
   const retry=document.createElement('button');retry.textContent='다시 열기';retry.onclick=()=>location.reload();loading.append(retry);
 });

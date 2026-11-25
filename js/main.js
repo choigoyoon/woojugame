@@ -1,5 +1,5 @@
 import { ACTION, CONFIG, MODE } from './config.js';
-import { Profile } from './profile.js';
+import { Profile, FutureSaveError } from './profile.js';
 import { Arcade, FrameClock } from './arcade.js';
 import { Input, actionAt } from './input.js';
 import { Renderer } from './renderer.js';
@@ -15,13 +15,17 @@ import { setupPWA } from './pwa.js';
 import { Juice } from './juice.js';
 import { materialStats } from './material.js';
 import { FrameBudget, FramePacer } from './frame-budget.js';
+import { ScreenTransition } from './screen-transition.js';
 
 const canvas=document.querySelector('#scene'),element=document.querySelector('#game'),viewport=document.querySelector('#viewport'),score=document.querySelector('#score');
-const profile=new Profile(),arcade=new Arcade(profile),audio=new Audio(profile),haptics=new Haptics(profile);
+const profile=new Profile();
+if(profile.writeProtected)throw new FutureSaveError();
+const arcade=new Arcade(profile),audio=new Audio(profile),haptics=new Haptics(profile);
 const renderer=new Renderer(canvas,arcade.stairs),ctx=renderer.ctx;
 const battleView=new BattleRenderer(ctx,arcade.battle,profile),puzzleView=new PuzzleRenderer(ctx,arcade.stairs,profile),lobby=new Lobby(ctx,profile);
 const adventureView=new AdventureRenderer(ctx,arcade.runner,arcade.plaza,profile),center=new Center(ctx,profile);
 const juice=new Juice(canvas,profile);
+const transition=new ScreenTransition(canvas);
 const controls=new Map();
 const timer=new FrameClock(performance.now()),frameBudget=new FrameBudget(),framePacer=new FramePacer();
 let viewWidth=0,viewHeight=0,viewDpr=0,qualityPending=false;
@@ -84,12 +88,12 @@ function events(){
   if(['runner','plaza'].includes(arcade.mode))for(const e of arcade[arcade.mode].takeEvents())event(e);
 }
 function speakPuzzle(){const p=arcade.stairs.state.puzzle;if(p&&!p.solved){const s=SCENARIOS.find(s=>s.id===p.id);audio.speak(s.speech,s.id);}}
-function changed(){frameBudget.reset(performance.now());juice.reset(arcade.mode);audio.setMode(arcade.mode);input.reset();dragId=null;adventureView.joystick=null;center.close();if(['profile','parents'].includes(arcade.mode))center.open(arcade.mode);audio.stopEffects();uiKey='';audio.play({type:'select'});events();if(arcade.mode==='stairs'&&arcade.stairs.state.mode===MODE.PUZZLE)speakPuzzle();if(arcade.mode==='plaza'&&arcade.plaza.state.phase==='briefing')audio.speak(arcade.plaza.speech);syncUI();render();}
+function changed(){transition.start();frameBudget.reset(performance.now());juice.reset(arcade.mode);audio.setMode(arcade.mode);input.reset();dragId=null;adventureView.joystick=null;center.close();if(['profile','parents'].includes(arcade.mode))center.open(arcade.mode);audio.stopEffects();uiKey='';audio.play({type:'select'});events();if(arcade.mode==='stairs'&&arcade.stairs.state.mode===MODE.PUZZLE)speakPuzzle();if(arcade.mode==='plaza'&&arcade.plaza.state.phase==='briefing')audio.speak(arcade.plaza.speech);syncUI();render();}
 function advance(now){
-  const delta=timer.tick(now);if(arcade.paused)return;
+  const delta=timer.tick(now);if(profile.writeProtected){arcade.setPaused(true);audio.pause();return;}if(arcade.paused)return;
   if(arcade.mode==='battle')arcade.battle.setAxis(input.axis());
   if(arcade.mode==='plaza'&&dragId===null){const x=input.axis(),y=(input.isPressed('down')?1:0)-(input.isPressed('up')?1:0);if(x||y)arcade.interact();arcade.plaza.move(x+y,y-x);}
-  juice.update(delta);arcade.advance(delta);events();
+  transition.update(delta);juice.update(delta);arcade.advance(delta);events();
   const playing=arcade.mode==='stairs'||arcade.mode==='runner'||arcade.mode==='battle'&&arcade.battle.state.phase==='combat'||arcade.mode==='plaza'&&arcade.plaza.state.phase==='active';audio.update(delta,playing);
   if(arcade.mode==='stairs'){
     const landing=renderer.update(delta,input);audio.play(landing);if(landing)juiceEvent(landing);juice.trail(delta,renderer.pose.x,renderer.screenY(renderer.pose.y)-renderer.pose.lift,1.3,!!renderer.jump);
@@ -100,7 +104,7 @@ function advance(now){
 }
 const input=new Input(element,{
   press(record){
-    advance(performance.now());if(arcade.paused)return;
+    advance(performance.now());if(arcade.paused||profile.writeProtected)return;
     const action=record.action;
     if(action==='home'){
       if(arcade.home(input.hasGameplayInput()))changed();
@@ -108,6 +112,7 @@ const input=new Input(element,{
     }
     if(arcade.mode==='lobby'){
       lobby.tap(action);
+      lobby.render();
       if(arcade.enter(action))changed();else audio.play({type:'locked'});
       return;
     }
@@ -190,6 +195,8 @@ function render(force=false){
   else if(arcade.mode==='plaza')adventureView.plazaView(canHome);
   else if(['profile','parents'].includes(arcade.mode))center.render();else lobby.render();
   juice.render();
+  transition.render(ctx);
+  if(profile.writeProtected){lobby.art.rect(0,0,720,1280,'#10203df5');lobby.art.text('새 버전으로 다시 열어 주세요',360,574,32,'#fff0ba');lobby.art.text('저장된 기록은 안전하게 그대로 두었습니다',360,637,23,'#c0ddec');return;}
   if(arcade.paused){lobby.art.rect(0,0,720,1280,'#11234790');lobby.art.rect(300,570,120,120,'#14284ce6',28);lobby.art.rect(333,602,17,53,'#fff3cf',3);lobby.art.rect(372,602,17,53,'#fff3cf',3);}
 }
 function backingResize(){return renderer.resize(viewWidth,viewHeight,Math.max(1,Math.min(viewDpr,CONFIG.view.maxDpr)*frameBudget.scale));}
@@ -204,6 +211,7 @@ function frame(now){
   if(!arcade.paused)frameId=requestAnimationFrame(frame);
 }
 function resize(){
+  transition.stop();
   const style=getComputedStyle(viewport),width=viewport.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight),height=viewport.clientHeight-parseFloat(style.paddingTop)-parseFloat(style.paddingBottom);
   const scale=Math.max(0,Math.min(width/720,height/1280)),w=720*scale,h=1280*scale,dpr=window.devicePixelRatio||1;
   if(w===viewWidth&&h===viewHeight&&dpr===viewDpr)return;
@@ -213,7 +221,7 @@ function resize(){
 function syncVisibility(){
   const paused=document.hidden||pageAway||!document.hasFocus();if(paused===arcade.paused)return;
   advance(performance.now());arcade.setPaused(paused);input.reset();dragId=null;
-  if(paused){juice.stop();audio.pause();haptics.stop();if(['profile','parents'].includes(arcade.mode))center.open(arcade.mode);profile.save();if(frameId!==null)cancelAnimationFrame(frameId);frameId=null;render();}
+  if(paused){transition.stop();juice.stop();audio.pause();haptics.stop();if(['profile','parents'].includes(arcade.mode))center.open(arcade.mode);profile.save();if(frameId!==null)cancelAnimationFrame(frameId);frameId=null;render();}
   else{timer.reset(performance.now());framePacer.reset();frameBudget.reset(performance.now());audio.resume();events();if(arcade.mode==='stairs')speakPuzzle();if(frameId===null)frameId=requestAnimationFrame(frame);}
 }
 new ResizeObserver(resize).observe(viewport);window.visualViewport?.addEventListener('resize',resize);window.addEventListener('resize',resize);

@@ -16,12 +16,15 @@ export class BattleRenderer {
     const motion=window.matchMedia('(prefers-reduced-motion: reduce)');this.reduced=motion.matches;
     motion.addEventListener('change',event=>{this.reduced=event.matches;});
     this.troopSprites=[];this.prepareTroops();
+    this.squadX=battle.state.x;this.squadLean=0;
   }
   prepareTroops() {
     const density=Math.max(1,Math.ceil(this.art.c.canvas.width/720*.53*12/(12+CONFIG.battle.playerZ)));
     const palette=this.profile.palette;
-    if(palette===this.spritePalette&&density===this.spriteDensity)return;
-    this.spritePalette=palette;this.spriteDensity=density;
+    if(palette===this.spritePalette&&density===this.spriteDensity&&this.reduced===this.spriteReduced)return;
+    this.spritePalette=palette;this.spriteDensity=density;this.spriteReduced=this.reduced;
+    // Keep one readable captain silhouette. Repeating 24 crowns/wings hides the squad's motion.
+    const recruitPalette={...palette,parts:{...palette.parts,head:'pilot',back:'none'}};
     // Draw the same procedural avatar once per gait pose. No downloaded sprites.
     // Match the largest projected soldier's pixel footprint, including high-DPR tablets.
     // A fixed 16-frame cache replaces hundreds of limb paths on every large-squad frame.
@@ -29,7 +32,7 @@ export class BattleRenderer {
       const surface=typeof OffscreenCanvas==='function'?new OffscreenCanvas(208*density,224*density):document.createElement('canvas');
       surface.width=208*density;surface.height=224*density;
       const context=surface.getContext('2d');context.setTransform(density,0,0,density,0,0);
-      new Art(context).toy(104,210,1,{time:i/CONFIG.battle.spriteFrames*Math.PI*2*95,run:true,back:true,palette:this.profile.palette});
+      new Art(context).toy(104,210,1,{time:i/CONFIG.battle.spriteFrames*Math.PI*2*CONFIG.motion.avatarStrideMs,run:true,back:true,palette:recruitPalette});
       return surface;
     });
   }
@@ -38,6 +41,10 @@ export class BattleRenderer {
     this.time+=ms;this.glow=Math.max(0,this.glow-ms);
     this.kick=Math.max(0,this.kick-ms);this.powerIntro=Math.max(0,this.powerIntro-ms);this.chainMs=Math.max(0,this.chainMs-ms);
     this.displaySquad+=(this.game.state.squad-this.displaySquad)*(1-Math.exp(-ms/140));
+    const target=this.game.state.x,lag=target-this.squadX;
+    this.squadX+=lag*(1-Math.exp(-ms/CONFIG.motion.squadFollowMs));
+    const lean=this.reduced?0:Math.max(-CONFIG.motion.squadMaxLean,Math.min(CONFIG.motion.squadMaxLean,lag*.65));
+    this.squadLean+=(lean-this.squadLean)*(1-Math.exp(-ms/CONFIG.motion.squadLeanMs));
     for(const p of this.particles){if(p.life<=0)continue;p.life=Math.max(0,p.life-ms);p.x+=p.vx*ms/1000;p.y+=p.vy*ms/1000;p.vy+=480*ms/1000;p.angle+=p.spin*ms/1000;}
     for(const r of this.rings)r.life=Math.max(0,r.life-ms);
     for(const p of this.popups){p.life=Math.max(0,p.life-ms);p.y-=ms*.045;}
@@ -230,12 +237,16 @@ export class BattleRenderer {
     const count=Math.max(1,Math.min(CONFIG.battle.maxVisibleSquad,Math.round(this.displaySquad)));
     for(let i=count-1;i>=0;i--){
       const row=Math.floor(i/5),col=i%5,columns=Math.min(5,count-row*5);
-      const p=this.project(s.x+(col-(columns-1)/2)*.14,CONFIG.battle.playerZ+row*.82);
+      // The lead soldier stays on the input/collision position. Only rear rows lag visually.
+      const follow=this.reduced?s.x:s.x+(this.squadX-s.x)*Math.min(1,row*.3);
+      const p=this.project(follow+(col-(columns-1)/2)*.14,CONFIG.battle.playerZ+row*.82);
       const bob=this.reduced?0:Math.abs(Math.sin(this.time/100+i*.8))*3-s.recoilMs/65*3;
       if(this.glow>0){c.save();c.globalAlpha=this.glow/900*.45;a.ellipse(p.x,p.y,30*p.s,10*p.s,'#ffe893');c.restore();}
       const scale=.53*p.s;
-      const phase=this.reduced?0:Math.floor((this.time+i*51)/(Math.PI*2*95)*CONFIG.battle.spriteFrames)%CONFIG.battle.spriteFrames;
-      c.drawImage(this.troopSprites[phase],p.x-104*scale,p.y-bob-210*scale,208*scale,224*scale);
+      const phase=this.reduced?0:Math.floor((this.time+i*51)/(Math.PI*2*CONFIG.motion.avatarStrideMs)*CONFIG.battle.spriteFrames)%CONFIG.battle.spriteFrames;
+      c.save();c.translate(p.x,p.y);c.rotate(this.reduced?0:this.squadLean);c.translate(-p.x,-p.y);
+      if(i===Math.floor(Math.min(5,count)/2))a.toy(p.x,p.y-bob,scale*1.1,{time:this.time,run:true,back:true,palette:this.profile.palette});
+      else c.drawImage(this.troopSprites[phase],p.x-104*scale,p.y-bob-210*scale,208*scale,224*scale);
       if(this.glow>0)a.star(p.x+39*scale,p.y-bob-156*scale,10*scale,'#fff4a5');
       const powered=s.powerMs>0;
       a.block(p.x+16*p.s,p.y-57*p.s+s.recoilMs/65*4,14*p.s,29*p.s,4*p.s,powered?'#29dce3':CONFIG.campaign.weapons[s.weapon]?.color??'#2e4b66',powered?'#c7fff3':'#b4dfe4','#173550');
@@ -244,6 +255,7 @@ export class BattleRenderer {
         a.star(p.x+23*p.s,p.y-66*p.s,11*p.s,'#fffde0');
         a.ellipse(p.x+23*p.s,p.y-62*p.s,4*p.s,7*p.s,'#fff');
       }
+      c.restore();
     }
     const center=this.project(s.x,CONFIG.battle.playerZ);
     a.rect(center.x-44,center.y+20,88,39,'#153453dc',18,'#b8fff56b');a.text(s.squad,center.x,center.y+40,s.squad>999?21:28,'#eaffda');
@@ -292,22 +304,28 @@ export class BattleRenderer {
     const a=this.art,c=a.c,s=this.game.state;
     a.cached('hud',[0,0,720,240],()=>{
       const c=a.c;c.fillStyle=a.gradient(0,0,0,240,['#122b5be8','#122b5b00']);c.fillRect(0,0,720,240);
-      a.text('BRIDGE BATTLE',403,62,31,'#fff2c7');
+      a.text('다리 배틀 런',403,62,31,'#fff2c7');
       a.rect(30,125,274,86,'#122d54df',25,'#96e9fb59');a.toy(67,194,.28,{time:0,palette:this.profile.palette});
       a.rect(417,125,274,86,'#122d54df',25,'#96e9fb59');a.coin(459,168,.9);
     },this.spritePalette);
     a.home(canHome);a.text(s.squad,184,168,43,'#c8ffed');a.counter(this.profile.coins,566,168,206,36,'#ffe8a5');
-    a.label(this.game.campaign?'하늘 항구  1-'+(s.round+1)+'  ·  '+this.game.round.title:'WAVE '+s.wave,360,244,18,'#fff4d4','#18375b');
+    a.label(this.game.campaign?'하늘 항구  '+(s.round+1)+' / 3  ·  '+this.game.round.title:'WAVE '+s.wave,360,244,19,'#fff4d4','#18375b');
     const boss=this.game.entities.find(entity=>entity.kind==='boss');
-    a.rect(142,274,436,9,'#143b6266',5);a.rect(142,274,436*(boss?boss.hp/boss.maxHp:Math.min(1,s.waveMs/this.game.rules.bossAtMs)),9,boss?'#ff8e8d':'#b2f2e2',5);
+    a.rect(142,274,436,9,'#143b62a6',5);a.rect(142,274,436*(boss?boss.hp/boss.maxHp:Math.min(1,s.waveMs/this.game.rules.bossAtMs)),9,boss?'#ff8e8d':'#b2f2e2',5);
+    if(!boss&&this.game.campaign){
+      const route=Math.min(1,s.waveMs/this.game.rules.bossAtMs),at=CONFIG.campaign.sectionFractions;
+      for(let i=0;i<=at.length;i++){const point=at[i]??1,x=142+436*point;a.ellipse(x,278,7,7,point<=route?'#b8ffdf':'#204363');}
+      const section=at.reduce((found,point,index)=>route>=point?index:found,0);
+      a.label(CONFIG.campaign.sectionNames[section],360,308,18,'#d8f6e9','#18375b');
+    }
     if(boss)a.label(this.game.campaign?this.game.round.boss+(boss.rage?' !':''):boss.rage?'BOSS • RAGE':'BOSS',360,310,22,boss.rage?'#ffbd87':'#fff1d3','#18375b');
     if(s.bannerMs>0){
       c.save();c.globalAlpha=Math.min(1,s.bannerMs/260);
       const clear=s.banner==='CLEAR!';
       a.rect(clear?133:220,340,clear?454:280,clear?123:95,'#142d55e8',27,clear?'#ffe791':'#95ffe0');
-      a.text(s.banner,360,clear?383:374,clear?53:48,clear?'#ffe68e':s.gateResult?.good?'#9dffe3':'#ffc5b1');
+      a.text(s.banner,360,clear?383:374,clear?53:48,clear?'#ffe68e':s.gateResult?.change>=0?'#9dffe3':'#ffc5b1');
       if(clear){a.coin(310,430,.6);a.text('+'+CONFIG.battle.bossCoins,376,430,28,'#fff4ac');}
-      else if(s.gateResult)a.text(s.gateResult.text+' = '+s.gateResult.result,360,413,22,'#fff5dd');
+      else if(s.gateResult)a.text(s.gateResult.change>=0?'지원병 합류!':'부대를 지켜!',360,413,22,'#fff5dd');
       c.restore();
     }
     if(this.chainMs>0&&this.chain>1){c.save();c.globalAlpha=Math.min(1,this.chainMs/220);a.text('CHAIN ×'+this.chain,360,1062,28,'#18345c');a.text('CHAIN ×'+this.chain,360,1059,26,'#fff2ad');c.restore();}

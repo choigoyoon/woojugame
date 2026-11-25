@@ -15,19 +15,24 @@ test('2,000 generated gates use exact arithmetic, unequal results, and independe
   }
   assert.equal(combinations.size,4);assert.ok(negatives>0);
 });
-test('passing a gate adds the exact larger result once; smaller and negative choices never eliminate the squad',()=>{
+test('either positive gate adds its displayed result and coins exactly once',()=>{
   const b=new Battle(seeded()),gate={...makeGate(()=>.8,true),z:1.9};
   b.state.x=gate.correct===0?-.5:.5;const count=b.state.squad;
   b.passGate(gate);assert.equal(b.state.squad,count+gate.options[gate.correct].result);
   const total=b.state.squad,coins=b.state.coins;b.passGate(gate);assert.equal(b.state.squad,total);assert.equal(b.state.coins,coins);
-  for(let i=0;i<30;i++){const bad={...makeGate(()=>.3),passed:false};b.state.x=bad.correct===0?.5:-.5;b.passGate(bad);}
-  assert.equal(b.state.squad,1);assert.equal(b.state.coins,coins);
+  const smaller={...makeGate(()=>.3),passed:false},index=1-smaller.correct,result=smaller.options[index].result;
+  assert.ok(result>0);b.state.x=index===0?-.5:.5;b.passGate(smaller);
+  assert.equal(b.state.squad,total+result);assert.equal(b.state.coins,coins+CONFIG.battle.gateCoins);
+  assert.equal(b.state.gateResult.good,false);assert.equal(b.state.gateResult.change,result);
+  b.passGate(smaller);assert.equal(b.state.squad,total+result);assert.equal(b.state.coins,coins+CONFIG.battle.gateCoins);
 });
 
-test('a smaller gate only removes one member from the starting five, and at most three from a large squad',()=>{
-  const b=new Battle(),bad=()=>({...makeGate(()=>.3),passed:false});
-  let gate=bad();b.state.x=gate.correct===0?.5:-.5;b.passGate(gate);assert.equal(b.state.squad,4);
-  b.state.squad=100;gate=bad();b.state.x=gate.correct===0?.5:-.5;b.passGate(gate);assert.equal(b.state.squad,97);
+test('negative gates use a small penalty and never eliminate the last member',()=>{
+  const b=new Battle(),negative=()=>({passed:false,correct:1,options:[{a:2,b:5,op:'−',result:-3},{result:8}]});
+  b.state.x=-.5;b.passGate(negative());assert.equal(b.state.squad,4);
+  b.state.squad=100;b.passGate(negative());assert.equal(b.state.squad,97);
+  for(let i=0;i<100;i++)b.passGate(negative());
+  assert.equal(b.state.squad,1);assert.equal(b.state.coins,0);
 });
 test('relative swept collision consumes one bullet at the nearest barrel even during a long frame',()=>{
   const b=new Battle();b.entities=[];b.bullets=[];b.state.shotClock=10000;

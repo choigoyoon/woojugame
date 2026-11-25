@@ -24,6 +24,7 @@ jobs:
       - run: npm test
       - run: python tests/frame_budget_browser.py
       - run: python tests/production_browser_check.py
+      - run: python tests/profile_browser_check.py
       - run: python tests/pwa_check.py
       - run: python tests/audio_audit.py
       - run: python tests/audio_plot.py

@@ -40,7 +40,7 @@ export class AdventureRenderer {
     const squash=s.squashMs?Math.sin(s.squashMs/200*Math.PI):0,scale=s.goldMs?1.38:.86;
     c.save();c.translate(CONFIG.runner.playerX,870-s.y);c.scale(1+squash*.13-Math.min(1,s.y/180)*.05,1-squash*.14+Math.min(1,s.y/180)*.08);
     if(s.goldMs){const glow=c.createRadialGradient(0,-90,10,0,-90,165);glow.addColorStop(0,'#fff5ae99');glow.addColorStop(1,'#ffe18c00');c.fillStyle=glow;c.fillRect(-170,-260,340,340);for(let i=0;i<5;i++)a.star(Math.sin(t/260+i)*105,-105+Math.cos(t/260+i)*95,8,'#fff6c0');}
-    c.globalAlpha=s.invulnerableMs&&Math.floor(t/90)%2?.45:1;a.toy(0,0,scale,{time:t,run:true,gold:s.goldMs>0,palette:this.profile.palette});c.restore();
+    c.globalAlpha=s.invulnerableMs&&Math.floor(t/90)%2?.45:1;a.toy(0,0,scale,{time:t,run:s.y<=0,jump:Math.min(1,s.y/100),gold:s.goldMs>0,palette:this.profile.palette});c.restore();
     this.effects();this.header('슈퍼 블록 런',canHome);
     a.cached('sentence-slots',[22,148,676,145],()=>{const labels=['누가','무엇을','어쨌다'];
     for(let i=0;i<3;i++){const x=24+i*232,filled=i<s.slot;a.rect(x,150,208,141,filled?'#f6de91':'#183a61e6',22,filled?'#fff7be':'#add5e466');a.text(labels[i],x+104,177,18,filled?'#89704c':'#b5d9e4');a.label(filled?this.runner.sentence[i]:i===s.slot?'?':'···',x+104,230,27,filled?'#fff9e5':'#e3f9ff','#263a60');if(i<2)a.text('›',x+220,217,29,'#fff2b8');}

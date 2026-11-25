@@ -24,9 +24,9 @@ DRAW=r'''({name,bigNumbers=false})=>{
  const {p,arcade,r,b,adv,l,center,puzzle,juice,m,canvas,ctx}=window.__visualFixture;
  const bounds=document.querySelector('#game').getBoundingClientRect(),w=Math.round(bounds.width*devicePixelRatio),h=Math.round(bounds.height*devicePixelRatio);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
  ctx.setTransform(canvas.width/720,0,0,canvas.height/1280,0,0);r.ratio=canvas.width/720;
- p.data.equipped={head:'crown',body:'armor',back:'wings'};p.data.coins=bigNumbers?999999999:12450;
+ for(const id of ['crown','armor','wings'])p.equip(id);p.data.coins=bigNumbers?999999999:12450;
  juice.reset(name.split('-')[0]);
- if(name.startsWith('part-')){const id=name.slice(5),part=m.PARTS.find(p=>p.id===id);p.data.equipped={head:'pilot',body:'coral',back:'none',[part.slot]:id};center.open('profile');center.slot=part.slot;center.selected=id;center.render();}
+ if(name.startsWith('part-')){const id=name.slice(5),part=m.PARTS.find(p=>p.id===id);for(const base of ['pilot','coral','none'])p.equip(base);p.equip(id);center.open('profile');center.slot=part.slot;center.selected=id;center.render();}
  else if(name==='lobby')l.render();
  else if(name==='parents'){center.open('parents');center.stage='dashboard';center.render();}
  else if(name==='stairs'||name==='stairs-brake'){arcade.stairs.state.mode=name==='stairs-brake'?'auto-climb':'playing';arcade.stairs.state.combo=12;r.aura=name==='stairs-brake'?1200:0;r.render(true);if(name==='stairs-brake'){juice.impact({type:'brake-win',coins:15},r.pose.x,r.screenY(r.pose.y)-120);juice.hold=0;juice.update(260);juice.render();}}

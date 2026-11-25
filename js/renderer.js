@@ -382,16 +382,23 @@ export class Renderer {
   }
 
   platformBody(x,y,palette,next,stepped=false) {
-    // Sleek Sci-Fi Hover Platform Base (pairs cleanly with OGL 3D LEGO Brick & Star Crystal!)
-    this.ellipse(x+4,y+52,72,16,'#091b3844');
+    // Cel-Shaded 3D Isometric Mecha-Block Platform with Bold #0b132b Ink Contour & Glowing Studs!
+    this.ellipse(x+6,y+64,74,16,'#07142b4d');
     if (next || stepped) {
-      this.ctx.save(); this.ctx.globalAlpha = stepped ? 0.45 : 0.35;
-      this.ellipse(x, y + 18, 76, 26, stepped ? '#ffe875' : '#63ffee');
+      this.ctx.save(); this.ctx.globalAlpha = stepped ? 0.42 : 0.32;
+      this.polygon([[x - 92, y + 6], [x, y - 34], [x + 92, y + 6], [x, y + 46]], stepped ? '#ffbe0b' : '#00f5d4');
       this.ctx.restore();
     }
-    this.ellipse(x, y + 28, 64, 20, '#142b4d');
-    this.ellipse(x, y + 22, 58, 17, stepped ? '#ffd86b' : palette[1]);
-    this.ellipse(x, y + 18, 48, 13, stepped ? '#fff6c4' : palette[0]);
+    const topCol = stepped ? '#ffe66d' : palette[0];
+    const leftCol = stepped ? '#ffbe0b' : palette[1];
+    const rightCol = stepped ? '#d97706' : palette[2];
+    this.polygon([[x - 80, y + 4], [x, y + 34], [x, y + 72], [x - 80, y + 42]], leftCol, '#0b132b', 3.5);
+    this.polygon([[x, y + 34], [x + 80, y + 4], [x + 80, y + 42], [x, y + 72]], rightCol, '#0b132b', 3.5);
+    this.polygon([[x - 80, y + 4], [x, y - 26], [x + 80, y + 4], [x, y + 34]], topCol, '#0b132b', 3.5);
+    for (const [dx, dy] of [[-30, 4], [0, -7], [30, 4], [0, 15]]) {
+      this.art.stud(x + dx, y + dy, 10, 4, stepped ? 3 : 6, leftCol, topCol);
+    }
+    if (stepped) this.star(x, y + 4, 11, '#ffffff');
   }
 
   avatar() {
@@ -517,24 +524,24 @@ export class Renderer {
   }
 
   buttonFace(action,colors) {
+    // Commercial Brawl-Arcade Bevelled Tactile Trigger Button with Thick #0b132b Outline
     const c=this.ctx,fill=c.createLinearGradient(0,0,0,190);
-    fill.addColorStop(0,colors[0]);fill.addColorStop(.55,colors[1]);fill.addColorStop(1,colors[1]);
-    this.rect(0,0,312,190,fill,94,'#fff5e570');
-    c.save();c.beginPath();c.roundRect(4,4,304,182,90);c.clip();
-    this.ellipse(156,7,130,41,'#ffffff24');this.rect(69,12,174,5,'#ffffff4f',3);c.restore();
-      c.save(); c.translate(156,94);
-      if (action === ACTION.TURN) {
-        this.arrow(-7, -15, -1, 1.3, '#5c43947a'); this.arrow(7, 26, 1, 1.3, '#5c43947a');
-        this.arrow(-7, -20, -1, 1.3, '#fff7ff'); this.arrow(7, 21, 1, 1.3, '#fff7ff');
-      } else {
-        for (let j = 0; j < 3; j += 1) {
-          this.rect(-52 + j * 42, 39 - j * 22, 33, 14 + j * 22, '#8c542d', 4);
-          this.rect(-50 + j * 42, 39 - j * 22, 29, 4, '#b07837', 2);
-        }
-        c.save(); c.translate(-9, -27); c.rotate(-Math.PI / 2);
-        this.arrow(-4, 0, 1, 1.32, '#a3713b'); this.arrow(0, 0, 1, 1.32, '#fffdf0'); c.restore();
-      }
+    const topC=action===ACTION.TURN?'#7209b7':'#ff9f1c';
+    const botC=action===ACTION.TURN?'#3a0ca3':'#e85d04';
+    fill.addColorStop(0,topC);fill.addColorStop(1,botC);
+    this.rect(0,0,312,188,fill,42,'#0b132b');
+    this.rect(8,8,296,74,'#ffffff24',32);
+    c.save(); c.translate(156,82);
+    if (action === ACTION.TURN) {
+      this.arrow(-8, -14, -1, 1.25, '#0b132b'); this.arrow(8, 22, 1, 1.25, '#0b132b');
+      this.arrow(-8, -18, -1, 1.25, '#00f5d4'); this.arrow(8, 18, 1, 1.25, '#ffffff');
+    } else {
+      c.save(); c.translate(0, 4); c.rotate(-Math.PI / 2);
+      this.arrow(-4, 0, 1, 1.45, '#0b132b'); this.arrow(0, 0, 1, 1.45, '#fff3b0');
       c.restore();
+    }
+    c.restore();
+    this.art.label(action===ACTION.TURN?'방향 전환':'점프 오르기',156,154,24,'#ffffff','#0b132b');
   }
 
   brakeOverlay() {
@@ -588,9 +595,8 @@ export class Renderer {
     for (const popup of this.popups) {
       if (popup.life <= 0 || (!popup.bonus && this.popups.some((other) => other.bonus && other.life > 0))) continue;
       c.save(); c.globalAlpha = Math.min(1, popup.life / 200);
-      const x = clamp(popup.x + 65, 62, 660); const y = this.screenY(popup.y);
-      this.text('+' + (CONFIG.rules.stepCoins + popup.bonus), x + 2, y + 3, popup.bonus ? 46 : 29, '#654b62', 'center');
-      this.text('+' + (CONFIG.rules.stepCoins + popup.bonus), x, y, popup.bonus ? 46 : 29, '#fff5b6', 'center'); c.restore();
+      const x = clamp(popup.x + (popup.x >= 360 ? 105 : -105), 68, 652); const y = this.screenY(popup.y) - 38;
+      this.art.label('+' + (CONFIG.rules.stepCoins + popup.bonus), x, y, popup.bonus ? 42 : 28, '#ffbe0b', '#0b132b'); c.restore();
     }
     c.restore(); this.hud(); this.controls(); this.brakeOverlay(); this.art.home(canHome);
   }

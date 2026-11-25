@@ -246,12 +246,19 @@ export class AdventureRenderer {
       }
     },s.sentence*4+s.slot);
     if(s.messageMs){
-      a.text(s.message==='GOLD RUSH!'?'★ 폭주 객차 도킹 & 황금 질주!':s.message,360,445,s.message==='GOLD RUSH!'?40:34,'#fff6bc');
-      if(s.message==='GOLD RUSH!')a.text('회수한 부스터 객차가 로비 별빛특급에 합체됩니다!',360,492,20,'#b8ffe8');
+      a.rect(76,242,568,72,'#0b132bf0',20,'#ffbe0b');
+      a.label(s.message==='GOLD RUSH!'?'★ 폭주 객차 도킹 & 황금 질주!':s.message,360,268,s.message==='GOLD RUSH!'?30:28,'#ffbe0b','#0b132b');
+      if(s.message==='GOLD RUSH!')a.text('회수한 부스터 객차가 로비 별빛특급에 합체됩니다!',360,298,17,'#00f5d4');
     }
-    if(s.goldMs){a.rect(130,322,460,14,'#254478',8);a.rect(130,322,460*s.goldMs/CONFIG.runner.goldMs,14,'#ffe79a',8);}
-    a.cached(pressed?'jump-held':'jump-ready',[64,1041,592,184],()=>{a.rect(66,1058,588,165,'#0d3451',46);a.rect(66,1043+(pressed?13:0),588,165,'#ffda7b',46,'#fff2be');
-    a.poly([[132,1136],[158,1104],[184,1136]],'#775a53');a.text('점프',377,1115+(pressed?13:0),47,'#493c61');a.text('꾹 누르면 더 높이!',377,1171+(pressed?13:0),21,'#786854');});
+    if(s.goldMs){a.rect(130,322,460,14,'#0b132b',8);a.rect(130,322,460*s.goldMs/CONFIG.runner.goldMs,14,'#ffbe0b',8);}
+    a.cached(pressed?'jump-held':'jump-ready',[64,1041,592,184],()=>{
+      a.rect(66,1058,588,162,'#0b132b',38);
+      a.rect(66,1044+(pressed?10:0),588,160,a.gradient(66,1044,66,1204,['#ffbe0b','#fb5607']),38,'#0b132b');
+      a.rect(82,1054+(pressed?10:0),556,58,'#ffffff28',26);
+      a.poly([[140,1136+(pressed?10:0)],[168,1096+(pressed?10:0)],[196,1136+(pressed?10:0)]],'#ffffff','#0b132b',3.5);
+      a.label('⚡ 터보 점프',382,1112+(pressed?10:0),44,'#ffffff','#0b132b');
+      a.label('길게 누르면 하이점프 & 적 밟기!',382,1166+(pressed?10:0),20,'#fff3b0','#0b132b');
+    });
   }
   iso(x,z){return{x:360+(x-z)*44,y:668+(x+z)*33};}
   good(kind,x,y,scale=1){
@@ -290,21 +297,20 @@ export class AdventureRenderer {
     a.cached('plaza-ground',[0,0,720,1280],()=>{
     a.c.fillStyle=a.gradient(0,0,720,1280,['#193258','#385d8a','#1f365c']);a.c.fillRect(0,0,720,1280);
     for(let i=0;i<18;i++)a.star((i*173+19)%720,300+(i*71)%840,3+i%3,'#fff0bb55');
-    // LEGO Sky Harbor Station Architecture surrounding the isometric plaza so there is zero empty purple void!
-    a.rect(44,315,632,120,'#152c4ecc',22,'#639bc244');
-    for(let i=0;i<5;i++){
-      const px=88+i*136;
-      a.block(px-24,335,48,74,8,'#2c567d','#79bce0','#1b3854');
-      a.rect(px-14,350,28,34,'#ffe89488',4);
-      a.stud(px,331,11,4,4.5,'#e39d3b','#fff5bd');
+    // Sleek Sky Harbor Control Balcony at top & Tactile Cyber-Radar Deck at bottom (zero copy-pasted grey boxes!)
+    a.rect(40,312,640,98,'#0b132bd9',24,'#00f5d466');
+    a.line([[72,362],[648,362]],'#00f5d444',3);
+    for(let i=0;i<4;i++){
+      const px=126+i*156;
+      a.ellipse(px,362,22,22,'#14284e');
+      a.ellipse(px,362,14,14,i%2?'#00f5d4':'#ffbe0b');
+      a.star(px,362,9,'#ffffff');
     }
-    // Lower Harbor Dock Pier & Crane Girder framing the bottom of the plaza
-    a.rect(36,975,648,240,'#0f233fcc',26,'#5b94bd33');
-    for(let i=0;i<6;i++){
-      const bx=86+i*110;
-      a.stud(bx,996,15,5.5,6,'#3a668c','#8ed2f2');
-      a.rect(bx-28,1012,56,10,'#25486b',3);
-    }
+    a.rect(40,982,640,226,'#0b132bd9',28,'#4cc9f055');
+    a.ellipse(360,1076,58,58,'#14284e');
+    a.ellipse(360,1076,40,40,'#00f5d433');
+    a.ellipse(360,1076,18,18,'#00f5d4');
+    for(const [dx,dy]of[[0,-44],[0,44],[-44,0],[44,0]])a.ellipse(360+dx,1076+dy,5,5,'#ffbe0b');
     const corners=[this.iso(-4,-4),this.iso(4,-4),this.iso(4,4),this.iso(-4,4)];
     a.poly([corners[0],[corners[1].x,corners[1].y],[corners[2].x,corners[2].y+36],[corners[3].x,corners[3].y+36]].map(p=>Array.isArray(p)?p:[p.x,p.y+28]),'#273b61','#8cc4e0',4);
     for(let x=-4;x<4;x++)for(let z=-4;z<4;z++){

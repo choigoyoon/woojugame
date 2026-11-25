@@ -203,68 +203,71 @@ export class BattleRenderer {
     a.line([[-17,20],[0,35],[17,20]],color,7);c.restore();
   }
   crane(entity) {
-    // Dreadnought Kraken-Claw Mecha Boss (Angular Battleship Hull, Chest Turbine Core & Dual Plasma Claws!)
+    // Dreadnought Kraken-Claw Mecha Boss — Heavy Gunmetal & Crimson Armor with Bold #0b132b Ink Outlines (Never turns beige!)
     const a=this.art,c=a.c,p=this.project(0,entity.z),s=p.s,m=this.game.harbor.state,round=this.game.state.round??0;
     const warning=this.game.state.attack?.phase==='warning',lift=warning?20+Math.sin(this.time/80)*6:0;
     const impact=(entity.hitMs??0)/CONFIG.battle.hitMs,dent=this.reduced?0:Math.sin(impact*Math.PI)*.14;
     const ratio=Math.max(0,Math.min(1,entity.hp/Math.max(1,entity.maxHp)));
     const stage=ratio<.34?3:ratio<.67?2:ratio<.92?1:0;
-    const palettes=[['#2b3954','#e84a5f','#ffd86b'],['#342654','#ff4f8b','#63ffee'],['#1f2d4a','#ff6b4a','#ffe875']];
+    const palettes=[['#1f2d50','#ff2a6d','#ffbe0b'],['#2d1e54','#ff4d8d','#00f5d4'],['#1b263b','#ff6b35','#ffbe0b']];
     const [hull,accent,coreCol]=palettes[round]??palettes[0];
     c.save();c.translate(p.x,p.y);
     if(!this.reduced&&impact>0)c.rotate(Math.sin(impact*10)*impact*.05);
     c.scale(s*(1+dent),s*(1-dent*.72));
-    a.ellipse(0,8,255,36,'#091b3255');
+    a.ellipse(0,8,255,36,'#06112466');
     if(stage>=1){
       for(let i=0;i<stage+1;i++){
         const f=((this.time/600)+i*.33)%1,sx=(i%2?86:-86)+(i-1)*24;
-        a.ellipse(sx,-390-lift-f*75,16+f*22,12+f*15,stage>=3?`rgba(255,85,110,${(1-f)*.6})`:`rgba(60,78,108,${(1-f)*.5})`);
+        a.ellipse(sx,-390-lift-f*75,16+f*22,12+f*15,stage>=3?`rgba(255,42,109,${(1-f)*.65})`:`rgba(45,62,94,${(1-f)*.55})`);
       }
     }
-    // Articulated Dual Hydraulic Plasma Pincer Claws
+    // Articulated Dual Hydraulic Plasma Pincer Claws with Bold Ink Outlines
     for(const side of[-1,1]){
       const broken=m.locksBroken>=(side<0?1:2);
       const jitter=!this.reduced&&(broken||stage>=2)?Math.sin(this.time/50+side)*7:0;
-      a.line([[side*112,-310-lift],[side*226+jitter,-236-lift],[side*190+jitter,-66]],'#1b2a42',38);
-      a.line([[side*112,-310-lift],[side*222+jitter,-238-lift],[side*186+jitter,-68]],broken?'#55687d':accent,20);
-      a.ellipse(side*224+jitter,-236-lift,26,26,'#132238');
-      a.ellipse(side*224+jitter,-236-lift,14,14,broken?'#7a8ca0':coreCol);
-      // Plasma Pincer Blades
-      a.poly([[side*190+jitter,-72],[side*146+jitter,-24],[side*166+jitter,-82]],broken?'#7a8ca0':coreCol,'#ffffff',2);
-      a.poly([[side*190+jitter,-72],[side*218+jitter,-22],[side*208+jitter,-82]],broken?'#7a8ca0':accent,'#ffffff',2);
+      a.line([[side*112,-310-lift],[side*226+jitter,-236-lift],[side*190+jitter,-66]],'#0b132b',42);
+      a.line([[side*112,-310-lift],[side*222+jitter,-238-lift],[side*186+jitter,-68]],broken?'#4a5d75':accent,22);
+      a.ellipse(side*224+jitter,-236-lift,27,27,'#0b132b');
+      a.ellipse(side*224+jitter,-236-lift,15,15,broken?'#7a8ca0':coreCol);
+      a.poly([[side*190+jitter,-72],[side*146+jitter,-20],[side*166+jitter,-84]],broken?'#7a8ca0':coreCol,'#0b132b',3.5);
+      a.poly([[side*190+jitter,-72],[side*220+jitter,-18],[side*208+jitter,-84]],broken?'#7a8ca0':accent,'#0b132b',3.5);
     }
-    // Angular Dreadnought Battleship Hull (Hexagonal Mecha Cowl)
-    a.poly([[-158,-340-lift],[-118,-412-lift],[118,-412-lift],[158,-340-lift],[132,-242-lift],[-132,-242-lift]],impact>.3?'#fff2c2':hull,accent,5);
+    // Angular Dreadnought Battleship Hull (Rich Gunmetal Navy + Thick #0b132b Ink Contour)
+    a.poly([[-162,-340-lift],[-120,-416-lift],[120,-416-lift],[162,-340-lift],[134,-240-lift],[-134,-240-lift]],hull,'#0b132b',6);
+    a.poly([[-146,-340-lift],[-110,-404-lift],[110,-404-lift],[146,-340-lift],[122,-252-lift],[-122,-252-lift]],'#2b3d66',accent,3);
     // Detachable Shoulder Missile Pods (shatter below 67% HP)
     for(const side of[-1,1]){
       if(stage<2||side<0&&stage<3){
-        a.poly([[side*118,-412-lift],[side*168,-436-lift],[side*174,-364-lift],[side*142,-346-lift]],accent,'#fff4b8',3);
-        a.ellipse(side*148,-392-lift,12,12,coreCol);
+        a.poly([[side*118,-414-lift],[side*172,-440-lift],[side*178,-364-lift],[side*142,-346-lift]],accent,'#0b132b',4);
+        a.ellipse(side*150,-394-lift,13,13,'#0b132b');
+        a.ellipse(side*150,-394-lift,9,9,coreCol);
       }
     }
     // Menacing V-Shaped Cyber-Visor & Glowing Tactical Optics
-    a.poly([[-118,-376-lift],[0,-356-lift],[118,-376-lift],[102,-316-lift],[0,-302-lift],[-102,-316-lift]],'#091528',coreCol,3);
+    a.poly([[-118,-378-lift],[0,-358-lift],[118,-378-lift],[102,-314-lift],[0,-300-lift],[-102,-314-lift]],'#081021','#0b132b',4);
     for(const side of[-1,1]){
-      const eyeColor=m.weakMs?'#63ffee':warning||stage>=2?'#ff3b5c':coreCol;
+      const eyeColor=m.weakMs?'#00f5d4':warning||stage>=2?'#ff2a6d':coreCol;
       if(stage>=2||impact>.2){
-        a.line([[side*58-20,-352-lift],[side*58+20,-328-lift]],eyeColor,6);
-        a.line([[side*58+20,-352-lift],[side*58-20,-328-lift]],eyeColor,6);
+        a.line([[side*58-20,-352-lift],[side*58+20,-328-lift]],eyeColor,6.5);
+        a.line([[side*58+20,-352-lift],[side*58-20,-328-lift]],eyeColor,6.5);
       }else{
         a.poly([[side*32,-344-lift],[side*88,-358-lift],[side*82,-330-lift],[side*32,-326-lift]],eyeColor);
         a.ellipse(side*58,-340-lift,6,6,'#ffffff');
       }
     }
-    // Central Spinning Chest Turbine Reactor Core & HP Readout
-    a.ellipse(0,-276-lift,44,24,'#0a172b');
-    a.ellipse(0,-276-lift,34,18,stage>=2?'#ff3b5c':'#63ffee');
-    a.rect(-54,-292-lift,108,32,'#0c1d36e6',12,coreCol);
-    a.text(Math.ceil(entity.hp),0,-276-lift,25*(1+impact*.18),'#fff8d6');
+    // Localized Impact Spark Ring on Hit (keeps hull colors rich and dark!)
+    if(impact>.15){
+      a.star((Math.sin(this.time)*45),-335-lift,26*impact,'#fff3b0');
+    }
+    // Clean, Unobstructed Boss HP Badge on Forehead Crest
+    a.rect(-64,-402-lift,128,36,'#0b132b',12,coreCol);
+    a.label(Math.ceil(entity.hp),0,-384-lift,26,'#fff8d6','#0b132b');
     const trainY=-52+Math.sin(this.time/350)*5;
     if(round===0)train(a,0,trainY,.82,{time:this.time,held:m.locksBroken<2});
     else wagon(a,0,trainY,1.6,this.time,round===2);
-    if(m.locksBroken<2)for(const side of[-1,1])if(side>0||m.locksBroken===0)a.line([[side*86,-248],[side*86,trainY-115]],'#63ffee',5);
-    a.rect(-150,-474,300,36,'#0e2442f0',14,m.weakMs?'#63ffee':'#ffd86b');
-    a.text(m.locksBroken<2?'레고 연결 볼트  '+(2-m.locksBroken)+'개 남음':m.weakMs?'⚡ 장갑 파손! 본체 집중 사격!':stage>=2?'🔥 보스 코어 과열 직전!':'볼트 해제 완료! 본체를 밀어내!',0,-456,20,m.weakMs?'#9efff0':'#fff2bd');
+    if(m.locksBroken<2)for(const side of[-1,1])if(side>0||m.locksBroken===0)a.line([[side*86,-248],[side*86,trainY-115]],'#00f5d4',5);
+    a.rect(-154,-480,308,38,'#0b132bf2',14,m.weakMs?'#00f5d4':'#ffbe0b');
+    a.text(m.locksBroken<2?'레고 연결 볼트  '+(2-m.locksBroken)+'개 남음':m.weakMs?'⚡ 장갑 파손! 본체 집중 사격!':stage>=2?'🔥 보스 코어 과열 직전!':'볼트 해제 완료! 본체를 밀어내!',0,-461,20,m.weakMs?'#00f5d4':'#fff2bd');
     c.restore();
   }
   barrel(entity) {

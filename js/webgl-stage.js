@@ -296,69 +296,18 @@ export class OGLStage {
       }
     }
 
-    // 3. 3D Enemies, Locks, Cargo Barrels, Supply Crates, and 3D Boss Crane Mech
+    // 3. 3D Boss Reactor Core Sphere & 3D Rotating Lock Cylinders
     for (const e of game.entities) {
       const p = view.project(e.x, e.z), s = p.s;
       if (s < 0.18) continue;
       const flash = Math.min(1, (e.hitMs || 0) / 120);
       const hpRatio = (e.hp ?? 1) / Math.max(1, e.maxHp ?? 1);
       const zDepth = -e.z * 0.08;
-
-      if (e.kind === 'enemy') {
-        const gait = Math.sin(t / 110 + e.id) * 0.35;
-        const wobble = flash * 0.25;
-        // 3D Walking Legs
-        this.addBox(p.x - 16 * s, p.y - 16 * s, zDepth, 15 * s, 28 * s, 18 * s, '#513757', 0.2 + gait, 0.18, 0, flash);
-        this.addBox(p.x + 16 * s, p.y - 16 * s, zDepth, 15 * s, 28 * s, 18 * s, '#513757', 0.2 - gait, -0.18, 0, flash);
-        // 3D Armored Torso Brick
-        const bodyCol = hpRatio <= 0.5 ? '#c84b68' : '#da5f7c';
-        this.addLegoBrick(p.x, p.y - 54 * s, zDepth + 0.2, 68 * s, 54 * s, 44 * s, bodyCol, '#ff98ae', 0.24 + wobble, Math.sin(t / 240 + e.id) * 0.22, 0, flash, 0.06, 0);
-        // 3D Head / Popped Helmet
-        if (hpRatio > 0.5) {
-          this.addLegoBrick(p.x, p.y - 92 * s, zDepth + 0.3, 54 * s, 28 * s, 38 * s, '#8e3d59', '#ff8aa3', 0.26, Math.sin(t / 200 + e.id) * 0.25, 0, flash, 0.08, 2);
-        } else {
-          // Helmet popped off! Bare yellow 3D LEGO head + spinning stud
-          this.addCyl(p.x, p.y - 90 * s, zDepth + 0.3, 38 * s, 24 * s, '#ffd86b', 0.28, t * 0.004, 0, flash, 0.18);
-          this.addCyl(p.x, p.y - 106 * s, zDepth + 0.35, 22 * s, 12 * s, '#fff5b8', 0.28, -t * 0.006, 0, flash, 0.25);
-        }
-      } else if (e.kind === 'lock') {
-        // 3D Rotating Hexagonal Lock Cylinder + Pop-off Corner Studs
-        const activeBolts = Math.max(1, Math.ceil(hpRatio * 4));
-        this.addCyl(p.x, p.y - 52 * s, zDepth + 0.2, 76 * s, 42 * s, '#d88b28', 0.48, t * 0.0022 + flash, 0.15, flash, 0.15);
-        for (let b = 0; b < activeBolts; b++) {
-          const ang = (b * Math.PI) / 2 + t * 0.002;
-          this.addCyl(p.x + Math.cos(ang) * 32 * s, p.y - 52 * s + Math.sin(ang) * 20 * s, zDepth + 0.4, 18 * s, 16 * s, '#ffe79b', 0.45, ang, 0, flash, 0.25);
-        }
-      } else if (e.kind === 'crate' || e.kind === 'supply') {
-        const col = e.kind === 'supply' ? '#49d6c8' : '#2f8fe8';
-        this.addLegoBrick(p.x, p.y - 48 * s, zDepth + 0.2, 78 * s, 64 * s, 56 * s, col, '#b8fbff', 0.28, Math.sin(t / 280 + e.id) * 0.35, 0, flash, 0.15, 2);
+      if (e.kind === 'lock') {
+        this.addCyl(p.x, p.y - 52 * s, zDepth + 0.2, 64 * s, 32 * s, '#ffbe0b', 0.48, t * 0.003 + flash, 0.15, flash, 0.25);
       } else if (e.kind === 'boss') {
-        // Massive 3D WebGL Boss Crane Mech aligned with crane(object) height!
-        const tele = e.telegraph || 0;
-        const bodyY = p.y - 182 * s;
-        this.addLegoBrick(p.x, bodyY, zDepth + 0.4, 168 * s, 108 * s, 92 * s, hpRatio <= 0.35 ? '#9e3548' : '#d66844', '#ffd296', 0.26, Math.sin(t / 350) * 0.16, 0, flash, 0.08, hpRatio > 0.35 ? 3 : 1);
-        // Glowing 3D Reactor Core Sphere in Boss Chest
-        this.addSphere(p.x, bodyY + 12 * s, zDepth + 0.9, (38 + Math.sin(t / 90) * 5) * s, hpRatio <= 0.35 ? '#ff3b5c' : '#7effe8', flash, 0.45);
-        // Detachable 3D Shoulder Armor Pods (pop off below 65% HP)
-        if (hpRatio > 0.65) {
-          for (const side of [-1, 1]) {
-            this.addLegoBrick(p.x + side * 102 * s, bodyY - 18 * s, zDepth + 0.5, 42 * s, 50 * s, 48 * s, '#e08a45', '#ffe7a8', 0.25, side * 0.3, 0, flash, 0.1, 1);
-          }
-        }
-        // Articulated 3D Left & Right Claw Arms (rear back on telegraph)
-        for (const side of [-1, 1]) {
-          const clawLift = tele > 0 ? 48 * s * Math.sin(tele * Math.PI) : Math.sin(t / 180 + side) * 12 * s;
-          const armX = p.x + side * 116 * s, armY = bodyY + 46 * s - clawLift;
-          this.addBox(armX, armY, zDepth + 0.7, 28 * s, 76 * s, 32 * s, '#63768d', 0.35 + tele * 0.6, side * 0.25, side * 0.2, flash);
-          this.addCyl(armX + side * 10 * s, armY + 42 * s, zDepth + 0.8, 34 * s, 24 * s, '#ffd86b', 0.4, t * 0.003 * side, 0, flash, 0.18);
-        }
-      } else {
-        // Cargo Barrel / Armor Barrel
-        const col = e.cargo ? '#e08b3e' : '#c95972';
-        this.addCyl(p.x, p.y - 46 * s, zDepth + 0.2, 68 * s, 68 * s, col, 0.28, t * 0.002 + e.id, 0, flash, 0.1);
-        if (hpRatio > 0.5) {
-          this.addCyl(p.x, p.y - 84 * s, zDepth + 0.25, 36 * s, 14 * s, '#ffe596', 0.28, -t * 0.002, 0, flash, 0.18);
-        }
+        const bodyY = p.y - 340 * s;
+        this.addSphere(p.x, bodyY, zDepth + 0.4, (54 + Math.sin(t / 90) * 6) * s, hpRatio <= 0.35 ? '#ff2a6d' : '#00f5d4', flash, 0.55);
       }
     }
 
@@ -384,7 +333,6 @@ export class OGLStage {
    */
   renderStairs(view) {
     const c = view.ctx;
-    const state = view.game.state;
     const t = view.reducedMotion ? 0 : view.time;
     this.beginPass();
 
@@ -394,29 +342,21 @@ export class OGLStage {
       const ty = 260 + i * 220 + towerShift;
       if (ty < 120 || ty > 1020) continue;
       const col = i % 2 === 0 ? '#d8e6f5' : '#e0675a';
-      this.addCyl(360, ty, -5.5, 148, 175, col, 0.14, t * 0.0004, 0, 0, 0.05, 0.42);
-      this.addCyl(360, ty - 88, -5.2, 168, 22, '#ffd86b', 0.16, -t * 0.0008, 0, 0, 0.15, 0.5);
+      this.addCyl(360, ty, -5.5, 148, 175, col, 0.14, t * 0.0004, 0, 0, 0.05, 0.35);
+      this.addCyl(360, ty - 88, -5.2, 168, 22, '#ffd86b', 0.16, -t * 0.0008, 0, 0, 0.15, 0.42);
     }
 
-    // 2. 3D WebGL LEGO Staircase Blocks + Cylindrical Top Studs + Spinning 3D Golden Star Bricks on stomped steps
+    // 2. Spinning 3D Golden Star Crystals floating above stomped steps + 3D Burst Particles
+    const state = view.game.state;
     for (let i = view.game.steps.length - 1; i >= 0; i--) {
       const step = view.game.steps[i];
+      if (step.id >= state.step) continue;
       const tile = (view.tiles.get(step.id)?.value ?? 0) * (view.reducedMotion ? 0.25 : 1);
       const sy = view.screenY(step.y) + tile;
-      if (sy < 110 || sy > 1040) continue;
-      const stomped = step.id <= state.step;
-      const current = step.id === state.step;
-      const bodyCol = stomped ? '#e8a838' : current ? '#49dfd0' : '#39b8b6';
-      const studCol = stomped ? '#fff5b8' : '#b8fff6';
-      const ry = (step.id % 2 ? 1 : -1) * -0.22 + (stomped ? Math.sin(t / 300 + step.id) * 0.08 : 0);
-      this.addLegoBrick(step.x, sy + 18, -1.2, 126, 36, 74, bodyCol, studCol, 0.34, ry, 0, current ? 0.25 : 0, stomped ? 0.26 : 0.08, 3);
-      if (stomped && !current) {
-        // Spinning 3D Golden Star Crystal above stomped steps
-        this.addBox(step.x, sy - 14, -0.6, 20, 20, 20, '#ffe875', t * 0.003 + step.id, t * 0.004, 0.78, 0, 0.45);
-      }
+      if (sy < 120 || sy > 1020) continue;
+      this.addBox(step.x, sy - 16, -0.4, 22, 22, 22, '#ffbe0b', t * 0.003 + step.id, t * 0.004, 0.78, 0, 0.45);
     }
 
-    // 3. 3D Burst Particles on step landing
     for (const p of view.particles) {
       if (p.life <= 0) continue;
       const py = view.screenY(p.y);
@@ -444,48 +384,28 @@ export class OGLStage {
       this.addCyl(x, 876, -1.5, 24, 12, s.goldMs ? '#ffd86b' : '#57b982', 0.35, t * 0.002, 0, 0, s.goldMs ? 0.3 : 0.08);
     }
 
-    // 2. 3D Runaway Starlight Train Coach with 3D Spinning Wheels & Progressive 3D Booster Assembly!
+    // 2. 3D Booster Wings & 3D Turbo Jet Thruster Cones on the Galaxy-Liner Coach
     const wy = 832 - hitReaction * 8;
     const flash = Math.min(1, hitReaction * 1.2);
-    // 3D Coach Chassis & Roof
-    this.addLegoBrick(wagonX, wy, 0.2, 114, 58, 68, s.goldMs ? '#f5b935' : '#3a7ca5', s.goldMs ? '#fff5b8' : '#8ee2ff', 0.22, -0.24 + hitReaction * 0.2, 0, flash, s.goldMs ? 0.28 : 0.1, 3);
-    // 3D Spinning Train Wheels
-    for (const dx of [-34, 34]) {
-      this.addCyl(wagonX + dx, 864, 0.6, 26, 14, '#d98a3c', 1.4, 0, t * 0.015, flash, 0.15);
-    }
-    // Stage 1: 3D Golden Magnetic Front Bumper
     if (s.slot >= 1 || s.goldMs) {
-      this.addLegoBrick(wagonX - 64, wy + 8, 0.5, 26, 26, 36, '#ffd363', '#fff5bd', 0.24, -0.3, 0, flash, 0.28, 1);
+      this.addLegoBrick(wagonX - 60, wy + 8, 0.5, 24, 24, 32, '#ffbe0b', '#fff5bd', 0.24, -0.3, 0, flash, 0.28, 1);
     }
-    // Stage 2: Twin 3D Angled Golden Booster Wings
     if (s.slot >= 2 || s.goldMs) {
-      this.addBox(wagonX - 24, wy - 28, 0.7, 46, 16, 32, '#ffd86b', 0.45, -0.35, 0.42, flash, 0.32);
-      this.addBox(wagonX + 24, wy - 28, 0.7, 46, 16, 32, '#ffd86b', 0.45, 0.35, -0.42, flash, 0.32);
+      this.addBox(wagonX - 24, wy - 34, 0.7, 44, 14, 30, '#ffbe0b', 0.45, -0.35, 0.42, flash, 0.32);
+      this.addBox(wagonX + 24, wy - 34, 0.7, 44, 14, 30, '#ffbe0b', 0.45, 0.35, -0.42, flash, 0.32);
     }
-    // Stage 3: 3D Glowing Turbo Jet Thruster Cones
     if (s.goldMs) {
-      this.addCyl(wagonX + 68, wy + 2, 0.6, 28, 44, '#63ffee', 0.2, 0, Math.PI * 0.5, 0, 0.85);
-      this.addSphere(wagonX + 92 + Math.sin(t / 40) * 8, wy + 2, 0.7, 26, '#fff8c4', 0, 0.95);
+      this.addCyl(wagonX + 68, wy + 2, 0.6, 26, 42, '#00f5d4', 0.2, 0, Math.PI * 0.5, 0, 0.85);
+      this.addSphere(wagonX + 90 + Math.sin(t / 40) * 8, wy + 2, 0.7, 24, '#fff8c4', 0, 0.95);
     }
 
-    // 3. 3D Rotating Hover Power Crates & 3D Patrol Mech Crawlers
+    // 3. 3D Hover Thruster Pods on Power Crates
     for (const item of view.runner.items.active) {
       if (item.kind === 'word') {
         const bob = view.reduced ? 0 : Math.sin(t / 140 + item.x * 0.02) * 6;
         const iy = item.y + bob + 22;
-        this.addLegoBrick(item.x, iy, -0.2, 136, 68, 56, '#f5b935', '#fff5b8', 0.26 + Math.sin(t / 220) * 0.08, Math.cos(t / 260 + item.x * 0.01) * 0.22, 0, 0, 0.18, 3);
-        this.addCyl(item.x - 74, iy, 0.1, 22, 16, '#7effe8', 0.35, t * 0.005, 0, 0, 0.55);
-        this.addCyl(item.x + 74, iy, 0.1, 22, 16, '#7effe8', 0.35, -t * 0.005, 0, 0, 0.55);
-      } else if (item.kind === 'coin') {
-        const cy = item.y + Math.sin(t / 180 + item.x) * 5;
-        this.addCyl(item.x, cy, 0.2, 32, 10, '#ffe16a', 1.35, t * 0.004 + item.x, 0, 0, 0.32);
-      } else {
-        // 3D Patrol Mech Crawler with Yellow 3D Stomp Pad
-        const walk = view.reduced ? 0 : Math.sin(t / 75 + item.x * 0.05) * 0.35;
-        this.addBox(item.x - 18, 860, 0.1, 14, 18, 18, '#3a2846', 0.2 + walk, 0.2, 0);
-        this.addBox(item.x + 18, 860, 0.1, 14, 18, 18, '#3a2846', 0.2 - walk, -0.2, 0);
-        this.addLegoBrick(item.x, 836, 0.3, 62, 46, 44, '#c84b68', '#ff9eb2', 0.24, -0.22 + Math.sin(t / 160) * 0.12, 0, 0, 0.1, 0);
-        this.addCyl(item.x, 806, 0.4, 34, 14, '#ffe875', 0.28, t * 0.004, 0, 0, 0.35);
+        this.addCyl(item.x - 72, iy, 0.1, 22, 16, '#00f5d4', 0.35, t * 0.005, 0, 0, 0.55);
+        this.addCyl(item.x + 72, iy, 0.1, 22, 16, '#00f5d4', 0.35, -t * 0.005, 0, 0, 0.55);
       }
     }
 
@@ -512,7 +432,6 @@ export class OGLStage {
    */
   renderPlaza(view, dock, collectedTotal) {
     const c = view.art.c;
-    const s = view.plaza.state;
     const t = view.reduced ? 0 : view.time;
     this.beginPass();
 
@@ -523,54 +442,21 @@ export class OGLStage {
       this.addSphere(cp.x, cp.y - 50, -1.5, 16, '#ffe875', 0, 0.55);
     }
 
-    // 2. 3D Starlight Express Locomotive at the Dock + Progressive 3D Glowing Engine Core Modules!
-    const flash = Math.min(1, view.dockPulseMs / 240);
-    this.addLegoBrick(dock.x - 16, dock.y - 26, -0.4, 78, 42, 48, '#356d96', '#89dcff', 0.32, 0.58, 0, flash, 0.14, 2);
-    this.addCyl(dock.x + 18, dock.y - 24, -0.2, 34, 52, '#d95b5b', 0.35, 0.58, Math.PI * 0.48, flash, 0.16);
-    this.addCyl(dock.x + 28, dock.y - 50, 0.1, 16, 22, '#ffd86b', 0.32, t * 0.003, 0, flash, 0.28);
-    for (let i = 0; i < Math.min(3, collectedTotal); i++) {
-      const col = ['#ff6c83', '#77ceff', '#74efd0'][i];
-      this.addLegoBrick(dock.x - 22 + i * 20, dock.y - 38, 0.4, 18, 18, 18, col, '#fff8d6', 0.35, t * 0.004 + i, 0, flash, 0.55, 1);
-    }
-
-    // 3. 3D Isometric Workbenches & 3D Rotating Engine Parts (or Activated Green 3D Sockets!)
+    // 2. 3D Isometric Pedestal Bases & Activated Green 3D Sockets
     for (const item of view.plaza.items.active) {
       const p = view.iso(item.x, item.z);
-      const col = item.collected ? '#2d7a6e' : '#70659e';
-      const topCol = item.collected ? '#7effe0' : '#cfc5f5';
-      this.addLegoBrick(p.x, p.y - 10, -0.6, 56, 24, 46, col, topCol, 0.42, 0.68, 0, 0, item.collected ? 0.28 : 0.08, 2);
-      if (item.collected) {
-        this.addCyl(p.x, p.y - 28, 0.1, 24, 14, '#7effe8', 0.42, t * 0.004, 0, 0, 0.65);
-      } else {
-        const hover = view.reduced ? 0 : Math.sin(t / 200 + item.x) * 5;
-        const py = p.y - 36 + hover;
-        const rotY = t * 0.0032 + item.x;
-        const partColors = { key: '#ff6c83', star: '#77ceff', gem: '#74efd0', book: '#b494f3', console: '#f3b05a', bomb: '#7b8db8' };
-        const pCol = partColors[item.kind] || '#ffe875';
-        if (item.kind === 'star' || item.kind === 'gem') {
-          this.addBox(p.x, py, 0.3, 28, 28, 28, pCol, 0.65, rotY, 0.78, 0, 0.42);
-        } else if (item.kind === 'key' || item.kind === 'bomb') {
-          this.addCyl(p.x, py, 0.3, 28, 18, pCol, 0.55, rotY, 0.35, 0, 0.38);
-        } else {
-          this.addLegoBrick(p.x, py, 0.3, 34, 24, 24, pCol, '#fff8d6', 0.45, rotY, 0, 0, 0.32, 1);
-        }
-      }
+      const col = item.collected ? '#147a6e' : '#3a4e7a';
+      const topCol = item.collected ? '#00f5d4' : '#8ecae6';
+      this.addLegoBrick(p.x, p.y + 4, -0.8, 48, 16, 40, col, topCol, 0.42, 0.68, 0, 0, item.collected ? 0.32 : 0.08, 2);
     }
 
-    // 4. 3D Patrol Guard Robots in Plaza
-    for (const h of view.plaza.hazards.active) {
-      const p = view.iso(h.x, h.z);
-      this.addLegoBrick(p.x, p.y - 44, -0.1, 54, 44, 42, '#7c8ecb', '#b5d7ff', 0.32, Math.sin(t / 220) * 0.35, 0, 0, 0.12, 1);
-      this.addLegoBrick(p.x, p.y - 88, 0.2, 58, 38, 40, '#9fcbea', '#e6ffff', 0.32, Math.cos(t / 180) * 0.45, 0, 0, 0.18, 1);
-    }
-
-    // 5. 3D Flying Cargo Part arcing to the Locomotive Dock
+    // 3. 3D Flying Cargo Part arcing to the Locomotive Dock
     for (const f of view.flyingCargo) {
       if (f.life <= 0) continue;
       const prog = 1 - f.life / f.duration;
       const fx = f.sx + (f.tx - f.sx) * prog;
       const fy = f.sy + (f.ty - f.sy) * prog - Math.sin(prog * Math.PI) * 145;
-      this.addLegoBrick(fx, fy, 1.4, 30, 22, 22, '#ffe875', '#7effe8', prog * 9, prog * 12, prog * 6, 0.3, 0.65, 1);
+      this.addLegoBrick(fx, fy, 1.4, 30, 22, 22, '#ffbe0b', '#00f5d4', prog * 9, prog * 12, prog * 6, 0.2, 0.65, 1);
     }
 
     this.endPass(c);

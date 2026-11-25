@@ -565,7 +565,29 @@ export class Renderer {
   render(canHome = false) {
     const c = this.ctx;
     c.setTransform(this.ratio, 0, 0, this.canvas.height / CONFIG.view.height, 0, 0);
-    this.background(); c.save();
+    this.background();
+    if (webglStage.gl) {
+      // 100% Full-3D WebGL2 Sky-Fortress Spiral Tower Climber Viewport!
+      c.save();
+      c.beginPath(); c.rect(0, CONFIG.motion.clipTop, 720, CONFIG.view.height * (1 - CONFIG.view.controlFraction) - CONFIG.motion.clipTop); c.clip();
+      webglStage.renderStairs(this);
+      for (const st of webglStage.projectedSteps || []) {
+        const w = st.gold ? 138 : 68;
+        this.rect(st.x - w / 2, st.y - 16, w, 28, '#0b132be6', 10, st.gold ? '#ffbe0b' : '#00f5d4');
+        this.art.label(st.text, st.x, st.y - 2, 14, st.gold ? '#ffbe0b' : '#ffffff', '#0b132b');
+      }
+      for (const popup of this.popups) {
+        if (popup.life <= 0 || (!popup.bonus && this.popups.some((other) => other.bonus && other.life > 0))) continue;
+        c.save(); c.globalAlpha = Math.min(1, popup.life / 200);
+        const x = clamp(popup.x + (popup.x >= 360 ? 115 : -115), 68, 652); const y = this.screenY(popup.y) - 42;
+        this.art.label('+' + (CONFIG.rules.stepCoins + popup.bonus), x, y, popup.bonus ? 42 : 28, '#ffbe0b', '#0b132b');
+        c.restore();
+      }
+      c.restore();
+      this.hud(); this.controls(); this.brakeOverlay(); this.art.home(canHome);
+      return;
+    }
+    c.save();
     c.beginPath(); c.rect(0, CONFIG.motion.clipTop, 720, CONFIG.view.height * (1 - CONFIG.view.controlFraction) - CONFIG.motion.clipTop); c.clip();
     if (this.shake > 0 && !this.reducedMotion) {
       const amplitude = this.game.state.mode === MODE.STUMBLE ? CONFIG.motion.stumbleShakePx : CONFIG.motion.shakePx;

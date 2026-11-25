@@ -58,6 +58,52 @@ export class AdventureRenderer {
   header(title,canHome){const a=this.art;a.cached('header',[0,0,720,132],()=>{a.rect(0,0,720,130,'#10264ce8');a.text(title,340,65,30,'#fff0c7');a.rect(528,32,170,67,'#091a38',22,'#a2c9f44d');a.coin(557,64,.6);},title);a.home(canHome);a.counter(this.profile.coins,584,66,99,23,'#ffe6a6','left');}
   runnerView(canHome,pressed=false){
     const a=this.art,c=a.c,s=this.runner.state,t=this.reduced?0:this.time,d=s.distance;
+    const hitReaction=this.wagonHitMs/420;
+    const wagonX=s.goldMs?540:642-s.slot*38+Math.sin(t/210)*8-(hitReaction*18);
+    if(webglStage.gl){
+      // 100% Full-3D WebGL2 Mag-Lev Rail Cyber Surfer & Train Chaser Viewport!
+      c.fillStyle=a.gradient(0,0,0,1280,['#070f24','#122b54','#0b1936']);
+      c.fillRect(0,0,720,1280);
+      a.ellipse(575,260,58,58,'#ffbe0b22');
+      a.ellipse(575,260,38,38,'#fff3b0');
+      webglStage.renderRunner(this,wagonX,hitReaction);
+      for(const cr of webglStage.projectedCrates||[]){
+        a.rect(cr.x-62,cr.y-20,124,38,'#0b132bf0',12,'#00f5d4');
+        a.label(cr.title,cr.x,cr.y-1,17,'#fff8d6','#0b132b');
+      }
+      if(webglStage.projectedTrain?.visible){
+        const tr=webglStage.projectedTrain;
+        a.rect(tr.x-96,tr.y-36,192,30,'#0b132be6',10,s.goldMs?'#ffbe0b':'#00f5d4');
+        a.label(s.goldMs?'★ 도킹 완료! 황금 질주!':`폭주 열차 · 부스터 ${s.slot}/3`,tr.x,tr.y-21,13.5,'#fff8d6','#0b132b');
+      }
+      this.effects();
+      this.header('작전 3 · 3D 호버 레일 추격',canHome);
+      a.cached('sentence-slots',[22,138,676,96],()=>{
+        a.rect(26,142,668,80,'#0b132beb',22,'#00f5d466');
+        const labels=['⚡ 1단 플라즈마 램','🪽 2단 발키리 윙','🚀 3단 하이퍼 제트'];
+        for(let i=0;i<3;i++){
+          const x=38+i*218,filled=i<s.slot,active=i===s.slot;
+          a.rect(x,151,196,62,filled?'#ffbe0b':active?'#1e3a8ae6':'#0f172acc',16,filled?'#fff3b0':active?'#00f5d4':'#475569');
+          a.label(labels[i],x+98,174,16.5,filled?'#0b132b':active?'#ffffff':'#94a3b8',filled?'#fff8d6':'#0b132b');
+          a.text(filled?'★ 3D 합체 완료!':active?'점프 타격 / 적 밟기!':'대기 중',x+98,198,12.5,filled?'#0b132b':active?'#00f5d4':'#64748b');
+        }
+      },s.sentence*4+s.slot);
+      if(s.messageMs){
+        a.rect(76,242,568,72,'#0b132bf0',20,'#ffbe0b');
+        a.label(s.message==='GOLD RUSH!'?'★ 3D 부스터 합체 & 하이퍼 질주!':s.message,360,268,s.message==='GOLD RUSH!'?28:26,'#ffbe0b','#0b132b');
+        if(s.message==='GOLD RUSH!')a.text('3단 풀업그레이드 별빛특급이 전속력으로 돌파합니다!',360,298,16,'#00f5d4');
+      }
+      if(s.goldMs){a.rect(130,322,460,12,'#0b132b',6);a.rect(130,322,460*s.goldMs/CONFIG.runner.goldMs,12,'#ffbe0b',6);}
+      a.cached(pressed?'jump-held':'jump-ready',[64,1041,592,184],()=>{
+        a.rect(66,1058,588,162,'#0b132b',38);
+        a.rect(66,1044+(pressed?10:0),588,160,a.gradient(66,1044,66,1204,['#ffbe0b','#fb5607']),38,'#0b132b');
+        a.rect(82,1054+(pressed?10:0),556,58,'#ffffff28',26);
+        a.poly([[140,1136+(pressed?10:0)],[168,1096+(pressed?10:0)],[196,1136+(pressed?10:0)]],'#ffffff','#0b132b',3.5);
+        a.label('⚡ 터보 점프',382,1112+(pressed?10:0),44,'#ffffff','#0b132b');
+        a.label('길게 누르면 하이점프 & 적 밟기!',382,1166+(pressed?10:0),20,'#fff3b0','#0b132b');
+      });
+      return;
+    }
     const zone=s.round%3;
     const skies=[['#3769b5','#75d5dc','#f5ecb6'],['#3f4b9c','#8b7fd6','#ffd6b0'],['#16244f','#355a96','#8ee8e2']][zone];
     c.fillStyle=a.gradient(0,0,0,1280,skies);c.fillRect(0,0,720,1280);
@@ -120,8 +166,7 @@ export class AdventureRenderer {
       c.restore();
     }
     // Runaway Starlight Express LEGO wagon with Coco on top — visibly transforms and jolts with each brick hit!
-    const hitReaction=this.wagonHitMs/420,wagonDent=this.reduced?0:Math.sin(hitReaction*Math.PI)*.18;
-    const wagonX=s.goldMs?540:642-s.slot*38+Math.sin(t/210)*8-(hitReaction*18);
+    const wagonDent=this.reduced?0:Math.sin(hitReaction*Math.PI)*.18;
     // Composite OGL v1.0.11 3D WebGL meshes for 3D Track Studs, 3D Hover Crates, 3D Boosters & 3D Powerups!
     webglStage.renderRunner(this,wagonX,hitReaction);
     // Wheel sparks flying from under the high-speed runaway train car!
@@ -294,6 +339,47 @@ export class AdventureRenderer {
   }
   plazaView(canHome){
     const a=this.art,c=a.c,s=this.plaza.state,t=this.reduced?0:this.time;
+    const dock=this.iso(-2.2,3.4),collectedTotal=s.collectedA+s.collectedB;
+    if(webglStage.gl){
+      // 100% Full-3D WebGL2 Mecha Brawl Survival Arena Viewport!
+      c.fillStyle=a.gradient(0,0,0,1280,['#060d1f','#102244','#071126']);
+      c.fillRect(0,0,720,1280);
+      webglStage.renderPlaza(this,dock,collectedTotal);
+      for(const pi of webglStage.projectedItems||[]){
+        if(pi.item.collected){
+          a.label('✓ 장착',pi.x,pi.y,15,'#00f5d4','#0b132b');
+        }else if(pi.near||s.phase==='briefing'||s.remindMs>0){
+          a.rect(pi.x-54,pi.y-16,108,26,'#0b132bf0',8,'#00f5d4');
+          a.label(GOODS[pi.item.kind].name,pi.x,pi.y-3,13,'#fff8d6','#0b132b');
+        }
+      }
+      if(this.plaza.ready&&webglStage.projectedCaptain?.visible){
+        const cp=webglStage.projectedCaptain;
+        a.rect(cp.x-68,cp.y-24,136,30,'#0b132bf0',10,'#ffbe0b');
+        a.label('▼ 코어 도킹!',cp.x,cp.y-9,16,'#ffbe0b','#0b132b');
+      }
+      this.effects();
+      this.header('작전 4 · 3D 메카 브롤 아레나',canHome);
+      a.rect(33,144,654,124,'#0b132beb',24,'#00f5d466');
+      a.label(this.plaza.ready?'⚡ 코어 3종 확보 완료! 대장 메카에게 도킹!':`⚡ 3D 아레나 코어 수거 & 자동 사격 (STAGE ${s.round+1})`,360,174,21,'#fff8d6','#0b132b');
+      for(let i=0;i<2;i++){
+        const m=this.plaza.mission[i],count=i?s.collectedB:s.collectedA;
+        a.rect(86+i*286,196,258,56,'#14284ee6',16,count>=m.count?'#00f5d4':'#ffbe0b');
+        this.good(m.kind,124+i*286,230,.58);
+        a.label(`${GOODS[m.kind].name}  ${count}/${m.count}`,228+i*286,224,17,count>=m.count?'#00f5d4':'#ffffff','#0b132b');
+      }
+      if(s.phase!=='active'){
+        a.rect(127,1046,466,118,a.gradient(127,1046,127,1164,['#00f5d4','#00b4d8']),34,'#0b132b');
+        a.label(s.phase==='success'?'★ 다음 3D 아레나 출동!':'⚡ 3D 아레나 출동!',360,1105,36,'#ffffff','#0b132b');
+      }else if(this.joystick){
+        c.save();c.strokeStyle='#00f5d4aa';c.lineWidth=4;c.beginPath();c.arc(this.joystick.x,this.joystick.y,58,0,Math.PI*2);c.stroke();
+        a.ellipse(this.joystick.knobX,this.joystick.knobY,24,24,'#00f5d4');c.restore();
+      }else{
+        a.rect(180,1120,360,54,'#0b132bcc',27,'#00f5d455');
+        a.label('🕹️ 화면을 드래그해 360° 이동 & 자동 사격',360,1147,17,'#00f5d4','#0b132b');
+      }
+      return;
+    }
     a.cached('plaza-ground',[0,0,720,1280],()=>{
     a.c.fillStyle=a.gradient(0,0,720,1280,['#193258','#385d8a','#1f365c']);a.c.fillRect(0,0,720,1280);
     for(let i=0;i<18;i++)a.star((i*173+19)%720,300+(i*71)%840,3+i%3,'#fff0bb55');
@@ -327,8 +413,8 @@ export class AdventureRenderer {
       a.stud(cp.x,cp.y-46,9,3.5,4,'#e39d3b','#fff6be');
     }
     });
-    const dock=this.iso(-2.2,3.4),parts=trainParts(this.profile.data),captain=this.iso(0,3.15);
-    const totalNeeded=this.plaza.mission.reduce((n,m)=>n+m.count,0),collectedTotal=s.collectedA+s.collectedB;
+    const parts=trainParts(this.profile.data),captain=this.iso(0,3.15);
+    const totalNeeded=this.plaza.mission.reduce((n,m)=>n+m.count,0);
     const dockPulse=this.dockPulseMs/480,dockDent=this.reduced?0:Math.sin(dockPulse*Math.PI)*.14;
     webglStage.renderPlaza(this,dock,collectedTotal);
     // Power conduits connecting the Captain Dock to the Starlight Express as core bricks are gathered

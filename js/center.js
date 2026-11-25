@@ -54,16 +54,17 @@ export class Center {
   render(){
     if(this.keypad){this.renderKeypad();return;}
     if(this.stage==='dashboard'){this.dashboard();return;}
-    this.background('아바타 상점');const a=this.art,p=this.part;
-    a.ellipse(190,416,130,35,'#8776bd');a.ellipse(190,402,130,29,'#bca6e6');
+    this.background('레고 아바타 조립 공방');const a=this.art,p=this.part;
+    a.ellipse(190,416,130,35,'#8776bd');a.stud(190,404,114,25,9,'#7e6bb8','#cbb8f5');
     a.toy(186,397,1.32,{time:this.time,palette:paletteFor({...this.profile.equipped,[this.slot]:p.id})});
     a.rect(366,157,307,77,'#0f1b39',24,'#b7c7f555');a.coin(406,195,.75);a.counter(this.profile.coins,450,198,198,32,'#ffdd8b','left');
-    a.text(p.name,511,281,30,'#e8efff');a.text(p.legendary?'LEGENDARY':'COLLECTION',511,325,16,p.legendary?'#ffe29c':'#99cfde');
-    a.text(this.profile.status==='memory'?'임시 보관 중':'자동 보관',511,373,18,this.profile.status==='memory'?'#ffb298':'#99dfcc');
-    for(const [i,slot]of ['head','body','back'].entries()){a.rect(40+i*224,450,208,62,this.slot===slot?'#b3e7e0':'#2d4367',20);a.text(['머리','몸통','등'][i],144+i*224,482,25,this.slot===slot?'#224559':'#c9dced');}
+    a.text(p.name,511,281,30,'#e8efff');a.text(p.legendary?'★ 전설 레고 파츠':'레고 커스텀 파츠',511,325,16,p.legendary?'#ffe29c':'#99cfde');
+    a.text(this.profile.status==='memory'?'임시 보관 중':'모든 작전에 장착 반영',511,373,17,this.profile.status==='memory'?'#ffb298':'#99dfcc');
+    for(const [i,slot]of ['head','body','back'].entries()){a.rect(40+i*224,450,208,62,this.slot===slot?'#b3e7e0':'#2d4367',20);a.text(['머리 브릭','몸통 슈트','등 부스터'][i],144+i*224,482,23,this.slot===slot?'#224559':'#c9dced');}
     this.parts.forEach((part,i)=>{
       const x=36+i%2*342,y=540+Math.floor(i/2)*263,selected=part.id===this.selected,owned=this.profile.data.owned.includes(part.id);
       a.rect(x,y+9,306,238,'#0a1833',24);a.rect(x,y,306,238,selected?'#3d567f':'#233a60',24,selected?'#ffdf99':'#88a9cf66');
+      for(let sIdx=0;sIdx<3;sIdx++)a.stud(x+78+sIdx*75,y+2,13,4,4.5,selected?'#5678ad':'#304d7a',selected?'#ffe8a8':'#8fb4de');
       a.toy(x+91,y+158,.72,{time:this.time,palette:paletteFor({...this.profile.equipped,[this.slot]:part.id})});
       if(part.legendary)a.star(x+258,y+34,14,'#ffdb86');
       a.text(part.name,x+216,y+81,19,'#e5efff');a.text(owned?'보유':part.price+' C',x+216,y+122,23,owned?'#b6ffdf':'#ffdc91');

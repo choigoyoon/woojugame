@@ -2,7 +2,7 @@ import { Art } from './art.js';
 import { CONFIG } from './config.js';
 import { SYMBOLS, SENTENCES } from './sentences.js';
 import { GOODS } from './plaza.js';
-import { train, wagon } from './harbor-art.js';
+import { train, wagon, picoToy, cocoToy } from './harbor-art.js';
 
 export class AdventureRenderer {
   constructor(ctx,runner,plaza,profile){
@@ -30,9 +30,12 @@ export class AdventureRenderer {
     for(let i=0;i<5;i++){const x=((i*251-d*.08)%1200+1200)%1200-220,y=365+(i%3)*65;a.ellipse(x,y,70,16,'#e8fff2bb');a.ellipse(x+20,y-14,35,25,'#f1fff3bb');}
     a.rect(0,870,720,410,'#1c656a');a.rect(0,870,720,37,'#a4e7a4');a.rect(0,906,720,20,'#4eac8b');
     for(let i=0;i<9;i++){const x=i*112-(d%112);a.line([[x,925],[x+50,996],[x+50,1280]],'#328083',4);a.stud(x+32,870,13,4,4.5,'#57b982','#d7ffbe');a.rect(x+15,951,18,10,'#47979b',3);}
-    // Runaway Starlight Express LEGO wagon being chased on the track ahead!
-    const wagonX=s.goldMs?560:645-s.slot*35+Math.sin(t/210)*8;
+    // Runaway Starlight Express LEGO wagon with Coco on top cheering the player on!
+    const wagonX=s.goldMs?550:640-s.slot*36+Math.sin(t/210)*8;
     wagon(a,wagonX,866,.68,t,true);
+    cocoToy(a,wagonX-6,818,.46,t);
+    a.rect(wagonX-96,742,174,28,'#132e4ee6',10,'#ffe79988');
+    a.text(s.goldMs?'코코: "황금 합체 성공!"':'코코: "브릭 '+(3-s.slot)+'개 더!"',wagonX-9,756,14,'#fff3bd');
     if(s.goldMs)a.line([[CONFIG.runner.playerX+35,795],[wagonX-45,825]],'#fff39e',6);
     for(const item of this.runner.items.active){
       if(item.kind==='word'){
@@ -40,7 +43,11 @@ export class AdventureRenderer {
         a.line([[item.x,item.y-67],[item.x,item.y-12]],'#e5ffef99',3);a.ellipse(item.x,item.y-73,31,37,['#efadc6','#9ce4d4','#bec1ff'][item.slot]);
         a.block(item.x-80,item.y-4,160,62,10,'#e8ba66','#fff3ad','#9c7045');a.label(text,item.x,item.y+27,29,'#fff9e8','#40345d');a.text(icon,item.x,item.y-75,30,'#fff');
       }else if(item.kind==='coin')a.coin(item.x,item.y+Math.sin(t/180+item.x)*5,.65);
-      else{a.block(item.x-28,815,56,55,12,'#b96881','#efacac','#683e62');a.rect(item.x-18,830,12,8,'#fff3a5',2);a.rect(item.x+6,830,12,8,'#fff3a5',2);}
+      else{
+        a.block(item.x-28,815,56,55,12,'#b96881','#efacac','#683e62');
+        a.rect(item.x-22,848,44,12,'#ffd86b',2);a.line([[item.x-16,848],[item.x-8,860]],'#4a2c48',4);a.line([[item.x+4,848],[item.x+12,860]],'#4a2c48',4);
+        a.rect(item.x-18,828,12,8,'#fff3a5',2);a.rect(item.x+6,828,12,8,'#fff3a5',2);
+      }
     }
     const squash=s.squashMs?Math.sin(s.squashMs/200*Math.PI):0,scale=s.goldMs?1.38:.86;
     c.save();c.translate(CONFIG.runner.playerX,870-s.y);c.scale(1+squash*.13-Math.min(1,s.y/180)*.05,1-squash*.14+Math.min(1,s.y/180)*.08);
@@ -61,15 +68,15 @@ export class AdventureRenderer {
   good(kind,x,y,scale=1){
     const a=this.art,c=a.c,color=GOODS[kind].color;c.save();c.translate(x,y);c.scale(scale,scale);
     a.ellipse(0,10,22,7,'#10295344');
-    if(kind==='key'){a.ellipse(-7,-17,13,13,color);a.ellipse(-7,-17,5,5,'#37466c');a.line([[3,-10],[20,7],[15,12]],color,8);}
-    if(kind==='star')a.star(0,-11,26,color);
-    if(kind==='gem')a.poly([[0,-37],[23,-17],[13,10],[-13,10],[-23,-17]],color,'#e8fff4',3);
+    if(kind==='key'){a.ellipse(-7,-17,13,13,color);a.stud(-7,-17,5.5,5.5,2.5,'#c93b5b','#ffd0da');a.line([[3,-10],[20,7],[15,12]],color,8);}
+    if(kind==='star'){a.star(0,-11,26,color);a.stud(0,-11,7,7,3,'#3c95c9','#e0f8ff');}
+    if(kind==='gem'){a.poly([[0,-37],[23,-17],[13,10],[-13,10],[-23,-17]],color,'#e8fff4',3);a.stud(0,-15,7.5,4,3.5,'#35b899','#dcfff4');}
     if(kind==='book'){a.block(-20,-29,38,43,6,color,'#f1d7ff','#756293');a.star(0,-10,11,'#fff4a7');}
-    if(kind==='console'){a.rect(-26,-24,52,34,color,9);a.rect(-12,-20,24,23,'#344775',4);a.line([[-21,-12],[-15,-12]],'#5a4f6d',3);a.ellipse(19,-10,4,4,'#e47792');}
-    if(kind==='bomb'){a.ellipse(0,-11,22,24,'#4c5c82');a.line([[5,-34],[14,-43],[20,-35]],'#e5c08a',4);a.star(22,-34,6,'#ffcb80');}
+    if(kind==='console'){a.rect(-26,-24,52,34,color,9);a.stud(-12,-25,6,2.5,3,'#d99a3d','#fff1b8');a.stud(12,-25,6,2.5,3,'#d99a3d','#fff1b8');a.rect(-12,-20,24,23,'#344775',4);a.line([[-21,-12],[-15,-12]],'#5a4f6d',3);a.ellipse(19,-10,4,4,'#e47792');}
+    if(kind==='bomb'){a.ellipse(0,-11,22,24,'#4c5c82');a.stud(0,-30,6,2.8,3,'#374569','#9cb3de');a.line([[5,-34],[14,-43],[20,-35]],'#e5c08a',4);a.star(22,-34,6,'#ffcb80');}
     c.restore();
   }
-  robot(x,y){const a=this.art;a.ellipse(x,y,40,13,'#203d6055');a.block(x-31,y-67,62,50,10,'#7c8ecb','#b5d7ff','#4d5897');a.block(x-35,y-120,70,47,9,'#9fcbea','#e6ffff','#627eac');a.rect(x-27,y-109,54,24,'#183957',7);a.rect(x-18,y-103,10,8,'#7effd8',3);a.rect(x+8,y-103,10,8,'#7effd8',3);a.star(x,y-42,16,'#ffdc8b');a.line([[x,y-124],[x,y-140]],'#a1d7df',4);a.ellipse(x,y-143,7,7,'#ffc990');}
+  robot(x,y){const a=this.art;a.ellipse(x,y,40,13,'#203d6055');a.block(x-31,y-67,62,50,10,'#7c8ecb','#b5d7ff','#4d5897');a.block(x-35,y-120,70,47,9,'#9fcbea','#e6ffff','#627eac');a.stud(x,y-125,13,4.5,5,'#6b9ec7','#e6ffff');a.rect(x-27,y-109,54,24,'#183957',7);a.rect(x-18,y-103,10,8,'#7effd8',3);a.rect(x+8,y-103,10,8,'#7effd8',3);a.star(x,y-42,16,'#ffdc8b');a.line([[x,y-128],[x,y-144]],'#a1d7df',4);a.ellipse(x,y-147,7,7,'#ffc990');}
   plazaView(canHome){
     const a=this.art,c=a.c,s=this.plaza.state,t=this.reduced?0:this.time;
     a.cached('plaza-ground',[0,0,720,1280],()=>{
@@ -80,6 +87,7 @@ export class AdventureRenderer {
     for(let x=-4;x<4;x++)for(let z=-4;z<4;z++){const points=[this.iso(x,z),this.iso(x+1,z),this.iso(x+1,z+1),this.iso(x,z+1)];a.poly(points.map(p=>[p.x,p.y]),(x+z)%2?'#aacacb':'#bed8cf','#86abbc',1);const center=this.iso(x+.5,z+.5);a.ellipse(center.x,center.y-2,7,3.2,'#ffffff38');}
     });
     const dock=this.iso(-2.2,3.4);train(a,dock.x,dock.y-18,.42,{time:t,cars:1});
+    cocoToy(a,dock.x+56,dock.y-8,.42,t);
     const captain=this.iso(0,3.15);a.ellipse(captain.x,captain.y,46,22,this.plaza.ready?'#fff0a4':'#6d95b7');
     // Fixed tiny scene: sort stable references in reusable scratch storage by floor depth.
     this.scene??=[];this.scene.length=0;

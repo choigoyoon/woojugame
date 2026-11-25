@@ -1,3 +1,52 @@
+export function picoToy(a,x,y,scale=1,time=0){
+  const c=a.c;c.save();c.translate(x,y);c.scale(scale,scale);
+  const bob=Math.sin(time/240)*2.5;c.translate(0,bob);
+  a.ellipse(0,6,26,8,'#091d3a44');
+  a.block(-18,-36,36,30,7,'#5f85c9','#b7dcff','#3b538a');
+  a.rect(-12,-30,24,18,'#1b355c',5,'#9beeff88');a.star(0,-21,7,'#ffe68f');
+  a.block(-22,-74,44,34,8,'#88c2e8','#e4fbff','#517ca8');
+  a.stud?.(0,-78,9,3.5,4.5,'#5f9cc7','#e4fbff');
+  a.line([[0,-82],[0,-96]],'#9ee7f5',3.5);
+  a.ellipse(0,-99,6,6,Math.floor(time/280)%2?'#ffdf78':'#72ffee');
+  a.rect(-16,-67,32,19,'#142f4f',6,'#8eeeff66');
+  const blink=time>0&&time%3400<120;
+  for(const ex of[-8,8]){
+    if(blink)a.line([[ex-4,-58],[ex+4,-58]],'#7effe0',2.5);
+    else{a.rect(ex-3.5,-63,7,9,'#7effe0',2.5);a.ellipse(ex-1,-60,1.3,1.3,'#fff');}
+  }
+  for(const side of[-1,1]){
+    const wave=side>0?Math.sin(time/150)*8:0;
+    a.line([[side*19,-26],[side*28,-32-wave]],'#88c2e8',5);
+    a.ellipse(side*29,-33-wave,4.5,4.5,'#ffe294');
+  }
+  c.restore();
+}
+
+export function cocoToy(a,x,y,scale=1,time=0){
+  const c=a.c;c.save();c.translate(x,y);c.scale(scale,scale);
+  const bob=Math.abs(Math.sin(time/220))*2.5;c.translate(0,-bob);
+  a.ellipse(0,6,34,9,'#091d3a44');
+  // Tail with LEGO studs and attached mini star-stamp box
+  a.poly([[-16,-14],[-48,-24],[-42,-6],[-14,-4]],'#67b875','#3e7a52',2);
+  a.stud?.(-34,-21,4.5,2.2,3,'#58a466','#b9f2b4');
+  a.block(-56,-38,20,18,5,'#d9874c','#ffe19c','#8c4f3e');a.star(-46,-29,5,'#fff1a8');
+  // Dinosaur body & LEGO dorsal plates
+  a.block(-22,-46,44,38,9,'#78c87e','#c5f4be','#468959');
+  a.rect(-12,-38,24,25,'#d8f5b8',6);
+  for(const sy of[-42,-30,-18])a.stud?.(-24,sy,4,2.5,3,'#f0a84b','#ffe7a3');
+  // Head, snout & LEGO engineer cap
+  a.block(-18,-82,42,34,8,'#8ad68c','#d2f9c8','#4f9660');
+  a.block(8,-72,24,20,6,'#9be099','#e0ffd4','#5ba36a');
+  a.stud?.(-2,-86,11,4,5,'#f3b749','#fff1a8');
+  a.rect(-20,-85,36,8,'#f3b749',4);a.rect(-10,-82,34,4,'#257d96',2);
+  a.ellipse(-4,-69,3.5,4.5,'#143852');a.ellipse(10,-69,3.5,4.5,'#143852');
+  a.ellipse(-3,-70,1.2,1.2,'#fff');a.ellipse(11,-70,1.2,1.2,'#fff');
+  a.line([[2,-56],[12,-53],[21,-56]],'#3c6b4b',2.5);
+  const armWave=Math.sin(time/140)*6;
+  a.line([[18,-32],[30,-40-armWave]],'#8ad68c',6);a.ellipse(31,-41-armWave,4.5,4.5,'#ffe39b');
+  c.restore();
+}
+
 export function wagon(a,x,y,scale=1,time=0,last=false){
   const c=a.c;c.save();c.translate(x,y);c.scale(scale,scale);
   a.line([[-70,-12],[69,-12]],'#91cbd4',9);

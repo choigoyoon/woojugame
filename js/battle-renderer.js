@@ -1,6 +1,6 @@
 import { CONFIG } from './config.js';
 import { Art } from './art.js';
-import { train, wagon, lockToy, cargoToy } from './harbor-art.js';
+import { train, wagon, lockToy, cargoToy, picoToy, cocoToy } from './harbor-art.js';
 
 export class BattleRenderer {
   constructor(ctx,battle,profile) {
@@ -184,26 +184,44 @@ export class BattleRenderer {
     a.line([[-17,20],[0,35],[17,20]],color,7);c.restore();
   }
   crane(entity) {
-    const a=this.art,c=a.c,p=this.project(0,entity.z),s=p.s,m=this.game.harbor.state;
+    const a=this.art,c=a.c,p=this.project(0,entity.z),s=p.s,m=this.game.harbor.state,round=this.game.state.round??0;
     const warning=this.game.state.attack?.phase==='warning',lift=warning?18+Math.sin(this.time/90)*5:0;
+    const palettes=[['#c77c57','#ffe0a0','#8b4e57','#ffc37b'],['#b84867','#ffc2d4','#6e2948','#79f2ff'],['#6a459c','#e0c7ff','#3e2666','#ffd86b']];
+    const [hull,hullTop,hullSide,clawColor]=palettes[round]??palettes[0];
     c.save();c.translate(p.x,p.y);c.scale(s,s);
     a.ellipse(0,8,250,35,'#18324740');
     for(const side of[-1,1]){
+      const broken=m.locksBroken>=(side<0?1:2);
       a.line([[side*104,-302-lift],[side*220,-232-lift],[side*187,-62]],'#334964',37);
-      a.line([[side*104-5,-308-lift],[side*215,-237-lift],[side*182,-68]],'#ffc37b',22);
-      a.ellipse(side*218,-236-lift,24,24,'#e5915c');a.ellipse(side*218,-239-lift,13,13,'#ffe7a4');
-      a.line([[side*187,-61],[side*156,-32],[side*134,-63]],'#e6ab72',19);
+      a.line([[side*104-5,-308-lift],[side*215,-237-lift],[side*182,-68]],broken?'#6d7f94':clawColor,22);
+      a.ellipse(side*218,-236-lift,24,24,broken?'#55687d':'#e5915c');a.ellipse(side*218,-239-lift,13,13,'#ffe7a4');
+      a.line([[side*187,-61],[side*156,-32],[side*134,-63]],broken?'#7a8ca0':'#e6ab72',19);
     }
-    a.block(-142,-382-lift,284,127,27,'#c77c57','#ffe0a0','#8b4e57');
+    a.block(-142,-382-lift,284,127,27,hull,hullTop,hullSide);
+    for(const sx of[-96,-32,32,96])a.stud(sx,-392-lift,16,5.5,7,hull,hullTop);
+    if(round===0){
+      a.block(-48,-422-lift,96,34,12,'#e09a48','#fff1b5','#945b36');
+      a.ellipse(0,-428-lift,14,14,warning?'#ff5964':'#ffe37e');
+    }else if(round===1){
+      for(const side of[-1,1]){a.block(side*84-26,-426-lift,52,38,12,'#34789e','#a8f7ff','#1e4968');a.ellipse(side*84,-407-lift,11,11,'#7effef');}
+    }else{
+      a.poly([[-68,-382-lift],[-86,-432-lift],[-32,-408-lift],[0,-448-lift],[32,-408-lift],[86,-432-lift],[68,-382-lift]],'#ffd86b','#fff5c0',4);
+      a.star(0,-412-lift,16,'#ff647c');
+    }
     a.rect(-119,-357-lift,238,77,'#203e5c',19,'#fff0bb');
-    for(const side of[-1,1]){a.rect(side*66-26,-339-lift,52,23,m.weakMs?'#a5ffe6':'#ffbd83',8);a.rect(side*66-5,-339-lift,10,23,'#254054',2);}
+    for(const side of[-1,1]){a.rect(side*66-26,-339-lift,52,23,m.weakMs?'#a5ffe6':warning?'#ff7888':'#ffbd83',8);a.rect(side*66-5,-339-lift,10,23,'#254054',2);}
     a.rect(-18,-301-lift,36,9,'#a2e8df',4);
     for(let i=0;i<5;i++)a.poly([[-111+i*49,-258-lift],[-91+i*49,-258-lift],[-105+i*49,-240-lift],[-125+i*49,-240-lift]],'#593f50');
+    if(entity.crack>0){
+      a.line([[-95,-365-lift],[-62,-332-lift],[-78,-305-lift]],'#ffe291',4);
+      if(entity.crack>1)a.line([[92,-360-lift],[58,-324-lift],[76,-296-lift]],'#ffe291',4);
+    }
     const trainY=-52+Math.sin(this.time/350)*5;
-    if(this.game.state.round===0)train(a,0,trainY,.82,{time:this.time,held:m.locksBroken<2});
-    else wagon(a,0,trainY,1.6,this.time,this.game.state.round===2);
+    if(round===0)train(a,0,trainY,.82,{time:this.time,held:m.locksBroken<2});
+    else wagon(a,0,trainY,1.6,this.time,round===2);
     if(m.locksBroken<2)for(const side of[-1,1])a.line([[side*86,-252],[side*86,trainY-125]],'#d5eeef',5);
-    a.rect(-137,-432,274,32,'#183450',12,'#e2c38a');a.text(m.locksBroken<2?'연결 볼트  '+(2-m.locksBroken):m.weakMs?'지금이야!':'집게를 밀어내!',0,-415,22,m.weakMs?'#abffe8':'#ffefbc');
+    a.rect(-145,-468,290,34,'#183450',12,'#e2c38a');
+    a.text(m.locksBroken<2?'레고 연결 볼트  '+(2-m.locksBroken)+'개 남음':m.weakMs?'⚡ 약점 노출! 본체 집중 사격!':'볼트 해제 완료! 본체를 밀어내!',0,-451,20,m.weakMs?'#abffe8':'#ffefbc');
     if(entity.hitMs){c.globalAlpha=entity.hitMs/CONFIG.battle.hitMs*.25;a.rect(-142,-382-lift,284,127,'#fff0b0',18);}
     c.restore();
   }
@@ -362,9 +380,13 @@ export class BattleRenderer {
       const section=at.reduce((found,point,index)=>route>=point?index:found,0);
       a.label(CONFIG.campaign.sectionNames[section]+' · 보스까지 '+Math.max(0,Math.ceil((this.game.rules.bossAtMs-s.waveMs)/1000))+'초',360,308,18,'#d8f6e9','#18375b');
     }
-    if(boss)a.label(this.game.harbor?'거대 레고 집게 견인차':this.game.campaign?this.game.round.boss+(boss.rage?' !':''):boss.rage?'BOSS • RAGE':'BOSS',360,310,22,boss.rage?'#ffbd87':'#fff1d3','#18375b');
+    if(boss)a.label(this.game.harbor?['1-1 철통 집게 크레인','1-2 쌍둥이 자석 집게','1-3 항구 수호 거인'][s.round]:this.game.campaign?this.game.round.boss+(boss.rage?' !':''):boss.rage?'BOSS • RAGE':'BOSS',360,310,22,boss.rage?'#ffbd87':'#fff1d3','#18375b');
     const mission=this.game.harbor?.state;
-    if(mission?.signalMs>0&&s.bannerMs<=0){a.rect(80,339,560,58,'#153955e8',21,'#9bdcc9');a.text(mission.signal,360,368,26,'#fff1c4');}
+    if(mission?.signalMs>0&&s.bannerMs<=0){
+      a.rect(64,337,592,62,'#133450f0',22,'#9bdcc9');
+      picoToy(a,106,389,.38,this.time);
+      a.text('삐코 무전 · '+mission.signal,382,368,23,'#fff1c4');
+    }
     if(s.bannerMs>0){
       c.save();c.globalAlpha=Math.min(1,s.bannerMs/260);
       const clear=s.banner==='CLEAR!';
@@ -409,10 +431,14 @@ export class BattleRenderer {
       if(done)a.star(x,189,19,'#95643d');else a.text(i+1,x,189,25,'#96b8de');
       a.text('1-'+(i+1),x,244,18,done?'#ffedc4':'#9cb9da');
     }
-    a.text(complete?'하늘 항구 완료!':'1-'+(s.round+1)+' CLEAR!',360,330,45,'#fff2c2');
+    a.text(complete?'하늘 항구 탈환 완료!':'1-'+(s.round+1)+' 레고 파츠 탈환!',360,330,43,'#fff2c2');
     a.text(this.game.harbor?CONFIG.harbor.recovered[s.round]:complete?'항구 배지를 획득했어':this.game.round.title,360,385,25,'#b9e9e5');
-    a.ellipse(360,582,139,36,'#8270bb');a.ellipse(360,570,139,34,'#bca4ef');
-    if(this.game.harbor)train(a,complete?440:360,552,.82,{time:this.time,cars:s.round});
+    a.ellipse(360,582,165,36,'#8270bb');a.stud(360,572,148,30,10,'#7c68b8','#c8b4f7');
+    if(this.game.harbor){
+      train(a,complete?445:372,552,.8,{time:this.time,cars:s.round});
+      cocoToy(a,178,562,.62,this.time);
+      picoToy(a,568,560,.58,this.time);
+    }
     else if(complete){a.poly([[360,430],[435,469],[422,548],[360,587],[298,548],[285,469]],'#ffd074','#fff2bc',5);a.star(360,507,42,'#fff4ca');}
     else a.toy(350,568,.92,{time:this.time,palette:this.profile.palette});
     a.rect(70,623,580,114,'#10213de6',26,'#9fbbe76b');

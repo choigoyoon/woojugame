@@ -1,6 +1,7 @@
 import { Art } from './art.js';
 import { CONFIG } from './config.js';
 import { SCENARIOS } from './scenarios.js';
+import { picoToy, cocoToy } from './harbor-art.js';
 
 export class PuzzleRenderer {
   constructor(ctx,game,profile){this.art=new Art(ctx);this.game=game;this.profile=profile;this.time=0;}
@@ -61,8 +62,15 @@ export class PuzzleRenderer {
     a.rect(584,196,59,58,'#55699835',18);a.poly([[598,220],[607,220],[617,210],[617,241],[607,232],[598,232]],'#4a6387');a.line([[625,215],[631,225],[625,235]],'#4a6387',3);
     a.rect(74,194,46,46,'#ffffff8c',16);a.text('?',97,217,32,'#746392');
     const elapsed=p.solved?CONFIG.puzzle.celebrationMs-p.celebrationMs:0;
-    const island=(x)=>{a.poly([[x-110,716],[x,678],[x+110,716],[x,755]],'#b3bde9');a.poly([[x-110,716],[x,755],[x+110,716],[x+90,779],[x,813],[x-88,777]],'#645a96');a.line([[x-106,717],[x,754],[x+106,717]],'#e0ddff',4);};
+    const island=(x)=>{
+      a.poly([[x-110,716],[x,678],[x+110,716],[x,755]],'#b3bde9');
+      a.poly([[x-110,716],[x,755],[x+110,716],[x+90,779],[x,813],[x-88,777]],'#645a96');
+      a.line([[x-106,717],[x,754],[x+106,717]],'#e0ddff',4);
+      for(const dx of[-45,0,45])a.stud(x+dx,706,10,3.8,4,'#7e74b8','#e5e0ff');
+    };
     island(123);island(596);
+    picoToy(a,68,706,.48,this.time);
+    cocoToy(a,648,708,.48,this.time);
     for(let i=0;i<3;i++){
       const built=p.solved&&elapsed>i*170;
       const x=262+i*70,y=711+(built?Math.max(0,1-(elapsed-i*170)/240)*85:105);

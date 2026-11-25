@@ -306,6 +306,19 @@ export class Renderer {
       this.polygon([[-90, 0], [0, -35], [90, 0], [0, 34]], '#dbfff7');
       c.restore();
     }
+    // Distant LEGO Cloud Lighthouse Tower guiding the Starlight Express
+    const lhY = 660 - clamp(-this.cameraY * 0.035, 0, 260);
+    c.save(); c.globalAlpha = 0.42; c.translate(108, lhY);
+    const sweep = this.reducedMotion ? 0.2 : Math.sin(this.time / 900) * 0.28;
+    this.polygon([[0, -138], [260, -210 + sweep * 90], [260, -90 + sweep * 90]], '#fff6b536');
+    this.rect(-34, 0, 68, 18, '#65809e', 4);
+    this.rect(-24, -110, 48, 110, '#e8f1fa', 4);
+    this.rect(-24, -92, 48, 22, '#e0675a', 2);
+    this.rect(-24, -48, 48, 22, '#e0675a', 2);
+    this.rect(-30, -120, 60, 12, '#3a5778', 4);
+    this.rect(-18, -144, 36, 24, '#ffe89c', 5);
+    this.art.stud(0, -148, 14, 4.5, 6, '#e39d3b', '#fff5bd');
+    c.restore();
   }
 
   platform(step) {
@@ -355,9 +368,10 @@ export class Renderer {
     this.polygon([[x - 88, y + 6], [x, y + 38], [x, y + 44], [x - 88, y + 12]], '#ffffff26');
     this.polygon([[x + 8, y + 42], [x + 78, y + 17], [x + 78, y + 22], [x + 8, y + 47]], '#00072b12');
     for (const [dx, dy] of [[-33, 0], [0, -12], [33, 0], [0, 12]]) {
-      this.ellipse(x + dx, y + dy + 1, 11, 4, '#23455230');
-      this.rect(x + dx - 11, y + dy - 5, 22, 5, palette[1]);
-      this.ellipse(x + dx, y + dy - 5, 11, 4, '#ffffff83');
+      this.ellipse(x + dx, y + dy + 2, 13, 5, '#19374838');
+      this.rect(x + dx - 12, y + dy - 7, 24, 7, palette[1], 2);
+      this.ellipse(x + dx, y + dy - 7, 12, 4.6, palette[0]);
+      this.ellipse(x + dx, y + dy - 7.5, 8.5, 3, '#ffffff88');
     }
   }
 

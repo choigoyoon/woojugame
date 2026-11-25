@@ -1,5 +1,5 @@
 import { Art } from './art.js';
-import { train } from './harbor-art.js';
+import { train, wagon, picoToy, cocoToy } from './harbor-art.js';
 
 export const CARTRIDGES = Object.freeze([
   { id:'stairs', title:'블록 계단 점프', tag:'작전 2 · 등대 신호탑', x:36,y:374, colors:['#42d2bc','#156d85'], accent:'#b8ffe5' },
@@ -72,34 +72,48 @@ export class Lobby {
     const a=this.art,c=a.c; const t=this.motion?.matches?0:this.time;
     c.save();c.translate(x,y);
     if(mode==='stairs') {
+      // LEGO Cloud Lighthouse Tower in background + studded stair plates
+      a.block(56,-84,32,68,7,'#e8eef7','#ffffff','#8ca4c2');
+      a.rect(56,-68,32,12,'#e3685c',2);a.rect(56,-42,32,12,'#e3685c',2);
+      a.stud(72,-88,12,4,5,'#ffcf5c','#fff7c2');
+      a.poly([[72,-88],[18,-102],[18,-74]],'#fff5b538');
       for(let i=0;i<4;i++){
-        const sx=-75+i*49,sy=55-i*30;
-        a.poly([[sx-39,sy],[sx,sy-16],[sx+39,sy],[sx,sy+16]],i===0?'#ffe499':'#b3fff1');
-        a.poly([[sx-39,sy],[sx,sy+16],[sx+39,sy],[sx+39,sy+23],[sx,sy+39],[sx-39,sy+23]],'#4cb5b4');
+        const sx=-75+i*46,sy=56-i*29;
+        a.poly([[sx-38,sy],[sx,sy-15],[sx+38,sy],[sx,sy+15]],i===0?'#ffe499':'#b3fff1');
+        a.poly([[sx-38,sy],[sx,sy+15],[sx+38,sy],[sx+38,sy+22],[sx,sy+37],[sx-38,sy+22]],'#4cb5b4');
+        a.stud(sx-12,sy-2,6,2.5,3,'#3ca1a3','#e3fff9');a.stud(sx+12,sy-2,6,2.5,3,'#3ca1a3','#e3fff9');
       }
-      const jump=Math.max(0,Math.sin(t/510));a.toy(-38,53-jump*27,.56,{time:t,run:false,jump,palette:this.profile.palette});
-      a.coin(65,-68+Math.sin(t/330)*5,.55);
+      const jump=Math.max(0,Math.sin(t/510));a.toy(-38,53-jump*27,.55,{time:t,run:false,jump,palette:this.profile.palette});
+      a.coin(36,-56+Math.sin(t/330)*5,.52);
     } else if(mode==='battle') {
       a.poly([[-118,94],[-42,-95],[42,-95],[118,94]],'#b9c6df');
+      a.line([[-24,94],[-10,-94]],'#58728c88',3);a.line([[24,94],[10,-94]],'#58728c88',3);
       for(const side of [-1,1]) {
         a.line([[side*108,94],[side*35,-94]],'#ff8c87',7);
         a.rect(side*64-5,-89,10,102,'#ff6f74',2);
         a.line([[-64,-87],[64,-87]],'#ffc2ad',7);
         for(let j=0;j<3;j++)a.line([[side*(44+j*17),-45+j*31],[side*(44+j*17),12+j*26]],'#ffd2bc',2);
       }
-      a.block(-24,-38,43,49,8,'#df8660','#ffcf8a','#ab535b');a.text('30',0,-16,25,'#fff2c7');
+      // Mini LEGO Claw Mech Boss & Target Bolts
+      a.block(-32,-76,64,46,9,'#d4734a','#ffd89c','#8a4349');
+      a.stud(-14,-80,7,2.8,3.5,'#c45f39','#ffe7b3');a.stud(14,-80,7,2.8,3.5,'#c45f39','#ffe7b3');
+      a.rect(-24,-66,48,22,'#1d3854',6,'#ffe6a3');
+      a.ellipse(-36,-42,9,9,'#ffd978');a.ellipse(36,-42,9,9,'#ffd978');
+      a.block(-20,-24,40,38,7,'#df8660','#ffcf8a','#ab535b');a.text('30',0,-4,21,'#fff2c7');
       for(const [px,py] of [[-22,88],[23,91],[0,65]])a.toy(px,py,.38,{time:t+px,run:true,back:true,palette:this.profile.palette});
       for(let i=0;i<4;i++){const yy=45-(t/5+i*27)%85;a.line([[0,yy],[0,yy-11]],'#fff7a6',4);}
     } else if(mode==='runner') {
       for(let i=0;i<4;i++)a.block(-112+i*58,51,53,35,7,'#54ad89','#bce5a9','#2c7379');
-      a.block(18,-74,57,54,8,'#e7b35f','#ffe49c','#9f774d');a.text('?',48,-47,39,'#fff5be');
-      const jump=Math.max(0,Math.sin(t/660));a.toy(-41,54-jump*29,.56,{time:t,run:jump<.15,jump,palette:this.profile.palette});
+      wagon(a,72,50,.48,t,true);
+      a.block(-8,-76,58,48,8,'#e7b35f','#ffe49c','#9f774d');a.text('⚡',21,-52,28,'#fff5be');
+      const jump=Math.max(0,Math.sin(t/660));a.toy(-52,54-jump*29,.54,{time:t,run:jump<.15,jump,palette:this.profile.palette});
       a.ellipse(-75,-80,32,13,'#d1f2e66b');
     } else {
       a.poly([[-115,35],[0,-36],[115,35],[0,103]],'#a89ed8');
+      for(const [sx,sy]of[[-45,25],[45,25],[0,-4],[0,56]])a.stud(sx,sy,8,3.2,3.5,'#897ec2','#dfd8ff');
       for(const px of [-65,60]){a.ellipse(px,25,17,6,'#625e9a');a.star(px,8+Math.sin(t/350+px)*6,16,px<0?'#ffb28a':'#a7edff');}
-      a.toy(0,74,.66,{time:t,palette:this.profile.palette});
-      a.block(39,-84,38,37,8,'#9db9e5','#d9f6ff','#6475ac');a.rect(46,-74,24,9,'#1f4369',3);a.rect(50,-72,5,4,'#7dfff6');a.rect(62,-72,5,4,'#7dfff6');
+      picoToy(a,48,-36,.58,t);
+      a.toy(-14,74,.64,{time:t,palette:this.profile.palette});
     }
     c.restore();
   }
@@ -131,13 +145,16 @@ export class Lobby {
       if(done)a.star(x,284,9,'#fff6c9');else a.text(i+1,x,285,13,'#9bb8c8');
     }
     if(progress.harbor?.rescued&1){
-      train(a,468,303,.36,{time:t+(this.pressed==='train'?this.pressMs*5:0),cars:Math.max(0,cleared-1)});
+      train(a,472,303,.35,{time:t+(this.pressed==='train'?this.pressMs*5:0),cars:Math.max(0,cleared-1)});
+      cocoToy(a,395,305,.38,t);
     }else{
-      c.save();c.globalAlpha=.35;train(a,468,303,.34,{time:0,cars:0});c.restore();
-      a.rect(414,272,108,24,'#102845d9',8,'#8be9ff66');a.text('기차 탈환 대기',468,284,12,'#a8f0ff');
+      c.save();c.globalAlpha=.35;train(a,472,303,.34,{time:0,cars:0});c.restore();
+      a.rect(414,272,112,24,'#102845d9',8,'#8be9ff66');a.text('기차 탈환 대기',470,284,12,'#a8f0ff');
     }
-    const callout=cleared===0?'▶ [작전 1] 다리 배틀 런에서 기관차와 코코를 구출하자!':cleared<3?'▶ 다음 기차 칸을 구출하거나 등대·추격·엔진 작전으로 지원!':'★ 하늘 항구 기차 조립 완성! 4대 작전 최고 기록에 도전!';
-    a.text(callout,39,354,18,'#fff0b8','left',650);
+    picoToy(a,54,361,.36,t);
+    a.rect(78,337,604,31,'#112947e6',12,'#7ed8ef55');
+    const callout=cleared===0?'삐코: "대장! [작전 1] 다리 배틀 런에서 기관차와 코코를 구출하자!"':cleared<3?'삐코: "코코 합류 완료! 다음 기차 칸을 구하거나 등대·추격·엔진 작전 출동!"':'삐코: "별빛특급 3칸 합체 완성! 4대 레고 작전 최고 기록에 도전하자!"';
+    a.text(callout,92,353,15.5,'#fff2b8','left',650);
     for(const card of CARTRIDGES){
       const {x,y}=card,w=306;
       this.cabinet(card);

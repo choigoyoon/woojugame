@@ -213,8 +213,8 @@ export class Lobby {
     a.rect(70,637,580,102,'#17284e',26,'#96abe657');a.coin(120,687,1.2);a.text(this.profile.coins,365,689,49,'#ffe89b');
     for(let i=0;i<3;i++){
       const x=70+i*199;a.rect(x,783,182,149,'#354574',24,'#9db4e657');
-      if(i===0)a.block(x+50,815,65,30,10,this.profile.palette.helmet,this.profile.palette.helmetTop,this.profile.palette.helmetSide);
-      if(i===1)a.block(x+59,806,51,55,10,this.profile.palette.shirt,this.profile.palette.shirtTop,this.profile.palette.shirtSide);
+      if(i===0)a.rect(x+50,815,65,30,this.profile.palette.helmet,8,'#0b132b');
+      if(i===1)a.rect(x+59,806,51,55,this.profile.palette.shirt,8,'#0b132b');
       if(i===2)a.text('—',x+91,838,47,'#b0c4e8');
       a.text(['머리','몸통','등'][i],x+91,899,24,'#e0e6ff');
     }

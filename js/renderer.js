@@ -302,18 +302,16 @@ export class Renderer {
       this.polygon([[-90, 0], [0, -35], [90, 0], [0, 34]], '#dbfff7');
       c.restore();
     }
-    // Giant LEGO Cloud Lighthouse Tower rising in the center-background behind the stairs + distant Harbor Lighthouse
+    // Giant Cloud Lighthouse Tower rising in the center-background behind the stairs
     const towerShift = (-this.cameraY * 0.18) % 240;
     c.save();
-    c.globalAlpha = 0.24;
+    c.globalAlpha = 0.22;
     this.rect(250, 180, 220, 860, '#1b3b63', 12);
     for (let i = -1; i < 5; i += 1) {
       const ty = 220 + i * 240 + towerShift;
       this.rect(236, ty, 248, 28, '#e0675a', 6);
       this.rect(268, ty + 48, 56, 86, '#ffe89c', 14);
       this.rect(396, ty + 48, 56, 86, '#ffe89c', 14);
-      this.art.stud(296, ty - 4, 14, 5, 6, '#d98a3c', '#fff4bd');
-      this.art.stud(424, ty - 4, 14, 5, 6, '#d98a3c', '#fff4bd');
     }
     c.restore();
     // Distant Cel-Shaded Cloud Lighthouse Tower guiding the Starlight Express

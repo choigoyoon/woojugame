@@ -118,28 +118,28 @@ export class BattleRenderer {
     a.poly([[0,395],[84,369],[148,395]],'#7ed8c5');
     // Cloud Lighthouse from Operation 2 (Stairs) on the harbor headland; lights up once 50F bridge is cleared!
     const parts=trainParts(this.profile?.data);
-    a.rect(72,292,18,58,'#e8f1fa',2);a.rect(72,306,18,11,'#e0675a',1);a.rect(72,328,18,11,'#e0675a',1);
-    a.stud(81,290,7,2.5,3.5,'#e39d3b','#fff5bd');
+    a.rect(70,290,22,62,'#0b132b',4);
+    a.rect(72,292,18,58,'#ffffff',2);a.rect(72,306,18,11,'#ff2a6d',1);a.rect(72,328,18,11,'#ff2a6d',1);
+    a.ellipse(81,289,8,4,'#ffbe0b');
     if(parts.beacon)a.poly([[81,290],[210,255+Math.sin(this.time/700)*15],[210,310+Math.sin(this.time/700)*15]],'#fff6b538');
-    // LEGO Harbor Escort Speedboats & Floating Signal Buoys skimming across the ocean beside the bridge!
+    // Harbor Escort Speedboats & Floating Signal Buoys skimming across the ocean beside the bridge!
     for(const [side,by,spd]of[[-1,540,22],[1,660,18],[-1,820,26]]){
       const bx=side<0?48+Math.sin(this.time/900+by)*18:672+Math.cos(this.time/850+by)*18;
       const sy=390+((by+this.time*spd*.015)%680);
       a.ellipse(bx,sy+6,22,7,'#ffffff55');
-      a.poly([[bx-16,sy],[bx+16,sy],[bx+11,sy+9],[bx-11,sy+9]],side<0?'#e0675a':'#f2b550');
-      a.stud(bx,sy-4,6,2.5,3,'#256d85','#9efff2');
+      a.poly([[bx-16,sy],[bx+16,sy],[bx+11,sy+9],[bx-11,sy+9]],side<0?'#ff2a6d':'#ffbe0b','#0b132b',2);
+      a.ellipse(bx,sy-3,6,3,'#00f5d4');
     }
   }
   deck() {
     const a=this.art,c=a.c;const distance=this.game.state.distance;
     const corner=(x,z)=>{const p=this.project(x,z);return[p.x,p.y];};
-    a.poly([corner(-1.18,72),corner(1.18,72),corner(1.18,-3),corner(-1.18,-3)],'#a7b8ca','#708fa7',3);
+    a.poly([corner(-1.18,72),corner(1.18,72),corner(1.18,-3),corner(-1.18,-3)],'#a7b8ca','#0b132b',4);
     for(let i=0;i<29;i++){
       const z=(i*2.7+80-distance%2.7)%80-3,p=this.project(0,z);if(z>70)continue;
       const left=this.project(-1.16,z),right=this.project(1.16,z);
       a.line([[left.x,left.y+2*p.s],[right.x,right.y+2*p.s]],'#213a5238',Math.max(1,3*p.s));
       a.line([[left.x,left.y],[right.x,right.y]],'#eaf8ef99',Math.max(1,2*p.s));
-      if(p.s>.3)for(const edge of [left,right]){a.stud(edge.x,edge.y,5.5*p.s,2.5*p.s,3*p.s,'#d96b53','#ffd3b5');}
       const next=this.project(0,z+.7);a.poly([[p.x-3*p.s,p.y],[p.x+3*p.s,p.y],[next.x+3*next.s,next.y],[next.x-3*next.s,next.y]],'#f6f0c1');
     }
     for(const railX of [-.38,.38]){
@@ -420,8 +420,9 @@ export class BattleRenderer {
     const a=this.art,c=a.c,left=attack.lane===2?-.35:attack.lane===0?-1.04:.04,right=attack.lane===2?.35:attack.lane===0?-.04:1.04;
     const corner=(x,z)=>{const p=this.project(x,z);return[p.x,p.y];};
     const warning=attack.phase==='warning';
-    a.poly([corner(left,15),corner(right,15),corner(right,-1),corner(left,-1)],warning?'#ff614c55':'#ffc77dbb','#ffc27a',3);
-    for(let z=0;z<15;z+=2){const l=this.project(left,z),r=this.project(right,z+.6);a.line([[l.x,l.y],[r.x,r.y]],warning?'#ffe9a776':'#fff1bd',4);}
+    // Cap warning lane at z=7.2 so it stays on the bridge deck in front of the boss and never covers the captured train!
+    a.poly([corner(left,7.2),corner(right,7.2),corner(right,-1),corner(left,-1)],warning?'#ff2a6d44':'#ffbe0b88','#ffbe0b',3);
+    for(let z=0;z<7;z+=1.8){const l=this.project(left,z),r=this.project(right,z+.5);a.line([[l.x,l.y],[r.x,r.y]],warning?'#ffe9a776':'#fff1bd',4);}
     const p=this.project(attack.lane===2?0:attack.lane===0?-.55:.55,4,12);
     a.ellipse(p.x,p.y+12,68*p.s,20*p.s,warning?'#ff3b3066':'#fff0ad88');
     a.rect(p.x-31,p.y-80,62,62,'#78364cd9',15,'#ffd59b');a.text('!',p.x,p.y-48,47,'#ffefae');
@@ -513,11 +514,16 @@ export class BattleRenderer {
   weaponIcon(id,x,y,rank=1) {
     const a=this.art,c=a.c,color=CONFIG.campaign.weapons[id].color;
     c.save();c.translate(x,y);a.ellipse(0,55,75,16,'#071f414d');
-    a.block(-39,-32,78,66,14,'#274f79',color,'#183250');
+    a.rect(-42,-35,84,72,'#0b132b',16);
+    a.rect(-38,-31,76,64,'#1e3a8a',13,color);
     const lanes=id==='spread'?[-35,0,35]:[0];
-    for(const lane of lanes){a.block(lane-9,-80,18,72,6,color,'#f4fff3','#567a9e');const t=(this.time/5+lane+100)%68;a.line([[lane,-89-t],[lane,-105-t]],color,id==='pierce'?9:5);}
-    if(id==='arc')a.line([[-55,-107],[-17,-92],[-27,-127],[21,-113],[39,-143]],'#e9ffff',5);
-    for(let i=0;i<rank;i++)a.star(-10+i*23,10,11,'#ffe7a0');c.restore();
+    for(const lane of lanes){
+      a.rect(lane-11,-82,22,74,'#0b132b',8);
+      a.rect(lane-8,-79,16,68,color,6);
+      const t=(this.time/5+lane+100)%68;a.line([[lane,-89-t],[lane,-105-t]],color,id==='pierce'?9:5);
+    }
+    if(id==='arc')a.line([[-55,-107],[-17,-92],[-27,-127],[21,-113],[39,-143]],'#00f5d4',5);
+    for(let i=0;i<rank;i++)a.star(-10+i*23,10,11,'#ffbe0b');c.restore();
   }
   result(canHome) {
     const a=this.art,c=a.c,s=this.game.state,complete=s.phase==='complete';

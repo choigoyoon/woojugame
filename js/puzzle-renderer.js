@@ -11,59 +11,59 @@ export class PuzzleRenderer {
   picture(id,x,y,scale=1){
     const a=this.art,c=a.c;c.save();c.translate(x,y);c.scale(scale,scale);
     if(id==='teacher'){
-      // Pico presenting the glowing Cloud Lighthouse LEGO Bridge Blueprint
-      a.block(-112,-112,204,112,10,'#1d5d7a','#63c5da','#133b52');
-      a.rect(-98,-98,176,84,'#0f3550',8,'#8beeff');
-      for(let i=0;i<3;i++)a.block(-76+i*54,-58,44,22,7,'#5be2d8','#c7fff7','#2b8c8e');
-      a.line([[-82,-76],[42,-76]],'#bff8ff',4);a.star(62,-74,15,'#ffe885');
+      // Pico presenting the glowing Cloud Lighthouse Star Bridge Blueprint
+      a.rect(-114,-114,208,116,'#0b132b',14);
+      a.rect(-108,-108,196,104,'#1e3a8a',11,'#00f5d4');
+      for(let i=0;i<3;i++)a.rect(-76+i*54,-58,44,22,'#00f5d4',6,'#0b132b');
+      a.line([[-82,-76],[42,-76]],'#bff8ff',4);a.star(62,-74,15,'#ffbe0b');
       picoToy(a,72,92,.78,this.time);
-      a.line([[38,18],[4,-42]],'#ffe28a',6);
-      a.block(-108,64,118,18,8,'#d49b6a','#ffe2ac','#8c5d3c');
-      a.block(-82,42,66,20,7,'#57c8d4','#d6ffff','#2f7c8a');
+      a.line([[38,18],[4,-42]],'#ffbe0b',6);
+      a.rect(-108,64,118,18,'#ff9f1c',6,'#0b132b');
+      a.rect(-82,42,66,20,'#00f5d4',6,'#0b132b');
     }else if(id==='bell'){
       // Cloud Lighthouse Golden Alarm Bell & Control Console
-      a.rect(-20,-114,40,22,'#c69555',6);a.ellipse(0,-9,22,16,'#e0675a');
-      a.poly([[-60,-22],[-42,-77],[-23,-98],[23,-98],[43,-77],[60,-22]],'#ffd56e','#c18b4f',4);
-      a.rect(-68,-27,136,20,'#ffe894',10);a.stud(0,-102,14,5,6,'#d99238','#fff4bd');
+      a.rect(-20,-114,40,22,'#c69555',6,'#0b132b');a.ellipse(0,-9,22,16,'#ff2a6d');
+      a.poly([[-60,-22],[-42,-77],[-23,-98],[23,-98],[43,-77],[60,-22]],'#ffbe0b','#0b132b',4);
+      a.rect(-68,-27,136,20,'#ffe66d',10,'#0b132b');
       a.line([[-88,-88],[-104,-102]],'#fff2bf',6);a.line([[88,-88],[104,-102]],'#fff2bf',6);
-      a.line([[-93,-49],[-114,-49]],'#ff9a8b',6);a.line([[93,-49],[114,-49]],'#ff9a8b',6);
-      a.block(-74,44,148,22,9,'#396584','#8ed4ec','#23425c');
-      a.rect(-56,66,12,42,'#29475e',2);a.rect(44,66,12,42,'#29475e',2);
-      a.block(-34,16,68,24,7,'#ffcf6e','#fff4bd','#b57d32');
+      a.line([[-93,-49],[-114,-49]],'#ff2a6d',6);a.line([[93,-49],[114,-49]],'#ff2a6d',6);
+      a.rect(-74,44,148,22,'#1e3a8a',8,'#0b132b');
+      a.rect(-56,66,12,42,'#0b132b',2);a.rect(44,66,12,42,'#0b132b',2);
+      a.rect(-34,16,68,24,'#ffbe0b',7,'#0b132b');
     }else if(id==='rain'){
       this.cloud(0,-83);for(let i=0;i<12;i++){const px=(i*47)%172-84,py=-29+(i*41+this.time*.05)%127;a.line([[px,py],[px-7,py+14]],'#65c2f2',5);}
-      a.block(-78,88,156,22,8,'#607999','#a8c5e0','#3b4e68');
+      a.rect(-78,88,156,22,'#475569',8,'#0b132b');
       a.ellipse(0,113,84,13,'#8fd5e795');
     }else if(id==='friend'){
       // Coco slipping on a cloud bridge plank with a star cargo box
-      a.block(-96,76,192,22,8,'#6b74a8','#b4c2f0','#454b75');
+      a.rect(-96,76,192,22,'#4c1d95',8,'#0b132b');
       c.save();c.translate(-12,56);c.rotate(-.55);cocoToy(a,0,10,.76,this.time);c.restore();
-      a.star(-52,-62,15,'#ffe48a');a.ellipse(58,-12,6,10,'#71cef4');a.ellipse(74,2,6,10,'#71cef4');
+      a.star(-52,-62,15,'#ffbe0b');a.ellipse(58,-12,6,10,'#00f5d4');a.ellipse(74,2,6,10,'#00f5d4');
     }else if(id==='listen'||id==='comic'){
       if(id==='listen'){
-        // Following the blueprint to snap LEGO bridge bricks together
-        a.rect(28,-118,86,56,'#174a66',8,'#8cf4ff');
-        a.block(44,-96,54,18,6,'#63e6dc','#dcfffb','#2d8f8b');
-        a.star(72,-106,12,'#fff1b5');
+        // Following the blueprint to snap bridge modules together
+        a.rect(28,-118,86,56,'#1e3a8a',8,'#0b132b');
+        a.rect(44,-96,54,18,'#00f5d4',6,'#0b132b');
+        a.star(72,-106,12,'#ffbe0b');
         this.person(-10,104,.92);
-        a.block(-91,51,182,18,9,'#3d6a89','#8ed8f0','#24445c');
-        a.block(-42,26,84,22,7,'#63e6dc','#dcfffb','#2d8f8b');
+        a.rect(-91,51,182,18,'#1e3a8a',8,'#0b132b');
+        a.rect(-42,26,84,22,'#00f5d4',7,'#0b132b');
       }else{
         // Tossing mismatched blocks around in disorder
         this.person(0,104,.92);
-        a.block(-91,51,182,18,9,'#5c4a78','#a58ec4','#3a2d52');
-        c.save();c.translate(-44,-14);c.rotate(-.38);a.block(-28,-14,56,24,7,'#e06b8b','#ffb8cb','#8f3954');c.restore();
-        c.save();c.translate(46,-6);c.rotate(.44);a.block(-28,-14,56,24,7,'#b57ce6','#e4c7ff','#6b4294');c.restore();
-        a.star(-33,-42,12,'#ff9eb5');a.star(36,-38,12,'#d4b2ff');
+        a.rect(-91,51,182,18,'#4c1d95',8,'#0b132b');
+        c.save();c.translate(-44,-14);c.rotate(-.38);a.rect(-28,-14,56,24,'#ff2a6d',7,'#0b132b');c.restore();
+        c.save();c.translate(46,-6);c.rotate(.44);a.rect(-28,-14,56,24,'#a855f7',7,'#0b132b');c.restore();
+        a.star(-33,-42,12,'#ff2a6d');a.star(36,-38,12,'#a855f7');
       }
     }else if(id==='desk'){
       // Pulling the Cloud Lighthouse Beacon Switch Console
       this.person(-8,84,.88);
-      a.block(-96,24,192,24,10,'#396584','#92d8f0','#23425c');
-      a.rect(-84,48,12,66,'#26435c',3);a.rect(72,48,12,66,'#26435c',3);
-      a.block(-38,0,76,22,7,'#ffd46b','#fff5bd','#b07b2c');
-      a.line([[18,-2],[34,-34]],'#ffe885',7);a.ellipse(34,-36,11,11,'#ff6e7a');
-      a.star(0,-88,18,'#fff2a6');
+      a.rect(-96,24,192,24,'#1e3a8a',8,'#0b132b');
+      a.rect(-84,48,12,66,'#0b132b',3);a.rect(72,48,12,66,'#0b132b',3);
+      a.rect(-38,0,76,22,'#ffbe0b',7,'#0b132b');
+      a.line([[18,-2],[34,-34]],'#0b132b',10);a.line([[18,-2],[34,-34]],'#ffbe0b',6);a.ellipse(34,-36,11,11,'#ff2a6d');
+      a.star(0,-88,18,'#ffbe0b');
     }else if(id==='run'||id==='leave'){
       this.person(26,111,1,true);a.line([[-110,6],[-65,6]],'#9ba9d1',6);a.line([[-117,37],[-75,37]],'#9ba9d1',5);
       if(id==='leave'){

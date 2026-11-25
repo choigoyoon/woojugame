@@ -78,17 +78,17 @@ export class AdventureRenderer {
         a.rect(wx,wy,10,14,(i+wy)%3===0?'#ffe89499':'#8eeeff55',2);
       }
     }
-    // Red LEGO Suspension Bridge Towers & Cables spanning the background
+    // Red Suspension Bridge Towers & Cables spanning the background
     for(let i=0;i<2;i++){
       const tx=((i*580-d*.32)%1160+1160)%1160-200;
       a.rect(tx,420,28,450,'#c84b5eaa',4);a.rect(tx+4,420,9,450,'#ff968288',2);
       a.rect(tx-18,480,64,18,'#e0675acc',4);a.rect(tx-18,610,64,16,'#e0675acc',4);
-      a.stud(tx+14,416,12,4,5,'#b83b4e','#ffb5a6');
+      a.ellipse(tx+14,416,12,4,'#ffb5a6aa');
       a.line([[tx+14,430],[tx-190,690]],'#ffb5a655',3);
       a.line([[tx+14,430],[tx+220,690]],'#ffb5a655',3);
     }
     a.rect(112,515,26,115,'#e8f1facc',4);a.rect(112,538,26,18,'#e0675acc',2);a.rect(112,576,26,18,'#e0675acc',2);
-    a.stud(125,511,11,3.5,5,'#e39d3b','#fff5bd');
+    a.ellipse(125,511,11,4,'#ffe66dcc');
     if(parts.beacon)a.poly([[125,511],[280,465+Math.sin(t/700)*18],[280,545+Math.sin(t/700)*18]],'#fff6b548');
     for(let i=0;i<5;i++){const x=((i*251-d*.08)%1200+1200)%1200-220,y=335+(i%3)*55;a.ellipse(x,y,70,16,'#e8fff2bb');a.ellipse(x+20,y-14,35,25,'#f1fff3bb');}
     // Track distance markers, overhead railway gantries & catenary power wires
@@ -195,9 +195,9 @@ export class AdventureRenderer {
         a.ellipse(item.x,807,15,4.5,'#00f5d4');
       }
     }
-    // Render spent/transformed solid blocks that were headbutted (hide behind giant Gold-Rush Astro-Bot so no cut-off grey box photobombs!)
+    // Render spent/transformed solid blocks that were headbutted (hide once they approach the player or left edge so no cut-off grey box photobombs!)
     for(const b of this.spentBlocks){
-      if(b.life<=0||(s.goldMs>0&&b.x<350))continue;
+      if(b.life<=0||b.x<340)continue;
       c.save();c.globalAlpha=Math.min(1,b.life/350);
       const by=b.y+b.bumpY;
       a.rect(b.x-76,by-4,152,56,'#47627d',16,'#0b132b');
@@ -412,8 +412,6 @@ export class AdventureRenderer {
     if(this.plaza.ready){
       const pulse=(Math.sin(t/150)+1)*6;
       c.save();c.strokeStyle='#ffe885';c.lineWidth=4;c.beginPath();c.ellipse(captain.x,captain.y,52+pulse,25+pulse*.4,0,0,Math.PI*2);c.stroke();c.restore();
-      a.rect(captain.x-68,captain.y-202,136,30,'#0b132bf2',10,'#ffbe0b');
-      a.label('▼ 엔진 도킹!',captain.x,captain.y-187,15,'#fff3a8','#0b132b');
     }
     // Fixed tiny scene: sort stable references in reusable scratch storage by floor depth.
     // Keep collected items in the scene so their workbench visibly transforms into an activated green socket!
@@ -487,6 +485,11 @@ export class AdventureRenderer {
         a.ellipse(p.x+Math.sin(t/120)*5,p.y-20,4.5,4.5,'#ff2a6d');
         a.ellipse(p.x+Math.sin(t/120)*5,p.y-20,2,2,'#ffe66d');
       }
+    }
+    if(this.plaza.ready){
+      const bobY=Math.sin(t/140)*4;
+      a.rect(captain.x-66,captain.y+24+bobY,132,30,'#0b132bf5',10,'#ffbe0b');
+      a.label('▲ 엔진 도킹!',captain.x,captain.y+39+bobY,15,'#fff3a8','#0b132b');
     }
     this.effects();
     // Render flying Cel-Shaded engine core modules arcing from the workbench straight into the Starlight Express engine dock!

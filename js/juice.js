@@ -64,6 +64,10 @@ export class Juice {
           :e.type==='explode'&&e.boss?['★ BOSS SMASHED! ★','#ffe875']
           :e.type==='gate-win'?['SQUAD UP!','#9effd8']:null;
         if(callout){
+          // Prevent overlapping callout banners when multiple events fire on the same or consecutive frames
+          for(const item of this.callouts.items){
+            if(item.life>0)item.life=0;
+          }
           const cx=this.mode==='runner'?430:x,cy=this.mode==='runner'?385:y-48;
           this.callouts.spawn(callout[0],cx,cy,callout[1]);
         }

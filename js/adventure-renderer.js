@@ -2,6 +2,7 @@ import { Art } from './art.js';
 import { CONFIG } from './config.js';
 import { SYMBOLS, SENTENCES } from './sentences.js';
 import { GOODS } from './plaza.js';
+import { train, wagon } from './harbor-art.js';
 
 export class AdventureRenderer {
   constructor(ctx,runner,plaza,profile){
@@ -28,7 +29,11 @@ export class AdventureRenderer {
     }
     for(let i=0;i<5;i++){const x=((i*251-d*.08)%1200+1200)%1200-220,y=365+(i%3)*65;a.ellipse(x,y,70,16,'#e8fff2bb');a.ellipse(x+20,y-14,35,25,'#f1fff3bb');}
     a.rect(0,870,720,410,'#1c656a');a.rect(0,870,720,37,'#a4e7a4');a.rect(0,906,720,20,'#4eac8b');
-    for(let i=0;i<9;i++){const x=i*112-(d%112);a.line([[x,925],[x+50,996],[x+50,1280]],'#328083',4);a.rect(x+15,951,18,10,'#47979b',3);}
+    for(let i=0;i<9;i++){const x=i*112-(d%112);a.line([[x,925],[x+50,996],[x+50,1280]],'#328083',4);a.stud(x+32,870,13,4,4.5,'#57b982','#d7ffbe');a.rect(x+15,951,18,10,'#47979b',3);}
+    // Runaway Starlight Express LEGO wagon being chased on the track ahead!
+    const wagonX=s.goldMs?560:645-s.slot*35+Math.sin(t/210)*8;
+    wagon(a,wagonX,866,.68,t,true);
+    if(s.goldMs)a.line([[CONFIG.runner.playerX+35,795],[wagonX-45,825]],'#fff39e',6);
     for(const item of this.runner.items.active){
       if(item.kind==='word'){
         const text=SENTENCES[item.sentence][item.slot],icon=item.slot===0?SYMBOLS[SENTENCES[item.sentence][3]]:item.slot===1?SYMBOLS[SENTENCES[item.sentence][4]]:'✦';
@@ -41,11 +46,13 @@ export class AdventureRenderer {
     c.save();c.translate(CONFIG.runner.playerX,870-s.y);c.scale(1+squash*.13-Math.min(1,s.y/180)*.05,1-squash*.14+Math.min(1,s.y/180)*.08);
     if(s.goldMs){const glow=c.createRadialGradient(0,-90,10,0,-90,165);glow.addColorStop(0,'#fff5ae99');glow.addColorStop(1,'#ffe18c00');c.fillStyle=glow;c.fillRect(-170,-260,340,340);for(let i=0;i<5;i++)a.star(Math.sin(t/260+i)*105,-105+Math.cos(t/260+i)*95,8,'#fff6c0');}
     c.globalAlpha=s.invulnerableMs&&Math.floor(t/90)%2?.45:1;a.toy(0,0,scale,{time:t,run:s.y<=0,jump:Math.min(1,s.y/100),gold:s.goldMs>0,palette:this.profile.palette});c.restore();
-    this.effects();this.header('슈퍼 블록 런',canHome);
-    a.cached('sentence-slots',[22,148,676,145],()=>{const labels=['누가','무엇을','어쨌다'];
-    for(let i=0;i<3;i++){const x=24+i*232,filled=i<s.slot;a.rect(x,150,208,141,filled?'#f6de91':'#183a61e6',22,filled?'#fff7be':'#add5e466');a.text(labels[i],x+104,177,18,filled?'#89704c':'#b5d9e4');a.label(filled?this.runner.sentence[i]:i===s.slot?'?':'···',x+104,230,27,filled?'#fff9e5':'#e3f9ff','#263a60');if(i<2)a.text('›',x+220,217,29,'#fff2b8');}
+    this.effects();this.header('작전 3 · 폭주 기차칸 추격',canHome);
+    a.cached('sentence-slots',[22,144,676,154],()=>{const labels=['1단 파워 브릭','2단 연결 브릭','3단 부스터 점화'];
+    for(let i=0;i<3;i++){const x=24+i*232,filled=i<s.slot;a.rect(x,154,208,137,filled?'#f6de91':'#183a61e6',22,filled?'#fff7be':'#add5e466');
+      for(const sx of[x+54,x+104,x+154])a.stud(sx,154,12,4,4.5,filled?'#e0b84f':'#28527d',filled?'#fff8c8':'#7bb8d4');
+      a.text(labels[i],x+104,180,16,filled?'#89704c':'#b5d9e4');a.label(filled?this.runner.sentence[i]:i===s.slot?'점프!':'···',x+104,232,27,filled?'#fff9e5':'#e3f9ff','#263a60');if(i<2)a.text('›',x+220,217,29,'#fff2b8');}
     },s.sentence*4+s.slot);
-    if(s.messageMs)a.text(s.message,360,455,s.message==='GOLD RUSH!'?51:34,'#fff6bc');
+    if(s.messageMs)a.text(s.message==='GOLD RUSH!'?'★ 메가 레고 황금 질주!':s.message,360,455,s.message==='GOLD RUSH!'?44:34,'#fff6bc');
     if(s.goldMs){a.rect(130,322,460,14,'#254478',8);a.rect(130,322,460*s.goldMs/CONFIG.runner.goldMs,14,'#ffe79a',8);}
     a.cached(pressed?'jump-held':'jump-ready',[64,1041,592,184],()=>{a.rect(66,1058,588,165,'#0d3451',46);a.rect(66,1043+(pressed?13:0),588,165,'#ffda7b',46,'#fff2be');
     a.poly([[132,1136],[158,1104],[184,1136]],'#775a53');a.text('점프',377,1115+(pressed?13:0),47,'#493c61');a.text('꾹 누르면 더 높이!',377,1171+(pressed?13:0),21,'#786854');});
@@ -70,8 +77,9 @@ export class AdventureRenderer {
     for(let i=0;i<15;i++)a.star((i*173+19)%720,310+(i*71)%800,3+i%3,'#fff0bb66');
     const corners=[this.iso(-4,-4),this.iso(4,-4),this.iso(4,4),this.iso(-4,4)];
     a.poly(corners.map(p=>[p.x,p.y+28]),'#364872','#97c1d8',3);
-    for(let x=-4;x<4;x++)for(let z=-4;z<4;z++){const points=[this.iso(x,z),this.iso(x+1,z),this.iso(x+1,z+1),this.iso(x,z+1)];a.poly(points.map(p=>[p.x,p.y]),(x+z)%2?'#aacacb':'#bed8cf','#86abbc',1);}
+    for(let x=-4;x<4;x++)for(let z=-4;z<4;z++){const points=[this.iso(x,z),this.iso(x+1,z),this.iso(x+1,z+1),this.iso(x,z+1)];a.poly(points.map(p=>[p.x,p.y]),(x+z)%2?'#aacacb':'#bed8cf','#86abbc',1);const center=this.iso(x+.5,z+.5);a.ellipse(center.x,center.y-2,7,3.2,'#ffffff38');}
     });
+    const dock=this.iso(-2.2,3.4);train(a,dock.x,dock.y-18,.42,{time:t,cars:1});
     const captain=this.iso(0,3.15);a.ellipse(captain.x,captain.y,46,22,this.plaza.ready?'#fff0a4':'#6d95b7');
     // Fixed tiny scene: sort stable references in reusable scratch storage by floor depth.
     this.scene??=[];this.scene.length=0;
@@ -85,19 +93,19 @@ export class AdventureRenderer {
       else if(o.kind){this.good(o.kind,p.x,p.y-9-Math.sin(t/300+o.x)*4);a.star(p.x+21,p.y-42,4+Math.sin(t/200+o.z)*2,'#fff3b8');}
       else{a.ellipse(p.x,p.y,25,10,'#34497177');a.block(p.x-24,p.y-39,48,33,8,'#e88996','#ffd0b2','#945b88');a.rect(p.x-14,p.y-29,8,7,'#704f74',2);a.rect(p.x+5,p.y-29,8,7,'#704f74',2);}
     }
-    this.effects();this.header('블록 광장',canHome);
+    this.effects();this.header('작전 4 · 기차 엔진 조립',canHome);
     a.rect(33,151,654,137,'#172f57eb',26,'#c5cbf077');
-    a.text(this.plaza.ready?'대장에게 돌아가자!':'대장 로봇의 심부름',310,187,27,'#f2edcc');
-    if(s.phase==='briefing'||s.remindMs>0){for(let i=0;i<2;i++){const m=this.plaza.mission[i],count=i?s.collectedB:s.collectedA;this.good(m.kind,195+i*260,244,.7);a.text(count+' / '+m.count,264+i*260,239,30,'#bbffe1');}}else{a.bag(205,240,.65);a.text('가방  '+(s.collectedA+s.collectedB)+' / '+this.plaza.mission.reduce((n,m)=>n+m.count,0),375,239,30,'#bbffe1');}
+    a.text(this.plaza.ready?'⚡ 코어 완성! 대장 로봇에게 합체!':'🔧 별빛특급 출발 코어 브릭 수송',310,187,25,'#f2edcc');
+    if(s.phase==='briefing'||s.remindMs>0){for(let i=0;i<2;i++){const m=this.plaza.mission[i],count=i?s.collectedB:s.collectedA;this.good(m.kind,195+i*260,244,.7);a.text(count+' / '+m.count,264+i*260,239,30,'#bbffe1');}}else{a.bag(205,240,.65);a.text('코어 가방  '+(s.collectedA+s.collectedB)+' / '+this.plaza.mission.reduce((n,m)=>n+m.count,0),375,239,30,'#bbffe1');}
     a.rect(604,164,62,52,'#435f89',15);a.text('♪',635,191,30,'#e9faff');
     if(s.phase==='briefing'||s.remindMs>0){
-      a.rect(54,310,612,236,'#122b53f5',27,'#9dceef');a.text('이것만 가져와!',360,350,30,'#fff0b8');
+      a.rect(54,310,612,236,'#122b53f5',27,'#9dceef');a.text('⚡ 기차 엔진에 조립할 레고 코어!',360,350,28,'#fff0b8');
       this.plaza.mission.forEach((m,i)=>{this.good(m.kind,220+i*270,411,.95);a.text(m.count+'개',280+i*270,403,29,'#d5ffef');a.text(GOODS[m.kind].name,225+i*270,453,20,'#d8edff');});
-      a.text('만화책 · 게임기 · 폭탄은 두고 와!',360,507,22,'#c9c4e8');
+      a.text('가짜 방해 브릭(만화책·게임기·폭탄)은 피해서 수거!',360,507,20,'#c9c4e8');
     }
-    if(s.phase==='retry'){a.rect(120,381,480,135,'#392d5ce8',28);a.text('앗! 다시 골라볼까?',360,435,31,'#ffe0ba');}
+    if(s.phase==='retry'){a.rect(120,381,480,135,'#392d5ce8',28);a.text('앗! 방해 브릭이야, 다시 조립!',360,435,28,'#ffe0ba');}
     if(s.phase==='success'){
-      a.rect(64,344,592,319,'#192e56f5',32,'#fff0a5');a.text('DELIVERY CLEAR!',360,398,34,'#ffe79b');a.bag(360,480,1.8);a.text('+'+CONFIG.plaza.reward,360,576,46,'#fff0b8');
+      a.rect(64,344,592,319,'#192e56f5',32,'#fff0a5');a.text('★ 엔진 코어 조립 성공!',360,398,34,'#ffe79b');a.bag(360,480,1.8);a.text('+'+CONFIG.plaza.reward,360,576,46,'#fff0b8');
     }
     if(['briefing','success'].includes(s.phase)){
       a.rect(127,1060,466,130,'#263152',35);a.rect(127,1046,466,130,s.phase==='success'?'#ffd579':'#8ce6ce',35,'#efffdc');a.text(s.phase==='success'?'다음 심부름':'출동!',360,1110,40,'#264660');

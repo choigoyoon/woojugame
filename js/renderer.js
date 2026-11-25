@@ -370,8 +370,12 @@ export class Renderer {
     if (arm) {
       this.box(-13, 0, 26, 27, 7, ['#f67962', '#ffa18a', '#ba4f5d']);
       c.translate(0, 29); c.rotate(-side * (0.08 + flight * 0.35));
-      this.box(-12, 0, 24, 31, 7, ['#ffd18b', '#ffe6b2', '#c99a64']);
-      this.rect(-8, 22, 16, 4, '#e8b374', 2);
+      this.box(-12, 0, 24, 25, 7, ['#ffd18b', '#ffe6b2', '#c99a64']);
+      this.rect(-6, 22, 12, 6, '#d9a461', 2);
+      c.beginPath(); c.arc(0, 33, 9.5, -0.25 * Math.PI, 1.25 * Math.PI);
+      c.strokeStyle = '#ffcf6e'; c.lineWidth = 6; c.lineCap = 'round'; c.stroke();
+      c.beginPath(); c.arc(0, 33, 9.5, 0.1 * Math.PI, 0.9 * Math.PI);
+      c.strokeStyle = '#fff4c2'; c.lineWidth = 2.2; c.stroke();
     } else {
       this.box(-14, 0, 28, 31, 8, ['#385b85', '#6686b0', '#253b61']);
       c.translate(0, 32); c.rotate(side * crouch * -0.58 + stride * side * flight * 0.25);
@@ -467,7 +471,8 @@ export class Renderer {
     this.box(-11, -157, 24, 9, 7, ['#efbb7d', '#ffdfa6', '#b98a5d']);
     this.box(-33, -211, 66, 56, 10, ['#ffda96', '#ffedbc', '#cba06c']);
     this.rect(-31, -207, 7, 41, '#eabd7b', 3);
-    // Rounded block helmet, split rim and glossy inset retain the toy silhouette.
+    // Rounded LEGO block helmet, top LEGO stud, split rim and glossy inset.
+    this.art.stud(0, -230, 16, 5.5, 8, palette.helmet, palette.helmetTop);
     this.box(-40, -224, 79, 23, 11, [palette.helmet, palette.helmetTop, palette.helmetSide]);
     this.rect(-32, -219, 61, 6, '#bafff5', 3);
     this.rect(-42, -202, 12, 26, '#36b5c5', 4, '#25607a');
@@ -491,8 +496,13 @@ export class Renderer {
     this.text(state.step, 126, 152, state.step > 99999 ? 34 : 48, '#fff');
     const coins = this.game.wallet?.coins ?? state.coins;
     this.text(coins, 436, 152, coins > 999999 ? 26 : coins > 99999 ? 34 : 48, '#fff4b2');
+    const bridgeLeft = Math.max(0, state.nextPuzzle - state.step);
+    const bridgeProgress = clamp(1 - bridgeLeft / CONFIG.puzzle.everySteps, 0, 1);
+    this.rect(140, 202, 440, 22, '#102549cc', 11, '#8be9ff4d');
+    this.rect(144, 206, Math.max(14, 432 * bridgeProgress), 14, '#58e6d0', 7);
+    this.text('등대 레고 브릿지까지 ' + bridgeLeft + '층 (+50 코인)', 360, 213, 13.5, '#fff7cc', 'center');
     if (state.combo > 1) {
-      c.save(); c.translate(360, 235);
+      c.save(); c.translate(360, 258);
       const elapsed = CONFIG.motion.auraMs - this.aura;
       const pulse = !this.reducedMotion && this.aura > 0 && elapsed < 300 ? 1 + Math.sin(elapsed / 300 * Math.PI) * 0.12 : 1;
       c.scale(pulse, pulse);
@@ -509,7 +519,7 @@ export class Renderer {
     const shade = c.createLinearGradient(0, 0, 0, 228);
     shade.addColorStop(0, '#142957db'); shade.addColorStop(1, '#14295700');
     c.fillStyle = shade; c.fillRect(0, 0, 720, 228);
-    this.text('블록 계단 점프', 139, 48, 28, '#ecffff');
+    this.text('작전 2 · 구름 등대 신호탑', 139, 48, 27, '#ecffff');
     for (const [x, width] of [[28, 312], [356, 336]]) {
       this.rect(x, 118, width, 80, '#11275045', 25);
       this.rect(x, 112, width, 80, '#1835578c', 25, '#c2f5ff4a');
@@ -576,15 +586,15 @@ export class Renderer {
   brakeOverlay() {
     const s = this.game.state, c = this.ctx, a = this.art;
     if (s.mode === MODE.AUTO_CLIMB) {
-      a.rect(150,300,420,110,'#17385be8',28,'#fff0a6');
-      a.text('SUPER STOP!',360,340,38,'#fff0a6'); a.text('+' + CONFIG.brake.coins,360,383,29,'#b5ffe5');
+      a.rect(135,300,450,114,'#17385be8',28,'#fff0a6');
+      a.text('🚀 레고 로켓 점프!',360,340,36,'#fff0a6'); a.text('5단 초고속 상승 · +' + CONFIG.brake.coins,360,384,24,'#b5ffe5');
       return;
     }
     if (![MODE.BRAKE_WARNING, MODE.BRAKE_HOLD].includes(s.mode)) return;
     const warning = s.mode === MODE.BRAKE_WARNING, color = warning ? '#ffe583' : '#ff657d';
     c.strokeStyle=color;c.lineWidth=12;c.beginPath();c.roundRect(8,8,704,1264,26);c.stroke();
-    a.rect(234,294,252,161,'#172a51eb',34,color);
-    a.text(warning?'READY':'HOLD!',360,327,27,color);
+    a.rect(210,294,300,165,'#172a51eb',34,color);
+    a.text(warning?'⚡ 돌풍 예고!':'🛑 멈춰! 부스터 충전',360,327,25,color);
     a.rect(338,370,44,48,color,14);
     for(let i=0;i<4;i++) a.rect(338+i*11,348-(i===1||i===2?8:0),9,43,color,5);
     a.rect(323,382,18,29,color,8);

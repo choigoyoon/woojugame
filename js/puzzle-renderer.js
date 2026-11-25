@@ -82,8 +82,10 @@ export class PuzzleRenderer {
     a.block(558,662,81,49,12,'#ffc565','#fff0a1','#b8794f');a.rect(590,671,14,28,'#754d5c',3);a.star(597,681,7,'#fff1b7');
     c.save();c.translate(558,662);if(lid)c.rotate(-.7);a.block(0,-16,81,19,12,'#eaaa56','#fff0a1','#a96949');c.restore();
     if(p.solved){
-      a.text('+'+CONFIG.puzzle.chestCoins,360,605,61,'#ffe79a');
-      for(let i=0;i<22;i++){const angle=i*2.399+this.time/500,r=25+(elapsed%1000)/6;a.star(360+Math.cos(angle)*r,628+Math.sin(angle)*r*.7,5+i%4,'#ffedb5');}
+      a.text('+'+CONFIG.puzzle.chestCoins,360,595,58,'#ffe79a');
+      a.rect(110,632,500,36,'#132e4ee8',14,'#ffe79999');
+      a.text('★ 등대 황금 신호등 획득! 로비 기차에 장착됨!',360,650,18,'#fff4bd');
+      for(let i=0;i<22;i++){const angle=i*2.399+this.time/500,r=25+(elapsed%1000)/6;a.star(360+Math.cos(angle)*r,618+Math.sin(angle)*r*.7,5+i%4,'#ffedb5');}
     }
     for(let i=0;i<2;i++){
       const x=36+i*342,shake=p.wrongIndex===i&&p.wrongMs>0?Math.sin(this.time*.07)*7:0;

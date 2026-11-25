@@ -1,6 +1,6 @@
 import { CONFIG } from './config.js';
 import { Art } from './art.js';
-import { train, wagon, lockToy, cargoToy, picoToy, cocoToy } from './harbor-art.js';
+import { train, wagon, lockToy, cargoToy, picoToy, cocoToy, trainParts } from './harbor-art.js';
 
 export class BattleRenderer {
   constructor(ctx,battle,profile) {
@@ -306,7 +306,7 @@ export class BattleRenderer {
       const scale=.53*p.s;
       const phase=this.reduced?0:Math.floor((this.time+i*51)/(Math.PI*2*CONFIG.motion.avatarStrideMs)*CONFIG.battle.spriteFrames)%CONFIG.battle.spriteFrames;
       c.save();c.translate(p.x,p.y);c.rotate(this.reduced?0:this.squadLean);c.translate(-p.x,-p.y);
-      if(i===Math.floor(Math.min(5,count)/2))a.toy(p.x,p.y-bob,scale*1.1,{time:this.time,run:true,back:true,palette:this.profile.palette});
+      if(i===Math.floor(Math.min(5,count)/2))a.toy(p.x,p.y-bob,scale*1.1,{time:this.time,run:true,back:true,turn:this.squadLean*3,jump:s.recoilMs/65*.28,palette:this.profile.palette});
       else c.drawImage(this.troopSprites[phase],p.x-104*scale,p.y-bob-210*scale,208*scale,224*scale);
       if(this.glow>0)a.star(p.x+39*scale,p.y-bob-156*scale,10*scale,'#fff4a5');
       const powered=s.powerMs>0;
@@ -435,7 +435,8 @@ export class BattleRenderer {
     a.text(this.game.harbor?CONFIG.harbor.recovered[s.round]:complete?'항구 배지를 획득했어':this.game.round.title,360,385,25,'#b9e9e5');
     a.ellipse(360,582,165,36,'#8270bb');a.stud(360,572,148,30,10,'#7c68b8','#c8b4f7');
     if(this.game.harbor){
-      train(a,complete?445:372,552,.8,{time:this.time,cars:s.round});
+      const parts=trainParts(this.profile.data);
+      train(a,complete?445:372,552,.78,{time:this.time,cars:s.round,beacon:parts.beacon,coach:parts.coach,reactor:parts.reactor,complete:parts.complete});
       cocoToy(a,178,562,.62,this.time);
       picoToy(a,568,560,.58,this.time);
     }

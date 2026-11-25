@@ -71,14 +71,30 @@ export class Art {
     this.line([[-10,-9],[-10,-22],[10,-22],[10,-9]],'#fff1c4',5);
     this.rect(-22,-12,44,42,'#ffd676',9,'#fff1c4');this.star(0,7,10,'#b87d4a');c.restore();
   }
-  gear(parts,time=0,layer='front',scale=1,golden=false) {
-    if(!parts)return;const c=this.c;c.save();c.scale(scale,scale);
+  gear(parts,time=0,layer='front',scale=1,golden=false,{run=false,jump=0,stride=0}={}) {
+    if(!parts)return;const c=this.c,t=MOTION?.matches?0:time;c.save();c.scale(scale,scale);
     if(layer==='back'){
-      if(parts.back==='cape')this.poly([[-34,-116],[34,-116],[51,-31],[0,-42],[-51,-31]],'#9c7ce0','#e3cbff',3);
-      if(parts.back==='jet')for(const side of [-1,1]){this.block(side*54-11,-116,22,65,7,'#50b7d7','#a9faff','#247391');this.rect(side*54-9,-106,18,7,'#ddfff6',2);this.poly([[side*54-9,-49],[side*54+9,-49],[side*54,-22-Math.sin(time/70)*9]],'#ffcc68');}
-      if(parts.back==='wings')for(const side of [-1,1]){
-        this.poly([[side*23,-112],[side*96,-148],[side*82,-101],[side*58,-72],[side*32,-70]],'#ffe6a0','#fff8d3',3);
-        for(let i=0;i<3;i++)this.line([[side*(37+i*11),-95],[side*(75+i*5),-132+i*8]],'#daaa5c',3);
+      if(parts.back==='cape'){
+        const sway=t?Math.sin(t/105)*(run?14:4)+stride*8:0,lift=jump*18+(run?8:0);
+        this.poly([[-32,-116],[32,-116],[54+sway,-28-lift],[sway*.6,-40-lift*.7],[-54+sway*.4,-28-lift]],'#9c7ce0','#e3cbff',3);
+      }
+      if(parts.back==='jet'){
+        const thrust=run||jump>0?18+Math.sin(t/45)*9+jump*18:8+Math.sin(t/75)*5;
+        for(const side of [-1,1]){
+          this.block(side*54-11,-116,22,65,7,'#50b7d7','#a9faff','#247391');
+          this.rect(side*54-9,-106,18,7,'#ddfff6',2);
+          this.poly([[side*54-10,-49],[side*54+10,-49],[side*54,-49+thrust]],'#ff9d47');
+          this.poly([[side*54-5,-49],[side*54+5,-49],[side*54,-49+thrust*.68]],'#fff8c9');
+        }
+      }
+      if(parts.back==='wings'){
+        const flap=t?Math.sin(t/(run||jump>0?105:260))*(run||jump>0?.22:.08)+jump*.18:0;
+        for(const side of [-1,1]){
+          c.save();c.translate(side*22,-104);c.rotate(side*flap);c.translate(-side*22,104);
+          this.poly([[side*23,-112],[side*98,-152],[side*84,-101],[side*58,-72],[side*32,-70]],'#ffe6a0','#fff8d3',3);
+          for(let i=0;i<3;i++)this.line([[side*(37+i*11),-95],[side*(75+i*5),-132+i*8]],'#daaa5c',3);
+          c.restore();
+        }
       }
     }else{
       if(layer!=='head'&&(parts.body==='armor'||parts.body==='solar')){const gold=golden||parts.body==='solar';this.poly([[-23,-102],[23,-102],[19,-69],[0,-57],[-19,-69]],gold?'#ffe498':'#bac9ff',gold?'#fff1c7':'#e7edff',3);this.star(0,-82,13,gold?'#ffab41':'#6472be');}
@@ -88,31 +104,42 @@ export class Art {
       if(layer!=='body'&&parts.head==='crown'){this.poly([[-35,-162],[-39,-192],[-20,-179],[0,-201],[20,-179],[37,-192],[33,-162]],'#ffd064','#fff0b7',3);this.ellipse(0,-174,5,6,'#ff6d80');}
     }c.restore();
   }
-  toy(x,y,scale=1,{time=0,run=false,back=false,gold=false,palette=AVATAR_PALETTE,glow=0,jump=0}={}) {
+  toy(x,y,scale=1,{time=0,run=false,back=false,gold=false,palette=AVATAR_PALETTE,glow=0,jump=0,pitch=0,squash=0,turn=0}={}) {
     const c=this.c,t=MOTION?.matches?0:time;
-    if(MOTION?.matches){run=false;jump=0;}
-    const stride=run?Math.sin(t/CONFIG.motion.avatarStrideMs):0,breath=Math.sin(t/620);
-    const lift=run?Math.abs(stride)*3:breath*1.5;
-    const lean=run?stride*.018:Math.sin(t/1300)*.018;
-    const stretch=1+jump*.065,squash=1-jump*.035;
+    if(MOTION?.matches){run=false;jump=0;pitch=0;squash=0;turn=0;}
+    const phase=t/CONFIG.motion.avatarStrideMs;
+    const stride=run?Math.sin(phase):0,snap=run?Math.sin(phase*2):0,breath=Math.sin(t/520);
+    const lift=run?(Math.abs(stride)*7.5+Math.max(0,snap)*2.4):breath*2.4;
+    const lean=(run?stride*.068+(back?0:.042):Math.sin(t/1150)*.032)+pitch+turn*.14;
+    const stretch=1+jump*.11+(run?Math.abs(stride)*.045:0)-squash*.14;
+    const squashX=1-jump*.06-(run?Math.abs(stride)*.03:0)+squash*.15;
     c.save();c.translate(x,y);c.scale(scale,scale);
-    this.ellipse(4,1,39-jump*8,12-jump*3,'#07183145');
-    c.translate(0,-lift);c.rotate(lean);c.scale(squash,stretch);
+    this.ellipse(4,1,Math.max(18,39-jump*10-lift*.4),Math.max(5,12-jump*3-lift*.15),'#07183145');
+    c.translate(run?stride*2.2:0,-lift);c.rotate(lean);c.scale(squashX,stretch);
     const shirt=gold?'#ffd667':palette.shirt,helmet=gold?'#fff09c':palette.helmet;
-    this.gear(palette.parts,t,'back',1,gold);
+    this.gear(palette.parts,t,'back',1,gold,{run,jump,stride});
     for(const side of [-1,1]) {
-      const step=side*stride,angle=step*.34-jump*.28;
-      c.save();c.translate(side*16,-44);c.rotate(angle);
+      const legPhase=phase+(side>0?0:Math.PI);
+      const wave=run?Math.sin(legPhase):0;
+      const thighAngle=wave*.56-jump*(side>0?.52:-.22)-squash*side*.12;
+      const kneeAngle=(run?Math.max(0,-Math.cos(legPhase))*.74:Math.max(0,breath)*side*.06)+jump*(side>0?.82:.28)+squash*.38;
+      const footAngle=(run?Math.sin(legPhase-.55)*.26:0)+jump*.2;
+      c.save();c.translate(side*16,-44);c.rotate(thighAngle);
       this.block(-11,0,23,19,6,'#344d79','#5b7eaa','#213652');
-      c.translate(0,17);c.rotate(Math.max(0,-step)*.54+jump*.5);
+      c.translate(0,17);c.rotate(kneeAngle);
       this.block(-10,0,21,19,6,'#344d79','#5b7eaa','#213652');
-      this.block(-14,18,29,10,6,'#f2ffff','#fff','#94b7ca');
-      this.rect(-11,22,22,4,shirt,2);c.restore();
+      c.translate(0,18);c.rotate(footAngle);
+      this.block(-14,0,29,10,6,'#f2ffff','#fff','#94b7ca');
+      this.rect(-11,4,22,4,shirt,2);c.restore();
     }
     for(const side of [-1,1]) {
-      c.save();c.translate(side*36,-96);c.rotate(side*stride*-.46+side*(.08+breath*.025+jump*.46));
+      const armPhase=phase+(side>0?Math.PI:0)-.32;
+      const armSwing=run?Math.sin(armPhase)*.66:side*(.11+breath*.045);
+      const shoulderAngle=armSwing-jump*(side>0?.92:.42)-squash*side*.22;
+      const elbowAngle=(run?-Math.abs(Math.sin(armPhase-.35))*.52-.16:-side*(.14+breath*.03))-jump*.38;
+      c.save();c.translate(side*36,-96);c.rotate(shoulderAngle);
       this.block(-10,0,21,24,5,shirt,palette.shirtTop,palette.shirtSide);
-      c.translate(0,24);c.rotate(-side*(.12+Math.max(0,side*stride)*.3+jump*.35));
+      c.translate(0,23);c.rotate(elbowAngle);
       this.block(-9,0,19,20,5,'#ffda96','#fff0b8','#bd976c');
       // LEGO minifigure C-grip claw hand
       this.rect(-5,18,10,5,'#d4a262',2);
@@ -124,9 +151,9 @@ export class Art {
     this.rect(-26,-51,52,8,'#223b5c',2);this.rect(-5,-45,10,12,'#223b5c',2);this.rect(-6,-52,14,9,'#ffda7b',2);
     if(back){this.rect(-18,-96,36,38,'#264b6d',6,'#9deded');this.stud(-8,-78,5,5,2.5,'#4593b2','#aef8ff');this.stud(8,-78,5,5,2.5,'#4593b2','#aef8ff');}
     else {this.rect(-12,-92,26,30,'#fff2ce',6,'#ffd584');this.star(1,-78,9,'#eeb441');}
-    // LEGO minifigure neck ring + head and top stud
+    // LEGO minifigure neck ring + head follow-through and top stud
     this.rect(-13,-109,26,7,'#e3b171',3);
-    c.save();c.translate(0,-113);c.rotate(run?-lean*.6:Math.sin(t/1750)*.035);c.translate(0,113);
+    c.save();c.translate(run?stride*1.6:0,-113);c.rotate((run?-lean*.58+Math.sin(phase-.45)*.055:Math.sin(t/1550)*.045)-jump*.12);c.translate(0,113);
     this.block(-27,-151,54,44,8,'#ffcf6e','#fff0b5','#c99449');
     this.stud(0,-167,12,4.2,6,helmet,palette.helmetTop);
     this.block(-32,-163,65,19,9,helmet,palette.helmetTop,palette.helmetSide);

@@ -378,12 +378,14 @@ export class Renderer {
   limb(kind, side, stride, crouch, flight) {
     const c = this.ctx;
     const arm = kind === 'arm';
-    const angle = stride * side * (arm ? 0.9 : -0.65) * flight;
+    const idle = this.reducedMotion || this.jump ? 0 : Math.sin(this.time / 280 + side * 0.8);
+    const swing = this.jump ? stride * side * (arm ? 0.98 : -0.78) * (0.35 + flight * 0.85) : idle * (arm ? 0.14 : 0.06);
     c.save(); c.translate(side * (arm ? 48 : 20), arm ? -146 : -73);
-    c.rotate(angle + (arm ? side * (0.09 + crouch * 0.25) : side * crouch * 0.26));
+    c.rotate(swing + (arm ? side * (0.11 + crouch * 0.32 - flight * 0.28) : side * crouch * 0.34 - flight * side * 0.18));
     if (arm) {
       this.box(-13, 0, 26, 27, 7, ['#f67962', '#ffa18a', '#ba4f5d']);
-      c.translate(0, 29); c.rotate(-side * (0.08 + flight * 0.35));
+      c.translate(0, 29);
+      c.rotate(-side * (0.14 + flight * 0.52 + crouch * 0.25) - Math.abs(swing) * 0.35);
       this.box(-12, 0, 24, 25, 7, ['#ffd18b', '#ffe6b2', '#c99a64']);
       this.rect(-6, 22, 12, 6, '#d9a461', 2);
       c.beginPath(); c.arc(0, 33, 9.5, -0.25 * Math.PI, 1.25 * Math.PI);
@@ -392,11 +394,14 @@ export class Renderer {
       c.strokeStyle = '#fff4c2'; c.lineWidth = 2.2; c.stroke();
     } else {
       this.box(-14, 0, 28, 31, 8, ['#385b85', '#6686b0', '#253b61']);
-      c.translate(0, 32); c.rotate(side * crouch * -0.58 + stride * side * flight * 0.25);
+      c.translate(0, 32);
+      const knee = side * crouch * -0.72 + (this.jump ? (stride * side > 0 ? 0.58 : -0.24) * flight : Math.max(0, idle) * 0.12);
+      c.rotate(knee);
       this.box(-14, 0, 28, 27, 8, ['#2d466c', '#496e99', '#203455']);
       this.rect(-9, 5, 18, 8, '#50749c', 2);
-      this.box(-17, 27, 34, 12, 9, ['#effbff', '#fff', '#a5bfd5']);
-      this.rect(-15, 36, 30, 4, '#49c8cf', 1);
+      c.translate(0, 27); c.rotate(flight * 0.22 - crouch * 0.18);
+      this.box(-17, 0, 34, 12, 9, ['#effbff', '#fff', '#a5bfd5']);
+      this.rect(-15, 9, 30, 4, '#49c8cf', 1);
     }
     c.restore();
   }
@@ -468,9 +473,9 @@ export class Renderer {
     }
     c.save(); c.translate(x, sy - lift + breath);
     if (state.mode === MODE.STUMBLE && !this.reducedMotion) c.rotate(Math.sin(this.time / 70) * 0.12);
-    else c.rotate(flight * (this.jump?.direction ?? 0) * 0.07);
-    c.scale(1 + crouch * 0.13 - flight * 0.05, 1 - crouch * 0.15 + flight * 0.1);
-    this.art.gear(palette.parts,this.time,'back',1.37);
+    else c.rotate(flight * (this.jump?.direction ?? 0) * 0.13 + (this.reducedMotion ? 0 : Math.sin(this.time / 480) * 0.025 * state.facing));
+    c.scale(1 + crouch * 0.16 - flight * 0.08, 1 - crouch * 0.18 + flight * 0.13);
+    this.art.gear(palette.parts,this.time,'back',1.37,false,{run:Boolean(this.jump),jump:flight,stride});
     const far = -state.facing; const near = state.facing;
     this.limb('arm', far, stride, crouch, flight);
     this.limb('leg', far, stride, crouch, flight);

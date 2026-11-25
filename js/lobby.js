@@ -1,5 +1,5 @@
 import { Art } from './art.js';
-import { train, wagon, picoToy, cocoToy } from './harbor-art.js';
+import { train, wagon, picoToy, cocoToy, trainParts } from './harbor-art.js';
 
 export const CARTRIDGES = Object.freeze([
   { id:'stairs', title:'블록 계단 점프', tag:'작전 2 · 등대 신호탑', x:36,y:374, colors:['#42d2bc','#156d85'], accent:'#b8ffe5' },
@@ -120,9 +120,8 @@ export class Lobby {
   render(profileView=false) {
     if(profileView){this.profileView();return;}
     this.background();const a=this.art,c=a.c,t=this.motion?.matches?0:this.time;
-    const allProgress=this.profile.data.progress,progress=allProgress.battle,cleared=progress.cleared;
-    const runnerClears=allProgress.runner?.cleared??0,plazaClears=allProgress.plaza?.cleared??0,brakeWins=this.profile.data.stats?.brakeWins??0;
-    const opsDone=(cleared>0?1:0)+(brakeWins>0?1:0)+(runnerClears>0?1:0)+(plazaClears>0?1:0);
+    const progress=this.profile.data.progress.battle,cleared=progress.cleared;
+    const parts=trainParts(this.profile.data);
     a.label('우주 레고',37,65,49,'#f0fbff','#10243d','left');
     a.label('특급 오락실',37,124,52,'#ffe4a1','#10243d','left');
     a.star(314,121,12,'#99e4d2');
@@ -130,31 +129,44 @@ export class Lobby {
     a.cached('avatar-shelf',[30,169,664,175],()=>{
       a.rect(37,192,646,140,'#0a182d',31);a.rect(37,180,646,148,a.gradient(37,180,683,328,['#587f97','#293b60']),30,'#a6d4df8c');
       for(let i=0;i<6;i++)a.stud(92+i*92,181,13,4,4.5,'#4e738c','#b7e6ee');
-      a.ellipse(118,318,66,13,'#0c213e');a.stud(118,312,56,12,7,'#4ea3b4','#b0e6db');
-      a.line([[208,195],[208,308]],'#bce4dc25',2);
+      a.ellipse(110,318,62,13,'#0c213e');a.stud(110,312,52,11,7,'#4ea3b4','#b0e6db');
+      a.line([[196,195],[196,310]],'#bce4dc25',2);
+      // Dedicated recessed Train Dock Bay (386..538) separated from Center Status (206..378) and Shop (548..661)
+      a.rect(386,199,152,107,'#0e233b',22,'#82c4d844');
+      a.line([[398,301],[526,301]],'#6fa8bd66',3);
       a.rect(548,199,113,107,'#172e49',26,'#acd1dd55');a.bag(604,240,.94);a.text('꾸미기',604,282,20,'#fff1c7');
     });
-    a.toy(114,304,.72,{time:t,palette:this.profile.palette});
-    a.text('CH.1 하늘 항구 작전본부',225,214,24,'#f5fbef','left');
-    const storyLine=cleared===0?'집게 보스가 기차 브릭을 훔쳐갔어!':cleared<3?'별빛특급 탈환  '+cleared+' / 3 · 작전 '+opsDone+'/4':'★ 별빛특급 합체 완료! 작전 '+opsDone+'/4';
-    a.text(storyLine,225,248,16,'#ffe9a8','left',650);
-    for(let i=0;i<3;i++){
-      const x=244+i*54,done=i<cleared;
-      a.ellipse(x,297,17,5,'#071a2c55');
-      a.poly([[x,269],[x+14,277],[x+12,294],[x,301],[x-12,294],[x-14,277]],done?'#ffd378':'#253e59',done?'#fff1bf':'#6d8a9d',2);
-      if(done)a.star(x,284,9,'#fff6c9');else a.text(i+1,x,285,13,'#9bb8c8');
-    }
-    if(progress.harbor?.rescued&1){
-      train(a,472,303,.35,{time:t+(this.pressed==='train'?this.pressMs*5:0),cars:Math.max(0,cleared-1)});
-      cocoToy(a,395,305,.38,t);
+    a.toy(110,304,.72,{time:t,palette:this.profile.palette});
+    // Zone B (x: 206..378): Campaign title, truthful status, and 4 non-overlapping operation badges
+    a.text('CH.1 별빛특급 조립',206,208,19,'#f5fbef','left');
+    const storyLine=parts.complete?'★ 4대 파츠 합체 완료!':parts.doneCount===0?'4대 작전으로 기차 조립!':`기차 파츠 ${parts.doneCount}/4 · 배틀 ${cleared}/3`;
+    a.counter(storyLine,206,234,170,15.5,parts.complete?'#ffe999':'#c7ecf4','left');
+    parts.ops.forEach((op,i)=>{
+      const x=224+i*42,done=op.done;
+      a.ellipse(x,293,14,4,'#071a2c55');
+      a.poly([[x,263],[x+13,270],[x+11,286],[x,293],[x-11,286],[x-13,270]],done?'#ffd378':'#203852',done?'#fff1bf':'#638296',2);
+      if(done)a.star(x,277,8,'#fff6c9');else a.text(i+1,x,278,12,'#9bb8c8');
+      a.text(op.short,x,307,11,done?'#fff0b8':'#9ab5c7');
+    });
+    // Zone C (x: 386..538): Clipped LEGO Train Assembly Dock so the train never overlaps Zone B or medals
+    c.save();c.beginPath();c.roundRect(388,201,148,103,20);c.clip();
+    const hasCars=parts.harborCars>0||parts.coach;
+    if(parts.loco){
+      train(a,hasCars?488:466,294,hasCars?.25:.29,{time:t+(this.pressed==='train'?this.pressMs*5:0),cars:parts.harborCars,beacon:parts.beacon,coach:parts.coach,reactor:parts.reactor,complete:parts.complete});
     }else{
-      c.save();c.globalAlpha=.35;train(a,472,303,.34,{time:0,cars:0});c.restore();
-      a.rect(414,272,112,24,'#102845d9',8,'#8be9ff66');a.text('기차 탈환 대기',470,284,12,'#a8f0ff');
+      c.save();c.globalAlpha=.32;train(a,466,294,.28,{time:0,cars:0});c.restore();
     }
+    c.restore();
+    a.text(parts.complete?'★ 별빛특급 출동 준비 끝!':parts.loco?`조립 도크 (${parts.doneCount}/4 파츠)`:'기관차 탈환 대기',462,214,11.5,parts.complete?'#ffe898':'#9fe6f8');
     picoToy(a,54,361,.36,t);
     a.rect(78,337,604,31,'#112947e6',12,'#7ed8ef55');
-    const callout=cleared===0?'삐코: "대장! [작전 1] 다리 배틀 런에서 기관차와 코코를 구출하자!"':cleared<3?'삐코: "코코 합류 완료! 다음 기차 칸을 구하거나 등대·추격·엔진 작전 출동!"':'삐코: "별빛특급 3칸 합체 완성! 4대 레고 작전 최고 기록에 도전하자!"';
-    a.text(callout,92,353,15.5,'#fff2b8','left',650);
+    const nextOp=!parts.loco?'삐코: "대장! [작전 1] 다리 배틀 런에서 기관차와 코코부터 구출하자!"'
+      :!parts.beacon?'삐코: "기관차 확보! [작전 2] 계단 50층 다리를 조립해 등대 신호등을 달자!"'
+      :!parts.coach?'삐코: "등대 신호 연결! [작전 3] 슈퍼 블록 런에서 폭주 객차를 회수하자!"'
+      :!parts.reactor?'삐코: "객차 도킹 완료! [작전 4] 블록 광장에서 출발 엔진 코어를 조립하자!"'
+      :cleared<3?`삐코: "4대 파츠 장착! 이제 배틀 런 남은 구간(${cleared}/3)을 돌파하자!"`
+      :'삐코: "별빛특급 4대 파츠 & 항구 3구간 완전 정복! 최고 기록에 도전하자!"';
+    a.counter(nextOp,90,353,580,15,'#fff2b8','left');
     for(const card of CARTRIDGES){
       const {x,y}=card,w=306;
       this.cabinet(card);
@@ -162,15 +174,18 @@ export class Lobby {
       c.save();c.beginPath();c.roundRect(x+20,y+54,w-44,204,16);c.clip();
       this.mini(card.id,x+w/2,y+158);c.restore();
       a.text(card.title,x+w/2,y+288,card.id==='plaza'?24:26,'#fff5dc');
-      const subtitle=card.id==='battle'?(cleared===3?'★ 3칸 합체 · 재출동!':'보스 격파 · '+(progress.round+1)+'/3 구간'):card.id==='stairs'?(brakeWins?'부스터 '+brakeWins+'회 · 50층 다리':'50층 등대 다리 조립'):card.id==='runner'?(runnerClears?'추격 '+runnerClears+'회 · 골드러시':'3단 합체 골드러시'):(plazaClears?'엔진 '+plazaClears+'회 · 코어 수송':'기차 엔진 코어 조립');
-      a.text(subtitle,x+22,y+329,13.5,'#c7e7f0','left',650);
+      const subtitle=card.id==='battle'?(cleared===3?'★ 기관차·화물 3/3 완료':`기관차 탈환 · ${progress.round+1}/3 구간`)
+        :card.id==='stairs'?(parts.beacon?`★ 등대 신호 장착 (${parts.stairsCleared}회)`:'50층 다리 조립 → 신호등')
+        :card.id==='runner'?(parts.coach?`★ 부스터 객차 장착 (${parts.runnerCleared}회)`:'3단 브릭 합체 → 객차 회수')
+        :(parts.reactor?`★ 엔진 코어 장착 (${parts.plazaCleared}회)`:'코어 브릭 수송 → 엔진 조립');
+      a.counter(subtitle,x+20,y+329,164,13.5,'#c7e7f0','left');
       const pressed=this.pressed===card.id&&this.pressMs>0;
       const dy=pressed?this.pressMs/450*5:0;
       a.rect(x+190,y+316,94,33,'#071b30',13);a.rect(x+190,y+311+dy,94,33,card.accent,13,'#fff4c28c');
       a.text(card.id==='battle'&&cleared>0?'계속':'출동',x+226,y+327+dy,17,'#18334b');
       a.poly([[x+258,y+321+dy],[x+266,y+327+dy],[x+258,y+333+dy]],'#24465a');
     }
-    const note=this.profile.status==='memory'?'이번 실행에서만 보관':this.profile.status==='update-required'?'새 버전으로 열어 주세요':cleared===3?'별빛특급을 구한 하늘 항구 레고 대장!':'4가지 레고 작전을 클리어해 별빛특급을 조립하자!';
+    const note=this.profile.status==='memory'?'이번 실행에서만 보관':this.profile.status==='update-required'?'새 버전으로 열어 주세요':parts.complete?'★ 4대 레고 파츠가 모두 합체된 별빛특급 대장!':`조립 완료 파츠 ${parts.doneCount}/4 · 각 게임을 깨면 내 기차가 진화해요`;
     a.text(note,38,1222,18,this.profile.status==='memory'?'#ffbf9e':'#a8c6d6','left',650);
     a.rect(538,1190,145,65,'#25415c',20,'#a6c6da55');a.text('보호자',610,1223,23,'#d0e5e9');
   }

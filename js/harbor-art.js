@@ -1,3 +1,17 @@
+export function trainParts(data={}){
+  const p=data?.progress??data??{},b=p.battle??{},rescued=b.harbor?.rescued??0,battleCleared=b.cleared??0;
+  const stairsCleared=p.stairs?.cleared??0,runnerCleared=p.runner?.cleared??0,plazaCleared=p.plaza?.cleared??0;
+  const loco=Boolean((rescued&1)||battleCleared>0),beacon=stairsCleared>0,coach=runnerCleared>0,reactor=plazaCleared>0;
+  const ops=[
+    {id:'battle',short:'기관',title:'기관차 구출',done:loco,cleared:battleCleared,target:3},
+    {id:'stairs',short:'등대',title:'50층 등대 연결',done:beacon,cleared:stairsCleared,target:1},
+    {id:'runner',short:'객차',title:'폭주 객차 회수',done:coach,cleared:runnerCleared,target:1},
+    {id:'plaza',short:'엔진',title:'엔진 코어 조립',done:reactor,cleared:plazaCleared,target:1},
+  ];
+  const doneCount=ops.filter(o=>o.done).length;
+  return {loco,beacon,coach,reactor,battleCleared,stairsCleared,runnerCleared,plazaCleared,harborCars:Math.max(0,battleCleared-1),doneCount,complete:doneCount===4&&battleCleared>=3,ops};
+}
+
 export function picoToy(a,x,y,scale=1,time=0){
   const c=a.c;c.save();c.translate(x,y);c.scale(scale,scale);
   const bob=Math.sin(time/240)*2.5;c.translate(0,bob);
@@ -59,12 +73,22 @@ export function wagon(a,x,y,scale=1,time=0,last=false){
   c.restore();
 }
 
-// Shared, procedural LEGO toy train: the same object is captive, rescued, then parked at home.
-export function train(a,x,y,scale=1,{time=0,cars=0,held=false}={}){
+// Shared, procedural LEGO toy train: visibly upgrades as Battle, Stairs, Runner, and Plaza missions are cleared.
+export function train(a,x,y,scale=1,{time=0,cars=0,held=false,beacon=false,coach=false,reactor=false,complete=false}={}){
   const c=a.c;c.save();c.translate(x,y);c.scale(scale,scale);
-  const bob=held?Math.sin(time/420)*4:Math.sin(time/95)*1.5;c.translate(0,bob);
-  a.ellipse(-8,8,132+cars*47,17,'#091d3f3d');
-  for(let i=cars;i>0;i--)wagon(a,-100-i*111,0,1,time,i===2);
+  const bob=held?Math.sin(time/420)*4:Math.sin(time/95)*1.8;c.translate(0,bob);
+  const totalCars=Math.max(cars,coach?1:0);
+  a.ellipse(-8,8,132+totalCars*47,17,'#091d3f3d');
+  for(let i=totalCars;i>0;i--){
+    const wx=-100-i*111;
+    wagon(a,wx,0,1,time,i===2||complete);
+    if(coach&&i===1){
+      // Runner reward: Golden Booster Wings on the recovered passenger/cargo coach
+      a.poly([[wx-38,-56],[wx-76,-88],[wx-58,-34]],'#ffd86b','#fff5bf',3);
+      a.poly([[wx+36,-56],[wx+74,-88],[wx+56,-34]],'#ffd86b','#fff5bf',3);
+      a.stud?.(wx,-80,10,4,5,'#e39d36','#fff6c4');
+    }
+  }
   a.block(-114,-72,219,66,17,'#289ca8','#a2f3dc','#16657b');
   a.block(-105,-138,91,83,15,'#f2b550','#fff2a7','#b77e43');
   a.rect(-92,-125,63,50,'#163e63',9,'#fff2b6');a.rect(-85,-119,51,37,a.gradient(-85,-120,-35,-80,['#87d7e6','#3495b1']),6);
@@ -75,15 +99,33 @@ export function train(a,x,y,scale=1,{time=0,cars=0,held=false}={}){
   a.line([[-38,-85],[-27+Math.sin(time/120)*5,-95]],'#ffe1a1',7);
   a.block(-115,-151,111,18,12,'#ea7758','#ffe1a1','#9d5260');
   for(const sx of[-92,-60,-28])a.stud?.(sx,-157,8.5,3.2,4,'#d95f43','#ffe6b3');
+  if(beacon){
+    // Stairs 50-step bridge reward: Lighthouse Golden Signal Dish & Searchlight Beam
+    a.block(-68,-182,36,24,8,'#ffcf5c','#fff6bf','#b87d32');
+    a.stud?.(-50,-187,11,4,5,'#e39d36','#fff9d2');
+    a.ellipse(-30,-170,10,13,'#fff7c4');
+    a.poly([[118,-54],[215,-92+Math.sin(time/320)*14],[215,-16+Math.sin(time/320)*14]],'#fff6b544');
+  }
   a.block(-7,-101,89,72,17,'#248da5','#90e2d6','#195b79');a.star(36,-67,23,'#ffe596');
+  if(reactor){
+    // Plaza mission reward: Starlight Energy Core Reactor & Turbo Flame Thruster
+    a.ellipse(36,-67,26,26,'#123b5e');
+    a.ellipse(36,-67,18+Math.sin(time/140)*2,18+Math.sin(time/140)*2,'#67fff0');
+    a.star(36,-67,15,'#fff7be');
+    a.poly([[-115,-48],[-154-Math.sin(time/65)*14,-62],[-142,-36],[-158-Math.cos(time/55)*12,-22],[-115,-24]],'#63ffee');
+    a.poly([[-115,-43],[-138-Math.sin(time/50)*8,-48],[-115,-29]],'#fff8c4');
+  }
   a.block(52,-131,24,38,8,'#f1b35f','#fff1b6','#b57951');a.rect(47,-140,40,16,'#ffd78d',6);
-  a.block(91,-76,28,56,12,'#e68b61','#ffdd99','#a96156');a.ellipse(111,-54,13,16,'#fff6be');
+  a.block(91,-76,28,56,12,'#e68b61','#ffdd99','#a96156');a.ellipse(111,-54,13,16,beacon?'#fffce0':'#fff6be');
   a.poly([[99,-13],[132,-13],[148,4],[92,4]],'#e36f60','#ffbe91',3);
+  if(complete){
+    a.poly([[18,-108],[6,-132],[24,-121],[36,-142],[48,-121],[66,-132],[54,-108]],'#ffd75e','#fff6c4',3);
+  }
   for(const wx of[-80,-21,64]){a.ellipse(wx,0,25,25,'#143653');a.ellipse(wx,-2,18,18,'#c5eef0');a.ellipse(wx,-2,11,11,'#478dac');
     a.stud?.(wx,-2,5.5,5.5,2.5,'#2a6b8a','#e8ffff');
     const ang=time/160;a.line([[wx,-2],[wx+Math.cos(ang)*12,-2+Math.sin(ang)*12]],'#e8ffea',4);}
   a.line([[-80,3],[-21,3],[64,3]],'#f4d49d',6);
-  for(let i=0;i<3;i++){const f=(time/900+i*.32)%1;a.ellipse(72-f*34,-158-f*51,10+f*17,8+f*12,`rgba(237,255,244,${(1-f)*.5})`);}
+  for(let i=0;i<3;i++){const f=(time/900+i*.32)%1;a.ellipse(72-f*34,-158-f*51,10+f*17,8+f*12,reactor?`rgba(135,255,245,${(1-f)*.65})`:`rgba(237,255,244,${(1-f)*.5})`);}
   c.restore();
 }
 

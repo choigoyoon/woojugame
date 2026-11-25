@@ -2,7 +2,7 @@ import { Art } from './art.js';
 import { CONFIG } from './config.js';
 import { SYMBOLS, SENTENCES } from './sentences.js';
 import { GOODS } from './plaza.js';
-import { train, wagon, picoToy, cocoToy } from './harbor-art.js';
+import { train, wagon, picoToy, cocoToy, trainParts } from './harbor-art.js';
 
 export class AdventureRenderer {
   constructor(ctx,runner,plaza,profile){
@@ -50,16 +50,22 @@ export class AdventureRenderer {
       }
     }
     const squash=s.squashMs?Math.sin(s.squashMs/200*Math.PI):0,scale=s.goldMs?1.38:.86;
-    c.save();c.translate(CONFIG.runner.playerX,870-s.y);c.scale(1+squash*.13-Math.min(1,s.y/180)*.05,1-squash*.14+Math.min(1,s.y/180)*.08);
+    const jumpFactor=Math.min(1.15,s.y/82),pitch=this.reduced?0:Math.max(-.22,Math.min(.24,-s.vy/2300));
+    c.save();c.translate(CONFIG.runner.playerX,870-s.y);
     if(s.goldMs){const glow=c.createRadialGradient(0,-90,10,0,-90,165);glow.addColorStop(0,'#fff5ae99');glow.addColorStop(1,'#ffe18c00');c.fillStyle=glow;c.fillRect(-170,-260,340,340);for(let i=0;i<5;i++)a.star(Math.sin(t/260+i)*105,-105+Math.cos(t/260+i)*95,8,'#fff6c0');}
-    c.globalAlpha=s.invulnerableMs&&Math.floor(t/90)%2?.45:1;a.toy(0,0,scale,{time:t,run:s.y<=0,jump:Math.min(1,s.y/100),gold:s.goldMs>0,palette:this.profile.palette});c.restore();
+    c.globalAlpha=s.invulnerableMs&&Math.floor(t/90)%2?.45:1;
+    a.toy(0,0,scale,{time:t,run:s.y<=0,jump:jumpFactor,pitch,squash,gold:s.goldMs>0,palette:this.profile.palette});
+    c.restore();
     this.effects();this.header('작전 3 · 폭주 기차칸 추격',canHome);
     a.cached('sentence-slots',[22,144,676,154],()=>{const labels=['1단 파워 브릭','2단 연결 브릭','3단 부스터 점화'];
     for(let i=0;i<3;i++){const x=24+i*232,filled=i<s.slot;a.rect(x,154,208,137,filled?'#f6de91':'#183a61e6',22,filled?'#fff7be':'#add5e466');
       for(const sx of[x+54,x+104,x+154])a.stud(sx,154,12,4,4.5,filled?'#e0b84f':'#28527d',filled?'#fff8c8':'#7bb8d4');
       a.text(labels[i],x+104,180,16,filled?'#89704c':'#b5d9e4');a.label(filled?this.runner.sentence[i]:i===s.slot?'점프!':'···',x+104,232,27,filled?'#fff9e5':'#e3f9ff','#263a60');if(i<2)a.text('›',x+220,217,29,'#fff2b8');}
     },s.sentence*4+s.slot);
-    if(s.messageMs)a.text(s.message==='GOLD RUSH!'?'★ 메가 레고 황금 질주!':s.message,360,455,s.message==='GOLD RUSH!'?44:34,'#fff6bc');
+    if(s.messageMs){
+      a.text(s.message==='GOLD RUSH!'?'★ 폭주 객차 도킹 & 황금 질주!':s.message,360,445,s.message==='GOLD RUSH!'?40:34,'#fff6bc');
+      if(s.message==='GOLD RUSH!')a.text('회수한 부스터 객차가 로비 별빛특급에 합체됩니다!',360,492,20,'#b8ffe8');
+    }
     if(s.goldMs){a.rect(130,322,460,14,'#254478',8);a.rect(130,322,460*s.goldMs/CONFIG.runner.goldMs,14,'#ffe79a',8);}
     a.cached(pressed?'jump-held':'jump-ready',[64,1041,592,184],()=>{a.rect(66,1058,588,165,'#0d3451',46);a.rect(66,1043+(pressed?13:0),588,165,'#ffda7b',46,'#fff2be');
     a.poly([[132,1136],[158,1104],[184,1136]],'#775a53');a.text('점프',377,1115+(pressed?13:0),47,'#493c61');a.text('꾹 누르면 더 높이!',377,1171+(pressed?13:0),21,'#786854');});
@@ -86,7 +92,8 @@ export class AdventureRenderer {
     a.poly(corners.map(p=>[p.x,p.y+28]),'#364872','#97c1d8',3);
     for(let x=-4;x<4;x++)for(let z=-4;z<4;z++){const points=[this.iso(x,z),this.iso(x+1,z),this.iso(x+1,z+1),this.iso(x,z+1)];a.poly(points.map(p=>[p.x,p.y]),(x+z)%2?'#aacacb':'#bed8cf','#86abbc',1);const center=this.iso(x+.5,z+.5);a.ellipse(center.x,center.y-2,7,3.2,'#ffffff38');}
     });
-    const dock=this.iso(-2.2,3.4);train(a,dock.x,dock.y-18,.42,{time:t,cars:1});
+    const dock=this.iso(-2.2,3.4),parts=trainParts(this.profile.data);
+    train(a,dock.x,dock.y-18,.42,{time:t,cars:parts.harborCars,beacon:parts.beacon,coach:parts.coach,reactor:parts.reactor||s.phase==='success',complete:parts.complete});
     cocoToy(a,dock.x+56,dock.y-8,.42,t);
     const captain=this.iso(0,3.15);a.ellipse(captain.x,captain.y,46,22,this.plaza.ready?'#fff0a4':'#6d95b7');
     // Fixed tiny scene: sort stable references in reusable scratch storage by floor depth.
@@ -96,7 +103,7 @@ export class AdventureRenderer {
     this.player??={kind:'player',x:0,z:0};this.player.x=s.x;this.player.z=s.z;this.scene.push(this.player);
     this.captain??={kind:'captain',x:0,z:3.15};this.scene.push(this.captain);this.scene.sort((x,y)=>(x.x+x.z)-(y.x+y.z));
     for(const o of this.scene){const p=this.iso(o.x,o.z);
-      if(o.kind==='player'){a.ellipse(p.x,p.y,29,13,'#c4fff0');c.save();c.globalAlpha=s.flashMs&&Math.floor(t/80)%2?.5:1;a.toy(p.x,p.y,.72,{time:t,run:!!(s.vx||s.vz),palette:this.profile.palette});c.restore();}
+      if(o.kind==='player'){a.ellipse(p.x,p.y,29,13,'#c4fff0');c.save();c.globalAlpha=s.flashMs&&Math.floor(t/80)%2?.5:1;a.toy(p.x,p.y,.72,{time:t,run:Math.hypot(s.vx,s.vz)>.08,turn:s.vx-s.vz,pitch:(s.vx+s.vz)*.05,squash:s.stunMs?Math.sin(s.stunMs/120)*.4:0,palette:this.profile.palette});c.restore();}
       else if(o.kind==='captain')this.robot(p.x,p.y);
       else if(o.kind){this.good(o.kind,p.x,p.y-9-Math.sin(t/300+o.x)*4);a.star(p.x+21,p.y-42,4+Math.sin(t/200+o.z)*2,'#fff3b8');}
       else{a.ellipse(p.x,p.y,25,10,'#34497177');a.block(p.x-24,p.y-39,48,33,8,'#e88996','#ffd0b2','#945b88');a.rect(p.x-14,p.y-29,8,7,'#704f74',2);a.rect(p.x+5,p.y-29,8,7,'#704f74',2);}
@@ -113,7 +120,10 @@ export class AdventureRenderer {
     }
     if(s.phase==='retry'){a.rect(120,381,480,135,'#392d5ce8',28);a.text('앗! 방해 브릭이야, 다시 조립!',360,435,28,'#ffe0ba');}
     if(s.phase==='success'){
-      a.rect(64,344,592,319,'#192e56f5',32,'#fff0a5');a.text('★ 엔진 코어 조립 성공!',360,398,34,'#ffe79b');a.bag(360,480,1.8);a.text('+'+CONFIG.plaza.reward,360,576,46,'#fff0b8');
+      a.rect(64,344,592,319,'#192e56f5',32,'#fff0a5');a.text('★ 별빛 엔진 코어 장착 완료!',360,392,33,'#ffe79b');
+      a.text('로비의 별빛특급에 터보 원자로가 조립되었습니다!',360,432,19,'#b6ffe8');
+      train(a,375,542,.48,{time:t,cars:parts.harborCars,beacon:parts.beacon,coach:parts.coach,reactor:true,complete:parts.complete});
+      a.text('+'+CONFIG.plaza.reward,360,612,44,'#fff0b8');
     }
     if(['briefing','success'].includes(s.phase)){
       a.rect(127,1060,466,130,'#263152',35);a.rect(127,1046,466,130,s.phase==='success'?'#ffd579':'#8ce6ce',35,'#efffdc');a.text(s.phase==='success'?'다음 심부름':'출동!',360,1110,40,'#264660');

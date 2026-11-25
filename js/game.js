@@ -60,6 +60,9 @@ export class Game {
       return { type: 'puzzle-miss' };
     }
     p.solved = true; p.celebrationMs = CONFIG.puzzle.celebrationMs; p.wrongMs = 0;
+    if (this.wallet?.data?.progress?.stairs) {
+      this.wallet.data.progress.stairs.cleared = Math.min(100000, (this.wallet.data.progress.stairs.cleared || 0) + 1);
+    }
     this.reward(CONFIG.puzzle.chestCoins);
     return { type: 'puzzle-win', coins: CONFIG.puzzle.chestCoins };
   }

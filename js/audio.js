@@ -79,7 +79,7 @@ export class Audio {
       this.lastImpact=this.context?.currentTime??0;
       this.tone(530+(event.crack??0)*100,145,.065,'triangle',0,.35);this.noise(.04,.22);
     }
-    if(event.type==='armor-break'){this.noise(.11,.45);this.tone(860,280,.12,'square',0,.19);}
+    if(event.type==='armor-break'){this.noise(.11,.45);this.tone(860,280,.12,'square',0,.19);this.fm(2150,1420,.045,.018,.26);}
     if(event.type==='train'){for(const delay of[0,.32]){this.tone(330,330,.24,'triangle',delay,.22);this.tone(440,440,.24,'sine',delay,.2);}this.noise(.12,.08);}
     if(event.type==='shield-block'){this.fm(330,990,.23,0,.3);this.noise(.065,.18);}
     if(['power-up','supply-pickup'].includes(event.type)){
@@ -105,7 +105,7 @@ export class Audio {
     if(event.type==='mission')this.speak(event.speech,'teacher');
     if(event.type==='mission-win'){this.play({type:'round-clear',final:true});this.noise(.22,.25);}
     if(event.type==='pickup'){this.fm(1046,1568,.22,0,.33);this.fm(2093,2349,.19,.035,.16);}
-    if(event.type==='smash'){this.noise(.15,.4);this.tone(150,45,.2,'sine',0,.5);}
+    if(event.type==='smash'){this.noise(.15,.4);this.tone(150,45,.2,'sine',0,.5);this.fm(1920,1280,.05,.015,.28);}
     if(['word-miss','mission-miss'].includes(event.type)){this.tone(350,260,.15,'triangle',0,.3);this.tone(220,180,.16,'sine',.06,.2);}
     if (['gate-miss', 'bump', 'puzzle-miss', 'locked'].includes(event.type)) this.tone(320, 190, 0.13, 'triangle', 0, 0.4);
     if (['reward', 'gate-win', 'puzzle-win', 'brake-win'].includes(event.type)) {

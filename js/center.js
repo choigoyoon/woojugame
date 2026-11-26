@@ -43,11 +43,11 @@ export class Center {
       if(this.stage==='pin-confirm'){
         if(pin!==this.secret){this.stage='pin-new';this.message='두 번호가 달라요. 다시 입력해 주세요';this.secret='';this.pending=false;return null;}
         const saved=await this.profile.setPin(pin);if(token!==this.generation)return null;
-        this.pending=false;this.secret='';this.stage=saved?'dashboard':'gate';this.message=saved?(this.profile.status==='memory'?'이번 실행에만 PIN이 적용됐어요':'새 PIN을 저장했어요'):'이 브라우저에서는 PIN 저장을 사용할 수 없어요';return{type:saved?'reward':'locked'};
+        this.pending=false;this.secret='';this.stage=saved?'dashboard':'gate';this.message=saved?(this.profile.status==='memory'?'이번 실행에만 암호가 적용됐어요':'새 암호를 저장했어요'):'이 브라우저에서는 암호 저장을 사용할 수 없어요';return{type:saved?'reward':'locked'};
       }
       const valid=await this.profile.verifyPin(pin);if(token!==this.generation)return null;
       this.pending=false;
-      if(!valid){this.message=Date.now()<this.profile.data.parent.lockedUntil?'30초 뒤에 다시 시도해 주세요':'PIN을 다시 확인해 주세요';return{type:'locked'};}
+      if(!valid){this.message=Date.now()<this.profile.data.parent.lockedUntil?'30초 뒤에 다시 시도해 주세요':'암호를 다시 확인해 주세요';return{type:'locked'};}
       const outcome=this.profile.buy(this.selected,true);this.stage='shop';this.message=outcome==='bought'?'전설 파츠 획득!':outcome==='coins'?'코인이 조금 더 필요해':'장착했어!';return{type:outcome==='bought'?'reward':'select'};
     }
     if(this.stage==='shop'){
@@ -96,7 +96,7 @@ export class Center {
       a.label(part.name,x+212,y+72,20,'#fff5db','#0b132b');
       a.label(owned?'✓ 보유 중':part.price+' 코인',x+212,y+112,23,owned?'#00f5d4':'#ffbe0b','#0b132b');
       a.counter((PERKS[part.id]??'').replace(/^[^\s]+\s/,''),x+212,y+152,158,13,'#b8e4f5');
-      a.text(this.profile.data.equipped[this.slot]===part.id?'★ 현재 장착 중':part.legendary?'전설 파츠 (보호자 PIN)':'탭하여 미리보기',x+153,y+208,15.5,this.profile.data.equipped[this.slot]===part.id?'#ffe885':'#bacde3');
+      a.text(this.profile.data.equipped[this.slot]===part.id?'★ 현재 장착 중':part.legendary?'전설 파츠 (보호자 암호)':'탭하여 미리보기',x+153,y+208,15.5,this.profile.data.equipped[this.slot]===part.id?'#ffe885':'#bacde3');
     });
     const owned=this.profile.data.owned.includes(p.id);a.rect(80,1124,560,94,'#081c36',27);a.rect(80,1114,560,94,this.profile.coins>=p.price||owned?'#8de6cd':'#77919e',27,'#c7fff1');a.text(owned?'장착하기':p.price+' 코인으로 데려오기',360,1160,29,'#193f50');
     if(this.message)a.text(this.message,360,1079,23,'#ffe3a4');
@@ -104,7 +104,7 @@ export class Center {
   renderKeypad(){
     this.background(this.stage==='pin-buy'?'전설 파츠 해금':'보호자 확인');const a=this.art,gate=this.stage==='gate';
     a.lock(360,230,1.5);
-    a.text(gate?'보호자가 계산해 주세요':this.stage==='pin-new'?'새 PIN 4자리':this.stage==='pin-confirm'?'같은 PIN을 한 번 더':'보호자 PIN을 입력해 주세요',360,328,29,'#dcecff');
+    a.text(gate?'보호자가 계산해 주세요':this.stage==='pin-new'?'새 암호 4자리':this.stage==='pin-confirm'?'같은 암호를 한 번 더':'보호자 암호를 입력해 주세요',360,328,29,'#dcecff');
     a.text(gate?this.a+' × '+this.b+' = ?':'숫자 4자리',360,400,gate?45:23,'#ffe1a0');
     a.rect(120,460,480,94,'#0b1935',23,'#a5c6ee66');a.text(gate?(this.digits||'—'):('●'.repeat(this.digits.length)||'○ ○ ○ ○'),360,509,40,'#c1fff0');
     if(this.message)a.text(this.message,360,593,21,'#ffcdb0');
@@ -118,7 +118,7 @@ export class Center {
     cards.forEach(([label,win,total,color],i)=>{const x=36+i%2*342,y=235+Math.floor(i/2)*238;a.rect(x,y,306,211,'#213958',25,color+'88');a.text(label,x+153,y+42,23,'#dce9f4');a.counter(total===null?win:total?Math.round(win/total*100)+'%':'—',x+153,y+103,260,48,color);a.text(total===null?'개':'성공 '+win+' / 시도 '+total,x+153,y+166,18,'#adc7d9');});
     a.text('게임 선택 결과의 누적 기록입니다',360,757,20,'#a7c4d8');
     for(const [i,key]of ['sound','haptics'].entries()){const x=36+i*342;a.rect(x,807,306,107,'#334e70',25,'#a1d2da66');a.text((key==='sound'?'소리':'진동')+'  '+(this.profile.data.settings[key]?'켜짐':'꺼짐'),x+153,860,29,'#d1f7ed');}
-    a.rect(80,969,560,112,'#b8c8f3',30);a.text('보호자 PIN 변경',360,1024,30,'#243756');
-    a.text(this.message||(this.profile.data.parent.hash?'이 기기에만 저장 · 결제 기능 없음':'초기 PIN 0808 · 변경해서 사용해 주세요'),360,1155,21,'#b6cbe5');
+    a.rect(80,969,560,112,'#b8c8f3',30);a.text('보호자 암호 변경',360,1024,30,'#243756');
+    a.text(this.message||(this.profile.data.parent.hash?'이 기기에만 저장 · 결제 기능 없음':'초기 암호 0808 · 변경해서 사용해 주세요'),360,1155,21,'#b6cbe5');
   }
 }

@@ -223,59 +223,53 @@ export class BattleRenderer {
     c.scale(s*(1+dent),s*(1-dent*.72));
     a.ellipse(0,8,265,38,'#06112455');
 
-    // Helper to draw a tapered Squid Arm or Diamond-Clubbed Feeding Tentacle (촉완) with visible 2-ring suction cups!
+    // Helper to draw a seamless, single-polygon tapered Squid Arm or Diamond-Clubbed Feeding Tentacle (촉완) — ZERO lumpy sausage joints or closed nib lines!
     const drawSquidLimb=(pts,wStart,wEnd,col,cupSide=1,hasClub=false,recoil=false)=>{
       const mainCol=recoil?'#be123c':col;
-      // 1. Tapered squid arm shaft
-      for(let pass=0;pass<2;pass++){
-        const extra=pass===0?12:0;
-        const strokeCol=pass===0?'#0b132b':mainCol;
-        for(let i=0;i<pts.length-1;i++){
-          const p0=pts[i],p1=pts[i+1];
-          const w=wStart+(wEnd-wStart)*(i/(pts.length-1))+extra;
-          a.line([p0,p1],strokeCol,w);
-        }
+      const leftPts=[],rightPts=[];
+      for(let i=0;i<pts.length;i++){
+        const pPrev=pts[Math.max(0,i-1)],pNext=pts[Math.min(pts.length-1,i+1)];
+        const dx=pNext[0]-pPrev[0],dy=pNext[1]-pPrev[1],len=Math.hypot(dx,dy)||1;
+        const nx=-dy/len,ny=dx/len;
+        const hw=.5*(wStart+(wEnd-wStart)*(i/(pts.length-1)));
+        leftPts.push([pts[i][0]+nx*hw,pts[i][1]+ny*hw]);
+        rightPts.push([pts[i][0]-nx*hw,pts[i][1]-ny*hw]);
       }
-      // 2. Suction cups along the shaft
-      for(let i=1;i<pts.length-1;i++){
-        const [x,y]=pts[i];
-        const w=wStart+(wEnd-wStart)*(i/(pts.length-1));
-        const r=Math.max(6,w*.33);
-        const cx=x+cupSide*(w*.46),cy=y+r*.22;
-        a.ellipse(cx,cy,r+3,r*.85+3,'#0b132b');
-        a.ellipse(cx,cy,r,r*.85,suckerCol);
-        a.ellipse(cx+cupSide*1.2,cy,r*.45,r*.38,hull);
-      }
-      // 3. Tip: Either a broad Diamond/Spear Squid Tentacular Club (촉완 마름모 클럽) or a sharp pointed Squid Arm Tip!
       const tip=pts[pts.length-1],prev=pts[pts.length-2];
       const dx=tip[0]-prev[0],dy=tip[1]-prev[1],len=Math.hypot(dx,dy)||1,ux=dx/len,uy=dy/len,nx=-uy,ny=ux;
       if(hasClub){
-        // Iconic Giant Squid Tentacular Club (넓적한 마름모/창끝 모양 촉완 클럽 + 3개의 대형 빨판)
-        const clubPoly=[
-          [prev[0]+ux*4,prev[1]+uy*4],
-          [tip[0]-ux*14+nx*34,tip[1]-uy*14+ny*34],
-          [tip[0]+ux*38,tip[1]+uy*38],
-          [tip[0]-ux*14-nx*34,tip[1]-uy*14-ny*34]
-        ];
-        a.poly(clubPoly,mainCol,'#0b132b',6);
+        // Continuous Tapered Shaft flaring seamlessly into a Diamond Squid Tentacular Club (마름모 촉완 클럽)
+        const clubLeft=[tip[0]-ux*8+nx*32,tip[1]-uy*8+ny*32];
+        const clubTip=[tip[0]+ux*42,tip[1]+uy*42];
+        const clubRight=[tip[0]-ux*8-nx*32,tip[1]-uy*8-ny*32];
+        a.poly([...leftPts,clubLeft,clubTip,clubRight,...rightPts.reverse()],mainCol,'#0b132b',5.5);
         a.poly([
-          [prev[0]+ux*10,prev[1]+uy*10],
-          [tip[0]-ux*12+nx*20,tip[1]-uy*12+ny*20],
-          [tip[0]+ux*24,tip[1]+uy*24],
-          [tip[0]-ux*12-nx*20,tip[1]-uy*12-ny*20]
+          [tip[0]-ux*14,tip[1]-uy*14],
+          [tip[0]-ux*6+nx*18,tip[1]-uy*6+ny*18],
+          [tip[0]+ux*26,tip[1]+uy*26],
+          [tip[0]-ux*6-nx*18,tip[1]-uy*6-ny*18]
         ],hullLight);
-        for(const [ox,oy,cr]of[[-10,-6,7.5],[8,-4,7.5],[2,12,8.5]]){
+      }else{
+        // Continuous Tapered Squid Arm tapering smoothly to a single sharp whip point
+        const sharpTip=[tip[0]+ux*26,tip[1]+uy*26];
+        a.poly([...leftPts,sharpTip,...rightPts.reverse()],mainCol,'#0b132b',5.5);
+      }
+      // Suction cups along the inner edge of the squid arm
+      for(let i=1;i<pts.length-1;i++){
+        const [x,y]=pts[i];
+        const w=wStart+(wEnd-wStart)*(i/(pts.length-1));
+        const r=Math.max(5.5,w*.32);
+        const cx=x+cupSide*(w*.48),cy=y+r*.2;
+        a.ellipse(cx,cy,r+2.8,r*.85+2.8,'#0b132b');
+        a.ellipse(cx,cy,r,r*.85,suckerCol);
+        a.ellipse(cx+cupSide,cy,r*.42,r*.36,hull);
+      }
+      if(hasClub){
+        for(const [ox,oy,cr]of[[-9,-4,7],[9,-4,7],[0,13,8]]){
           a.ellipse(tip[0]+ox,tip[1]+oy,cr+2.5,cr+2.5,'#0b132b');
           a.ellipse(tip[0]+ox,tip[1]+oy,cr,cr,suckerCol);
           a.ellipse(tip[0]+ox,tip[1]+oy,cr*.45,cr*.45,hull);
         }
-      }else{
-        // Sharp whip-like pointed squid arm tip
-        a.poly([
-          [tip[0]-ux*6+nx*(wEnd*.55),tip[1]-uy*6+ny*(wEnd*.55)],
-          [tip[0]+ux*26,tip[1]+uy*26],
-          [tip[0]-ux*6-nx*(wEnd*.55),tip[1]-uy*6-ny*(wEnd*.55)]
-        ],mainCol,'#0b132b',4.5);
       }
     };
 
@@ -398,10 +392,10 @@ export class BattleRenderer {
 
     if(impact>.15)a.star((Math.sin(t)*45),-290-lift,26*impact,'#fff3b0');
 
-    // Kraken King Crown & Boss HP Pill mounted prominently on the Squid Mantle Brow (-372)
-    a.poly([[-48,-342-lift],[-60,-384-lift],[-18,-360-lift],[0,-396-lift],[18,-360-lift],[60,-384-lift],[48,-342-lift]],'#ffbe0b','#0b132b',4.5);
-    a.rect(-62,-364-lift,124,38,'#0b132b',19,coreCol);
-    a.label(Math.ceil(entity.hp),0,-345-lift,26,'#ffffff','#0b132b');
+    // Kraken King Crown & Boss HP Pill mounted cleanly above the Squid Spearhead Apex (-572) so the Mantle & Collar are 100% unobstructed!
+    a.poly([[-46,-558-lift],[-58,-598-lift],[-18,-576-lift],[0,-610-lift],[18,-576-lift],[58,-598-lift],[46,-558-lift]],'#ffbe0b','#0b132b',4.5);
+    a.rect(-62,-574-lift,124,38,'#0b132b',19,coreCol);
+    a.label(Math.ceil(entity.hp),0,-555-lift,26,'#ffffff','#0b132b');
 
     // 6. Captured Starlight Express Train & Coiling Squid Arms wrapping the train!
     const trainY=-52+Math.sin(t/350)*5;

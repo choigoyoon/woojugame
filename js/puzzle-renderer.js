@@ -6,7 +6,7 @@ import { picoToy, cocoToy } from './harbor-art.js';
 export class PuzzleRenderer {
   constructor(ctx,game,profile){this.art=new Art(ctx);this.game=game;this.profile=profile;this.time=0;}
   update(ms){this.time+=ms;}
-  cloud(x,y){const a=this.art;a.rect(x-58,y,116,26,'#a5c5e3',15);a.ellipse(x-24,y-5,30,24,'#c8e3f2');a.ellipse(x+20,y-1,35,28,'#ddf0f8');}
+  cloud(x,y){const a=this.art;a.rect(x-60,y-2,120,30,'#0b132b',16);a.ellipse(x-24,y-5,33,27,'#0b132b');a.ellipse(x+20,y-1,38,31,'#0b132b');a.rect(x-58,y,116,26,'#a5c5e3',15);a.ellipse(x-24,y-5,30,24,'#c8e3f2');a.ellipse(x+20,y-1,35,28,'#ddf0f8');}
   person(x,y,scale=1,run=false){this.art.toy(x,y,scale,{time:this.time,run,palette:this.profile.palette});}
   picture(id,x,y,scale=1){
     const a=this.art,c=a.c;c.save();c.translate(x,y);c.scale(scale,scale);
@@ -74,20 +74,29 @@ export class PuzzleRenderer {
         for(let i=0;i<3;i++)a.rect(64,-82+i*30,40,14,'#ffd875',3);
       }
     }else if(id==='umbrella'){
-      this.person(0,113,.8);a.line([[14,-70],[14,36],[6,48],[-3,42]],'#665b81',5);
-      a.poly([[-103,-60],[-80,-95],[-42,-118],[0,-126],[44,-118],[81,-95],[104,-60]],'#49c6e5','#1f6985',3);
-      a.poly([[0,-126],[-38,-60],[37,-60]],'#b8f7ff');a.line([[-103,-60],[104,-60]],'#d6fbff',4);
-      a.stud(0,-130,13,4.5,5,'#2d8fb0','#d6fbff');
-      for(let i=0;i<5;i++)a.line([[-114+i*57,-146],[-119+i*57,-133]],'#81c9ee',3);
+      this.person(0,113,.8);
+      a.line([[14,-70],[14,36],[6,48],[-3,42]],'#0b132b',10);
+      a.line([[14,-70],[14,36],[6,48],[-3,42]],'#ffbe0b',5);
+      a.poly([[-103,-60],[-80,-95],[-42,-118],[0,-126],[44,-118],[81,-95],[104,-60]],'#00b4d8','#0b132b',4.5);
+      a.poly([[0,-126],[-38,-60],[37,-60]],'#90e0ef','#0b132b',3);
+      a.ellipse(0,-130,10,6,'#0b132b');a.ellipse(0,-130,7,4,'#ffbe0b');
+      for(let i=0;i<5;i++)a.line([[-114+i*57,-146],[-119+i*57,-133]],'#38bdf8',4);
     }else if(id==='fan'){
-      a.rect(-9,19,18,83,'#709cad',5);a.ellipse(0,108,48,12,'#86c4d3');a.ellipse(0,-38,71,71,'#bddeeb');a.ellipse(0,-38,61,61,'#e5f1ed');
-      for(let i=0;i<3;i++){const angle=this.time/350+i*Math.PI*2/3;c.save();c.translate(0,-38);c.rotate(angle);a.ellipse(0,-30,14,30,'#7caec3');c.restore();}a.ellipse(0,-38,13,13,'#4b839f');
-      for(let i=-2;i<=2;i++)a.line([[i*17,-91],[i*17,15]],'#99bdcc',2);
+      a.rect(-11,17,22,87,'#0b132b',7);a.rect(-8,20,16,81,'#38bdf8',5);
+      a.ellipse(0,108,52,15,'#0b132b');a.ellipse(0,108,46,11,'#1e3a8a');
+      a.ellipse(0,-38,74,74,'#0b132b');a.ellipse(0,-38,68,68,'#e0f2fe');
+      for(let i=0;i<3;i++){const angle=this.time/350+i*Math.PI*2/3;c.save();c.translate(0,-38);c.rotate(angle);a.ellipse(0,-30,16,32,'#0b132b');a.ellipse(0,-30,12,28,'#00f5d4');c.restore();}
+      a.ellipse(0,-38,16,16,'#0b132b');a.ellipse(0,-38,11,11,'#ffbe0b');
     }else if(id==='help'){
-      // Pulling Coco up with LEGO C-grip claw hand
+      // Helping Coco up with a glowing Star Lifebuoy Ring (no old yellow LEGO claw!)
       cocoToy(a,-44,92,.62,this.time);
       this.person(52,105,.82);
-      a.line([[-15,40],[22,14],[32,34]],'#f7d293',13);a.ellipse(16,23,10,10,'#ffe2a5');a.star(7,-104,16,'#ffd78f');
+      a.line([[-18,38],[22,18]],'#0b132b',11);
+      a.line([[-18,38],[22,18]],'#00f5d4',6);
+      a.ellipse(-18,38,18,18,'#0b132b');
+      a.ellipse(-18,38,14,14,'#ffbe0b');
+      a.ellipse(-18,38,6,6,'#0b132b');
+      a.star(7,-104,18,'#0b132b');a.star(7,-104,14,'#ffbe0b');
     }
     c.restore();
   }

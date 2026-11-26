@@ -32,24 +32,25 @@ export class Juice {
       this.freeze.getContext('2d').drawImage(this.canvas,0,0);
       this.hold=CONFIG.polish.hitStopMs;this.hitStops++;
     }
+    const fxX=this.mode==='runner'?Math.max(330,x):x;
     const reward=e.coins??(e.type==='word'?CONFIG.runner.wordCoins:e.type==='sentence'?CONFIG.runner.sentenceCoins:e.type==='jump'&&!e.auto&&this.mode==='stairs'?1+(e.bonus??0):e.type==='pickup'&&this.mode==='runner'?1:e.type==='smash'?3:0);
     if(reward>0)for(let i=0;i<Math.min(reward,this.reduced.matches?1:7);i++){
       const duration=580+i*45;
-      Object.assign(this.coins[this.ci++%this.coins.length],{x,y,life:duration,duration,bend:(i-3)*30});
+      Object.assign(this.coins[this.ci++%this.coins.length],{x:fxX,y,life:duration,duration,bend:(i-3)*30});
     }
     if(big||['word','pickup','land','gate-win','smash','explode','armor-break','hit'].includes(e.type)){
       if(e.type!=='hit'||big){
-        Object.assign(this.rings[this.ri++%this.rings.length],{x,y,life:big?600:340,duration:big?600:340,big});
+        Object.assign(this.rings[this.ri++%this.rings.length],{x:fxX,y,life:big?600:340,duration:big?600:340,big});
       }
       const sparkCount=this.reduced.matches?2:big?28:e.type==='hit'?4:10;
       for(let i=0;i<sparkCount;i++){
         const angle=i*2.399;
-        Object.assign(this.sparks[this.si++%this.sparks.length],{x,y,life:big?850:430,duration:big?850:430,vx:Math.cos(angle)*(big?220:110),vy:Math.sin(angle)*(big?190:95)-80,size:big?7:4});
+        Object.assign(this.sparks[this.si++%this.sparks.length],{x:fxX,y,life:big?850:430,duration:big?850:430,vx:Math.cos(angle)*(big?220:110),vy:Math.sin(angle)*(big?190:95)-80,size:big?7:4});
       }
       // Spawn physical 3D bouncing LEGO bricks & studs with floor collision!
       if(!this.reduced.matches&&['word','sentence','smash','explode','armor-break','brake-win','mission-win','gate-win'].includes(e.type)){
         const floorY=this.mode==='runner'?868:this.mode==='battle'?Math.min(1040,y+125):Math.min(1020,y+95);
-        this.physics.burst({x,y,floorY,count:big?12:6});
+        this.physics.burst({x:fxX,y,floorY,count:big?12:6});
         this.camera.impulse({trauma:big?.55:.28,zoom:big?.045:.02});
       }
       // Spawn floating arcade callout banner!

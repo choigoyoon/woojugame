@@ -459,8 +459,8 @@ export class BattleRenderer {
     a.counter(this.profile.coins,634,56,92,26,'#ffbe0b');
     // Clean Floating Top-Center Stage & Boss Progress Bar
     const boss=this.game.entities.find(entity=>entity.kind==='boss');
-    const title=boss?(this.game.harbor?['1-1 크라켄 집게 보스','1-2 쌍둥이 자석 보스','1-3 항구 수호 거인'][s.round]:'BOSS')
-      :(this.game.campaign?'하늘 항구 '+(s.round+1)+'/3 · '+this.game.round.title:'WAVE '+s.wave);
+    const title=boss?(this.game.harbor?['1-1 크라켄 집게 보스','1-2 쌍둥이 자석 보스','1-3 항구 수호 거인'][s.round]:'보스전')
+      :(this.game.campaign?'하늘 항구 '+(s.round+1)+'/3 · '+this.game.round.title:'웨이브 '+s.wave);
     a.label(title,320,42,22,'#ffffff','#0b132b');
     a.rect(158,64,324,18,'#0b132b',9);
     a.rect(162,67,316*(boss?boss.hp/boss.maxHp:Math.min(1,s.waveMs/this.game.rules.bossAtMs)),12,boss?'#ff2a6d':'#00f5d4',6);
@@ -475,20 +475,20 @@ export class BattleRenderer {
     }
     if(s.bannerMs>0){
       c.save();c.globalAlpha=Math.min(1,s.bannerMs/260);
-      const clear=s.banner==='CLEAR!';
+      const clear=s.banner==='CLEAR!'||s.banner==='클리어!';
       a.label(s.banner,360,210,clear?56:48,clear?'#ffbe0b':s.gateResult?.change>=0?'#00f5d4':'#ff2a6d','#0b132b');
-      if(clear)a.label('+'+CONFIG.battle.bossCoins+' COINS!',360,262,28,'#fff4ac','#0b132b');
+      if(clear)a.label('+'+CONFIG.battle.bossCoins+' 코인!',360,262,28,'#fff4ac','#0b132b');
       c.restore();
     }
     if(this.chainMs>0&&this.chain>1){
       c.save();c.globalAlpha=Math.min(1,this.chainMs/220);
-      a.label('★ CHAIN ×'+this.chain,360,1048,26,'#ffbe0b','#0b132b');
+      a.label('★ 연쇄 ×'+this.chain,360,1048,26,'#ffbe0b','#0b132b');
       c.restore();
     }
     // Single Compact Weapon Fever Pill at the bottom edge (leaves the bridge 100% open!)
     const powered=s.powerMs>0,charge=powered?s.powerMs/CONFIG.battle.powerMs:s.charge/CONFIG.battle.chargeKills;
     a.rect(220,1206,280,48,'#0b132be6',24,powered?'#00f5d4':'#ffbe0b');
-    a.label(powered?'⚡ HYPER STAR BURST!':(CONFIG.campaign.weapons[s.weapon]?.name??'BLAST')+' · 피버 '+s.charge+'/'+CONFIG.battle.chargeKills,360,1223,16,powered?'#00f5d4':'#ffffff','#0b132b');
+    a.label(powered?'⚡ 스타 피버 발동!':(CONFIG.campaign.weapons[s.weapon]?.name??'스타포')+' · 피버 '+s.charge+'/'+CONFIG.battle.chargeKills,360,1223,16,powered?'#00f5d4':'#ffffff','#0b132b');
     a.rect(254,1239,212,6,'#1e293b',3);a.rect(254,1239,212*charge,6,powered?'#00f5d4':'#ffbe0b',3);
   }
   weaponIcon(id,x,y,rank=1) {

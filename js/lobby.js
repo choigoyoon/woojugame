@@ -144,7 +144,7 @@ export class Lobby {
     });
     a.toy(110,304,.72,{time:t,palette:this.profile.palette});
     // Zone B (x: 206..378): Campaign title, truthful status, and 4 non-overlapping operation badges
-    a.text('CH.1 별빛특급 조립',206,208,19,'#f5fbef','left');
+    a.text('1장 별빛특급 조립',206,208,19,'#f5fbef','left');
     const storyLine=parts.complete?'★ 4대 파츠 합체 완료!':parts.doneCount===0?'4대 작전으로 기차 조립!':`기차 파츠 ${parts.doneCount}/4 · 배틀 ${cleared}/3`;
     a.counter(storyLine,206,234,170,15.5,parts.complete?'#ffe999':'#c7ecf4','left');
     parts.ops.forEach((op,i)=>{
@@ -206,7 +206,7 @@ export class Lobby {
   }
   profileView(){
     this.background();const a=this.art;
-    a.home(true);a.text('MY AVATAR',360,66,33,'#fff0c7');
+    a.home(true);a.text('내 캐릭터',360,66,33,'#fff0c7');
     a.ellipse(360,567,190,55,'#6254bc');a.ellipse(360,551,190,52,'#9e91f2');a.ellipse(360,541,157,37,'#d0c2ff');
     a.toy(350,530,2,{time:this.time,palette:this.profile.palette});
     for(let i=0;i<6;i++){const angle=i*Math.PI/3+this.time/2500;a.star(360+Math.cos(angle)*214,363+Math.sin(angle)*175,7,'#fff3b5');}
@@ -219,7 +219,7 @@ export class Lobby {
       a.text(['머리','몸통','등'][i],x+91,899,24,'#e0e6ff');
     }
     a.rect(70,980,580,152,'#1b2447',27,'#837bbc55');a.bag(161,1049,1.1);
-    a.text('PARTS SHOP',397,1032,27,'#d8d8ff');a.text('COMING SOON',397,1075,18,'#9b9cce');
+    a.text('꾸미기 공방',397,1032,27,'#d8d8ff');a.text('준비 중',397,1075,18,'#9b9cce');
     a.text(this.profile.status==='memory'?'이번 실행에서만 보관':this.profile.status==='recovered'?'새 보관함으로 시작':'코인 보관 완료',360,1192,20,this.profile.status==='memory'?'#ffbf9e':'#9ad6c4');
   }
 }

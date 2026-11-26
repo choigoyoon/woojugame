@@ -136,7 +136,7 @@ export class Battle {
     }
     if (boss) {
       this.state.bosses += 1; this.state.clearingMs = CONFIG.battle.waveBreakMs;
-      this.state.banner = 'CLEAR!'; this.state.bannerMs = CONFIG.battle.waveBreakMs;
+      this.state.banner = '클리어!'; this.state.bannerMs = CONFIG.battle.waveBreakMs;
       this.entities.forEach((item) => { item.dead = true; }); this.gates = []; this.bullets = [];this.state.attack=null;
     }
   }

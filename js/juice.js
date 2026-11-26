@@ -54,15 +54,15 @@ export class Juice {
       }
       // Spawn floating arcade callout banner!
       if(!this.reduced.matches){
-        const callout=e.type==='smash'&&e.stomp?['STOMP BOUNCE!','#7effe8']
-          :e.type==='smash'?['CRUSH!','#ffe875']
-          :e.type==='armor-break'?['ARMOR BREAK!','#ff9e75']
-          :e.type==='word'?['BOOSTER UP!','#8effe8']
-          :e.type==='sentence'?['★ GOLD RUSH! ★','#ffe875']
-          :e.type==='brake-win'?['🚀 ROCKET BOOST!','#7effe8']
-          :e.type==='mission-win'?['⚡ CORE IGNITION!','#ffe875']
-          :e.type==='explode'&&e.boss?['★ BOSS SMASHED! ★','#ffe875']
-          :e.type==='gate-win'?['SQUAD UP!','#9effd8']:null;
+        const callout=e.type==='smash'&&e.stomp?['밟기 점프!','#7effe8']
+          :e.type==='smash'?['격파!','#ffe875']
+          :e.type==='armor-break'?['장갑 파괴!','#ff9e75']
+          :e.type==='word'?['부스터 장착!','#8effe8']
+          :e.type==='sentence'?['★ 황금 질주! ★','#ffe875']
+          :e.type==='brake-win'?['🚀 로켓 부스터!','#7effe8']
+          :e.type==='mission-win'?['⚡ 코어 점화!','#ffe875']
+          :e.type==='explode'&&e.boss?['★ 보스 격파! ★','#ffe875']
+          :e.type==='gate-win'?['부대 합류!','#9effd8']:null;
         if(callout){
           // Prevent overlapping callout banners when multiple events fire on the same or consecutive frames
           for(const item of this.callouts.items){

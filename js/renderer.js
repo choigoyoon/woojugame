@@ -348,10 +348,10 @@ export class Renderer {
     this.cachedLayer('tile:'+palette[0]+':'+next+':'+stepped,x,y,[-110,-50,220,155],()=>this.platformBody(0,0,palette,next,stepped));
     if (bridgeGate) {
       this.rect(x - 66, y - 74, 132, 30, '#133154e6', 11, '#ffe885');
-      this.text('★ ' + step.id + 'F 등대 다리', x, y - 59, 15, '#fff3b0', 'center');
+      this.text('★ ' + step.id + '층 등대 다리', x, y - 59, 15, '#fff3b0', 'center');
     } else if (milestone && step.id !== state.step) {
       this.rect(x - 36, y - 62, 72, 24, '#163458cc', 9, '#ffd87588');
-      this.text(step.id + 'F', x, y - 50, 14, '#ffe89c', 'center');
+      this.text(step.id + '층', x, y - 50, 14, '#ffe89c', 'center');
     } else if (step.id > state.step && step.id <= state.step + 6) {
       const bob = this.reducedMotion ? 0 : Math.sin(this.time / 330 + step.id) * 4;
       this.ellipse(x, y - 2, 16, 5, '#26325514');
@@ -450,7 +450,7 @@ export class Renderer {
     const coins = this.game.wallet?.coins ?? state.coins;
     this.art.counter(coins, 634, 56, 92, 26, '#ffbe0b');
     // Giant Floating Outlined Floor Counter in Top-Center Sky
-    this.art.label(state.step + 'F', 360, 88, state.step > 9999 ? 46 : 64, '#ffffff', '#0b132b');
+    this.art.label(state.step + '층', 360, 88, state.step > 9999 ? 46 : 64, '#ffffff', '#0b132b');
     const bridgeLeft = Math.max(0, state.nextPuzzle - state.step);
     const bridgeProgress = clamp(1 - bridgeLeft / CONFIG.puzzle.everySteps, 0, 1);
     this.rect(228, 134, 264, 16, '#0b132b', 8);
@@ -460,7 +460,7 @@ export class Renderer {
       const elapsed = CONFIG.motion.auraMs - this.aura;
       const pulse = !this.reducedMotion && this.aura > 0 && elapsed < 300 ? 1 + Math.sin(elapsed / 300 * Math.PI) * 0.12 : 1;
       c.scale(pulse, pulse);
-      this.art.label('⚡ COMBO ×' + state.combo, 0, 0, 26, '#ffbe0b', '#0b132b');
+      this.art.label('⚡ 콤보 ×' + state.combo, 0, 0, 26, '#ffbe0b', '#0b132b');
       c.restore();
     }
   }

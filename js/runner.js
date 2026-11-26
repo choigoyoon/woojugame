@@ -24,7 +24,7 @@ export class Runner extends Adventure {
     s.slot++;this.reward(CONFIG.runner.wordCoins);this.emit({type:'word',word,x:item.x,y:item.y});
     for(const other of this.items.active)if(other.kind==='word')other.dead=true;
     s.spawnMs=950;
-    if(s.slot===3){s.goldMs=CONFIG.runner.goldMs;s.completed++;this.progress.cleared++;this.reward(CONFIG.runner.sentenceCoins,{sentences:1});s.message='GOLD RUSH!';s.messageMs=1800;this.emit({type:'sentence',speech:this.sentence.slice(0,3).join(' ')});}
+    if(s.slot===3){s.goldMs=CONFIG.runner.goldMs;s.completed++;this.progress.cleared++;this.reward(CONFIG.runner.sentenceCoins,{sentences:1});s.message='★ 황금 질주!';s.messageMs=1800;this.emit({type:'sentence',speech:this.sentence.slice(0,3).join(' ')});}
     else{s.message=`★ ${s.slot}단 부스터 합체!`;s.messageMs=750;}
   }
   tick(ms){

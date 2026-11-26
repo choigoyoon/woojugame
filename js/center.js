@@ -117,7 +117,7 @@ export class Center {
     const cards=[['브레이크 성공',s.brakeWins,s.brakes,'#8ce5d0'],['연산 정답률',s.gateWins,s.gates,'#a9c5ff'],['완성한 문장',s.sentences,null,'#ffd997'],['심부름 성공',s.missionWins,s.missions,'#d5b7fb']];
     cards.forEach(([label,win,total,color],i)=>{const x=36+i%2*342,y=235+Math.floor(i/2)*238;a.rect(x,y,306,211,'#213958',25,color+'88');a.text(label,x+153,y+42,23,'#dce9f4');a.counter(total===null?win:total?Math.round(win/total*100)+'%':'—',x+153,y+103,260,48,color);a.text(total===null?'개':'성공 '+win+' / 시도 '+total,x+153,y+166,18,'#adc7d9');});
     a.text('게임 선택 결과의 누적 기록입니다',360,757,20,'#a7c4d8');
-    for(const [i,key]of ['sound','haptics'].entries()){const x=36+i*342;a.rect(x,807,306,107,'#334e70',25,'#a1d2da66');a.text((key==='sound'?'소리':'진동')+'  '+(this.profile.data.settings[key]?'ON':'OFF'),x+153,860,29,'#d1f7ed');}
+    for(const [i,key]of ['sound','haptics'].entries()){const x=36+i*342;a.rect(x,807,306,107,'#334e70',25,'#a1d2da66');a.text((key==='sound'?'소리':'진동')+'  '+(this.profile.data.settings[key]?'켜짐':'꺼짐'),x+153,860,29,'#d1f7ed');}
     a.rect(80,969,560,112,'#b8c8f3',30);a.text('보호자 PIN 변경',360,1024,30,'#243756');
     a.text(this.message||(this.profile.data.parent.hash?'이 기기에만 저장 · 결제 기능 없음':'초기 PIN 0808 · 변경해서 사용해 주세요'),360,1155,21,'#b6cbe5');
   }

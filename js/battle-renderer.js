@@ -535,13 +535,16 @@ export class BattleRenderer {
     const a=this.art,c=a.c,s=this.game.state,complete=s.phase==='complete';
     c.fillStyle=a.gradient(0,0,720,1280,['#112c51','#352e6e','#142744']);c.fillRect(0,0,720,1280);
     for(let i=0;i<25;i++)a.star((i*173+30)%720,(i*227+this.time*.015)%1280,3+i%4,'#d6d4ff44');
-    a.home(canHome);a.text('하늘 항구',390,65,33,'#fff1be');
-    a.line([[155,189],[565,189]],'#6477b7',7);
+    a.home(canHome);a.label('하늘 항구',390,65,33,'#fff1be','#0b132b');
+    a.line([[155,189],[565,189]],'#0b132b',11);
+    a.line([[155,189],[565,189]],'#4cc9f0',6);
     for(let i=0;i<3;i++){
       const x=155+i*205,done=i<this.game.progress.cleared;
-      a.ellipse(x,189,32,32,done?'#ffd982':'#274874');
-      if(done)a.star(x,189,19,'#95643d');else a.text(i+1,x,189,25,'#96b8de');
-      a.text('1-'+(i+1),x,244,18,done?'#ffedc4':'#9cb9da');
+      a.ellipse(x,189,36,36,'#0b132b');
+      a.ellipse(x,189,31,31,done?'#ffbe0b':'#1e3a8a');
+      if(done){a.star(x,189,21,'#0b132b');a.star(x,189,17,'#ffffff');}
+      else a.label(i+1,x,189,25,'#96b8de','#0b132b');
+      a.label('1-'+(i+1),x,244,18,done?'#ffbe0b':'#9cb9da','#0b132b');
     }
     a.label(complete?'하늘 항구 탈환 완료!':'1-'+(s.round+1)+' 별빛특급 파츠 탈환!',360,330,43,'#fff2c2','#0b132b');
     a.label(this.game.harbor?CONFIG.harbor.recovered[s.round]:complete?'항구 배지를 획득했어':this.game.round.title,360,385,25,'#00f5d4','#0b132b');
@@ -554,33 +557,36 @@ export class BattleRenderer {
       cocoToy(a,178,562,.62,this.time);
       picoToy(a,568,560,.58,this.time);
     }
-    else if(complete){a.poly([[360,430],[435,469],[422,548],[360,587],[298,548],[285,469]],'#ffd074','#fff2bc',5);a.star(360,507,42,'#fff4ca');}
+    else if(complete){a.poly([[360,430],[435,469],[422,548],[360,587],[298,548],[285,469]],'#ffbe0b','#0b132b',5);a.star(360,507,42,'#ffffff');}
     else a.toy(350,568,.92,{time:this.time,palette:this.profile.palette});
-    a.rect(70,623,580,114,'#10213de6',26,'#9fbbe76b');
-    a.coin(126,670,.9);a.text('+'+s.roundCoins,242,671,38,'#ffe8a3');
-    a.text('최다 부대',492,651,18,'#b4cfec');a.text(s.roundMaxSquad,492,688,34,'#baffed');
+    a.rect(67,620,586,120,'#0b132b',28);
+    a.rect(70,623,580,114,'#162d54',26,'#00f5d4');
+    a.coin(126,670,.9);a.label('+'+s.roundCoins,242,671,38,'#ffbe0b','#0b132b');
+    a.text('최다 부대',492,651,18,'#b4cfec');a.label(s.roundMaxSquad,492,688,34,'#00f5d4','#0b132b');
     a.text(s.firstReward?'첫 클리어 보너스 +'+s.firstReward+' 포함':'보관 완료',275,712,16,'#a8d9d1');
     const ready=s.resultMs>=CONFIG.campaign.resultGuardMs;
-    if(this.game.harbor){const m=this.game.harbor.state;['연쇄 4','상자 2','공격 회피'].forEach((label,i)=>{const x=153+i*207,done=!!(m.medals&(1<<i));a.star(x-58,763,12,done?'#ffe296':'#65758e');a.text(label,x,764,17,done?'#fff0bf':'#a4b5cc');});}
+    if(this.game.harbor){const m=this.game.harbor.state;['연쇄 4','상자 2','공격 회피'].forEach((label,i)=>{const x=153+i*207,done=!!(m.medals&(1<<i));a.star(x-58,763,14,'#0b132b');a.star(x-58,763,11,done?'#ffbe0b':'#65758e');a.label(label,x,764,17,done?'#fff0bf':'#a4b5cc','#0b132b');});}
     if(complete){
       for(const [i,id]of Object.keys(CONFIG.campaign.weapons).entries()){
         const x=36+i*166,unlocked=this.game.progress.unlocked[id],chosen=s.weapon===id,color=CONFIG.campaign.weapons[id].color;
-        a.rect(x,800,150,75,chosen?'#3e6c89':'#1b3554',18,chosen?color:'#57738b');
-        a.text(unlocked?CONFIG.campaign.weapons[id].name:'잠김',x+75,837,24,unlocked?color:'#8498b2');
+        a.rect(x-2,798,154,79,'#0b132b',20);
+        a.rect(x,800,150,75,chosen?'#1d4ed8':'#162d54',18,chosen?color:'#475569');
+        a.label(unlocked?CONFIG.campaign.weapons[id].name:'잠김',x+75,837,24,unlocked?color:'#8498b2','#0b132b');
       }
-      a.text('다음에는 어떤 길로 갈까?',360,913,23,'#c3dfed');
+      a.label('다음에는 어떤 길로 갈까?',360,913,23,'#c3dfed','#0b132b');
       CONFIG.harbor.routes.forEach((name,i)=>{const x=60+i*310,chosen=this.game.progress.harbor.route===i;
-        a.rect(x,943,290,74,chosen?'#3c697e':'#213856',20,chosen?'#aef2d4':'#71859d');a.text(name,x+145,981,26,chosen?'#e1ffe2':'#b3ccdf');});
-      c.save();c.globalAlpha=ready?1:.5;a.rect(105,1060,510,112,'#112543',29);a.rect(105,1047,510,112,'#55d5c1',29,'#baffec');a.text('다시 출동',360,1103,35,'#143654');c.restore();
+        a.rect(x-2,941,294,78,'#0b132b',22);
+        a.rect(x,943,290,74,chosen?'#1d4ed8':'#162d54',20,chosen?'#00f5d4':'#475569');a.label(name,x+145,981,26,chosen?'#00f5d4':'#b3ccdf','#0b132b');});
+      c.save();c.globalAlpha=ready?1:.5;a.rect(103,1056,514,116,'#0b132b',31);a.rect(105,1047,510,112,'#00f5d4',29,'#0b132b');a.label('다시 출동',360,1103,35,'#ffffff','#0b132b');c.restore();
       const record=this.game.progress.harbor.records[this.game.progress.harbor.route*3+s.round];
       a.text(record?'이 길의 최고 기록  '+(record.bestMs/1000).toFixed(1)+'초':'처음 가는 길 · 적 배치가 달라져',360,1210,20,'#b4c8e0');return;
     }
-    a.text(this.game.harbor?(s.round===0?'별 도장 짐칸을 쫓아가자!':'선로 끝, 마지막 칸을 구하자!'):'다음 출동의 무기를 골라!',360,805,21,'#d5e7fa');
+    a.label(this.game.harbor?(s.round===0?'별 도장 짐칸을 쫓아가자!':'선로 끝, 마지막 칸을 구하자!'):'다음 출동의 무기를 골라!',360,805,21,'#d5e7fa','#0b132b');
     this.game.offers.forEach((offer,i)=>{
       const x=36+i*342,w=306,color=CONFIG.campaign.weapons[offer.id].color;
-      c.save();c.globalAlpha=ready?1:.55;a.rect(x,836,w,332,'#071b34',25);a.rect(x,824,w,332,'#294871',25,color);
+      c.save();c.globalAlpha=ready?1:.55;a.rect(x-3,822,w+6,344,'#0b132b',27);a.rect(x,824,w,332,'#162d54',25,color);
       this.weaponIcon(offer.id,x+w/2,1000,offer.rank);
-      a.text(CONFIG.campaign.weapons[offer.id].name+(offer.rank===2?' +':''),x+w/2,1060,31,color);
+      a.label(CONFIG.campaign.weapons[offer.id].name+(offer.rank===2?' +':''),x+w/2,1060,31,color,'#0b132b');
       a.text(offer.rank===2?'위력이 더 강해져':offer.id==='spread'?'넓게 쏘기':offer.id==='pierce'?'뒤까지 뚫기':'옆 적에게 번개',x+w/2,1106,21,'#e2f0ff');c.restore();
     });
     a.text('잠깐 쉬어도 선택 화면부터 다시 시작해',360,1220,18,'#a9bfd9');

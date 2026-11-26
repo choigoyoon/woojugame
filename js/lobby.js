@@ -177,28 +177,30 @@ export class Lobby {
       const {x,y}=card,w=306,recommended=card.id===targetMode;
       this.cabinet(card);
       if(recommended){
-        c.save();c.strokeStyle='#fff099';c.lineWidth=4;c.beginPath();c.roundRect(x-3,y-3,w+4,370,32);c.stroke();c.restore();
-        a.rect(x+198,y+10,92,28,'#ffe375',11,'#fff9ce');a.text('★ 추천 작전',x+244,y+24,13.5,'#19324a');
+        c.save();c.strokeStyle='#ffbe0b';c.lineWidth=5;c.beginPath();c.roundRect(x-3,y-3,w+4,370,32);c.stroke();c.restore();
+        a.rect(x+196,y+8,96,30,'#ffbe0b',12,'#0b132b');a.label('★ 추천 작전',x+244,y+23,13.5,'#ffffff','#0b132b');
       }
-      a.text(card.tag,x+24,y+26,16.5,'#102c45','left');
+      a.label(card.tag,x+24,y+25,16.5,'#fff8d6','#0b132b','left');
       c.save();c.beginPath();c.roundRect(x+20,y+54,w-44,204,16);c.clip();
       this.mini(card.id,x+w/2,y+158);c.restore();
-      a.text(card.title,x+w/2,y+288,card.id==='plaza'?24:26,'#fff5dc');
+      a.label(card.title,x+w/2,y+288,card.id==='plaza'?24:26,'#ffffff','#0b132b');
       const subtitle=card.id==='battle'?(cleared===3?'★ 기관차·화물 3/3 완료':`기관차 탈환 · ${progress.round+1}/3 구간`)
         :card.id==='stairs'?(parts.beacon?`★ 등대 신호 장착 (${parts.stairsCleared}회)`:'50층 다리 조립 → 신호등')
         :card.id==='runner'?(parts.coach?`★ 부스터 객차 장착 (${parts.runnerCleared}회)`:'3단 브릭 합체 → 객차 회수')
         :(parts.reactor?`★ 엔진 코어 장착 (${parts.plazaCleared}회)`:'코어 브릭 수송 → 엔진 조립');
-      a.counter(subtitle,x+20,y+329,164,13.5,'#c7e7f0','left');
+      a.counter(subtitle,x+22,y+329,162,13.5,'#00f5d4','left');
       const pressed=this.pressed===card.id&&this.pressMs>0;
       const dy=pressed?this.pressMs/450*5:0;
-      a.rect(x+190,y+316,94,33,'#071b30',13);a.rect(x+190,y+311+dy,94,33,card.accent,13,'#fff4c28c');
-      a.text(card.id==='battle'&&cleared>0?'계속':'출동',x+226,y+327+dy,17,'#18334b');
-      a.poly([[x+258,y+321+dy],[x+266,y+327+dy],[x+258,y+333+dy]],'#24465a');
+      a.rect(x+188,y+315,98,36,'#0b132b',14);
+      a.rect(x+190,y+311+dy,94,33,'#ffbe0b',13,'#0b132b');
+      a.label(card.id==='battle'&&cleared>0?'계속':'출동',x+226,y+327+dy,17,'#ffffff','#0b132b');
+      a.poly([[x+258,y+321+dy],[x+268,y+327+dy],[x+258,y+333+dy]],'#ffffff','#0b132b',2);
     }
     webglStage.renderLobby(this,CARTRIDGES);
     const note=this.profile.status==='memory'?'이번 실행에서만 보관':this.profile.status==='update-required'?'새 버전으로 열어 주세요':parts.complete?'★ 4대 스타 파츠가 모두 합체된 별빛특급 대장!':`조립 완료 파츠 ${parts.doneCount}/4 · 각 게임을 깨면 내 기차가 진화해요`;
     a.text(note,38,1222,18,this.profile.status==='memory'?'#ffbf9e':'#a8c6d6','left',650);
-    a.rect(538,1190,145,65,'#25415c',20,'#a6c6da55');a.text('보호자',610,1223,23,'#d0e5e9');
+    a.rect(536,1188,149,69,'#0b132b',22);
+    a.rect(538,1190,145,65,'#1e3a8a',20,'#4cc9f0');a.label('보호자',610,1223,23,'#ffffff','#0b132b');
   }
   profileView(){
     this.background();const a=this.art;

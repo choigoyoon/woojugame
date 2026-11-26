@@ -111,52 +111,57 @@ export function wagon(a,x,y,scale=1,time=0,last=false){
   c.restore();
 }
 
-// Shared Aerodynamic Sci-Fi Bullet-Locomotive ("별빛특급 갤럭시 라이너") with Bold #0b132b Ink Outlines
+// Shared Chibi Capsule Bullet-Locomotive ("별빛특급 갤럭시 라이너") — Smooth Rounded Capsule Body (No angular MS-Paint polygons!)
 export function train(a,x,y,scale=1,{time=0,cars=0,held=false,beacon=false,coach=false,reactor=false,complete=false}={}){
   const c=a.c;c.save();c.translate(x,y);c.scale(scale,scale);
   const bob=held?Math.sin(time/420)*4:Math.sin(time/95)*2;c.translate(0,bob);
   const totalCars=Math.max(cars,coach?1:0);
-  a.ellipse(-8,8,136+totalCars*48,16,'#07183244');
+  a.ellipse(-8,10,136+totalCars*48,16,'#07183244');
   for(let i=totalCars;i>0;i--){
-    const wx=-104-i*112;
+    const wx=-108-i*112;
     wagon(a,wx,0,1,time,i===2||complete);
-    if(coach&&i===1){
-      a.poly([[wx-36,-58],[wx-76,-92],[wx-54,-34]],'#ffbe0b','#0b132b',3.5);
-      a.poly([[wx+36,-58],[wx+76,-92],[wx+54,-34]],'#ffbe0b','#0b132b',3.5);
-    }
-  }
-  // Aerodynamic Bullet-Liner Main Fuselage with Bold #0b132b Cel-Shaded Contour
-  a.poly([[-115,-14],[-115,-88],[-30,-118],[88,-102],[136,-38],[128,-10]],'#1e40af','#0b132b',6);
-  a.poly([[-108,-42],[124,-42],[132,-18],[-108,-18]],'#ffbe0b','#0b132b',3);
-  // Panoramic Curved Cyan Cockpit Canopy
-  a.poly([[-24,-108],[68,-94],[108,-50],[-24,-50]],'#0b132b','#00f5d4',3);
-  a.poly([[-14,-98],[58,-86],[88,-56],[-14,-56]],'#00f5d488');
-  // Glowing Plasma Drive Reactor Core on Side
-  a.ellipse(-54,-62,25,25,'#0b132b');
-  a.ellipse(-54,-62,18,18,reactor?'#00f5d4':'#ffbe0b');
-  a.star(-54,-62,13,'#ffffff');
-  if(beacon){
-    // Top Holographic Radar Beacon & Searchlight
-    a.ellipse(-18,-126,20,9,'#0b132b');
-    a.ellipse(-18,-126,16,7,'#ffbe0b');
-    a.ellipse(-18,-135,11,11,'#0b132b');
-    a.ellipse(-18,-135,8,8,'#00f5d4');
-    a.poly([[128,-48],[225,-88+Math.sin(time/300)*14],[225,-12+Math.sin(time/300)*14]],'#00f5d444');
   }
   if(reactor){
     // Rear Plasma Afterburner Jet Flame
-    a.poly([[-115,-64],[-168-Math.sin(time/55)*16,-80],[-148,-46],[-172-Math.cos(time/50)*14,-22],[-115,-28]],'#00f5d4','#0b132b',3.5);
-    a.poly([[-115,-56],[-146-Math.sin(time/45)*10,-58],[-115,-36]],'#fff9d2');
+    a.poly([[-108,-64],[-162-Math.sin(time/55)*16,-78],[-144,-46],[-166-Math.cos(time/50)*14,-22],[-108,-28]],'#00f5d4','#0b132b',4);
+    a.poly([[-108,-56],[-138-Math.sin(time/45)*10,-58],[-108,-36]],'#fff9d2');
+  }
+  // Smooth Rounded Capsule Bullet-Train Body (Cute Chibi Shinkansen Silhouette!)
+  a.rect(-114,-112,244,104,'#0b132b',52);
+  a.rect(-109,-107,234,94,'#2563eb',47);
+  a.rect(-102,-102,216,38,'#60a5fa',22);
+  a.ellipse(-20,-94,54,8,'#ffffff66');
+  // Golden Express Waist Stripe
+  a.rect(-108,-42,232,18,'#ffbe0b',9,'#0b132b');
+  // Rounded Panoramic Cyan Cockpit Windshield
+  a.rect(12,-96,98,46,'#0b132b',23);
+  a.rect(16,-92,90,38,'#0f172a',19,'#00f5d4');
+  a.ellipse(58,-80,24,7,'#00f5d488');
+  a.ellipse(46,-83,12,4,'#ffffffaa');
+  // Side Passenger Cabin Windows
+  for(const wx of[-74,-30]){
+    a.rect(wx-16,-88,32,28,'#0b132b',10);
+    a.rect(wx-13,-85,26,22,'#00f5d4',8);
+    a.ellipse(wx-4,-79,6,3,'#ffffffaa');
+  }
+  // Glowing Star Reactor Emblem on Side
+  a.ellipse(-6,-48,22,22,'#0b132b');
+  a.ellipse(-6,-48,16,16,reactor?'#00f5d4':'#ffbe0b');
+  a.star(-6,-48,11,'#ffffff');
+  if(beacon){
+    a.rect(-24,-128,36,16,'#ffbe0b',8,'#0b132b');
+    a.ellipse(-6,-132,10,10,'#0b132b');
+    a.ellipse(-6,-132,6.5,6.5,'#00f5d4');
   }
   if(complete){
-    a.star(34,-128,21,'#0b132b');
-    a.star(34,-128,17,'#ffbe0b');
+    a.star(46,-126,20,'#0b132b');
+    a.star(46,-126,16,'#ffbe0b');
   }
-  // Magnetic Levitation Hover-Wheel Pods
-  for(const wx of[-78,-18,64]){
-    a.ellipse(wx,-2,23,23,'#0b132b');
+  // Cute Chibi Hover-Wheel Pods
+  for(const wx of[-74,-8,62]){
+    a.ellipse(wx,-2,22,22,'#0b132b');
     a.ellipse(wx,-2,15,15,'#00f5d4');
-    a.ellipse(wx,-2,7,7,'#ffffff');
+    a.ellipse(wx,-2,6.5,6.5,'#ffffff');
   }
   c.restore();
 }

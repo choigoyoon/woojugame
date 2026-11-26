@@ -441,49 +441,31 @@ export class Renderer {
   }
 
   hud() {
+    // Infinite Stairs (무한의 계단) Minimalist Open-Sky HUD (No giant dark-navy boxes covering the top of the sky!)
     const c = this.ctx; const { state } = this.game;
-    this.cachedLayer('hud',0,0,[0,0,720,228],()=>this.hudBackground());
-    this.art.label(state.step, 126, 152, state.step > 99999 ? 34 : 48, '#ffffff', '#0b132b', 'left');
+    // Floating Top-Right Coin Pill
+    this.rect(532, 26, 164, 58, '#0b132b', 29);
+    this.rect(535, 29, 158, 52, '#1e293b', 26, '#ffbe0b');
+    this.coin(566, 55, 0.58);
     const coins = this.game.wallet?.coins ?? state.coins;
-    this.art.label(coins, 436, 152, coins > 999999 ? 26 : coins > 99999 ? 34 : 48, '#ffbe0b', '#0b132b', 'left');
+    this.art.counter(coins, 634, 56, 92, 26, '#ffbe0b');
+    // Giant Floating Outlined Floor Counter in Top-Center Sky
+    this.art.label(state.step + 'F', 360, 88, state.step > 9999 ? 46 : 64, '#ffffff', '#0b132b');
     const bridgeLeft = Math.max(0, state.nextPuzzle - state.step);
     const bridgeProgress = clamp(1 - bridgeLeft / CONFIG.puzzle.everySteps, 0, 1);
-    this.rect(138, 200, 444, 26, '#0b132b', 13);
-    this.rect(144, 206, Math.max(14, 432 * bridgeProgress), 14, state.step >= CONFIG.sky.stratosphereStep ? '#ffbe0b' : '#00f5d4', 7);
-    this.art.label(state.step >= CONFIG.sky.stratosphereStep ? '★ 80F 구름 등대 정상 점등! 다음 브릿지 ' + bridgeLeft + '층' : '구름 등대 브릿지까지 ' + bridgeLeft + '층 (+50 코인)', 360, 213, 13.5, '#fff7cc', '#0b132b');
-    // Vertical Lighthouse Altitude Gauge on the right edge
-    this.rect(670, 278, 28, 304, '#0b132b', 14);
-    const fillH = Math.max(14, Math.round(288 * bridgeProgress));
-    this.rect(676, 574 - fillH, 16, fillH, '#ffbe0b', 8);
-    this.star(684, 266, 14, '#0b132b');
-    this.star(684, 266, 11, '#ffbe0b');
-    this.art.label(state.nextPuzzle + 'F', 684, 246, 12.5, '#fff4b8', '#0b132b');
+    this.rect(228, 134, 264, 16, '#0b132b', 8);
+    this.rect(232, 137, Math.max(12, 256 * bridgeProgress), 10, state.step >= CONFIG.sky.stratosphereStep ? '#ffbe0b' : '#00f5d4', 5);
     if (state.combo > 1) {
-      c.save(); c.translate(360, 258);
+      c.save(); c.translate(360, 182);
       const elapsed = CONFIG.motion.auraMs - this.aura;
       const pulse = !this.reducedMotion && this.aura > 0 && elapsed < 300 ? 1 + Math.sin(elapsed / 300 * Math.PI) * 0.12 : 1;
       c.scale(pulse, pulse);
-      this.rect(-84, -28, 168, 63, '#0b132bf0', 26, '#ffbe0b');
-      this.polygon([[-43, -18], [-56, 0], [-43, 0], [-48, 13], [-25, -8], [-39, -8]], '#ffbe0b');
-      this.art.label('×' + state.combo, 15, -3, 28, '#fff5ba', '#0b132b');
-      for (let i = 0; i < 10; i += 1) this.rect(-49 + i * 10, 21, 7, 4, i < (state.combo % 10 || 10) ? '#00f5d4' : '#ffffff26', 2);
+      this.art.label('⚡ COMBO ×' + state.combo, 0, 0, 26, '#ffbe0b', '#0b132b');
       c.restore();
     }
   }
 
-  hudBackground() {
-    const c=this.ctx;
-    const shade = c.createLinearGradient(0, 0, 0, 228);
-    shade.addColorStop(0, '#0b132bf0'); shade.addColorStop(1, '#0b132b00');
-    c.fillStyle = shade; c.fillRect(0, 0, 720, 228);
-    this.art.label('작전 2 · 구름 등대 신호탑', 139, 48, 27, '#ecffff', '#0b132b', 'left');
-    for (const [x, width, border] of [[28, 312, '#00f5d4'], [356, 336, '#ffbe0b']]) {
-      this.rect(x - 3, 110, width + 6, 86, '#0b132b', 27);
-      this.rect(x, 112, width, 80, '#162d54', 25, border);
-    }
-    this.rect(54, 157, 12, 16, '#00f5d4', 3); this.rect(70, 142, 12, 31, '#00f5d4', 3); this.rect(86, 126, 12, 47, '#ffffff', 3);
-    this.coin(397,151,1.1);
-  }
+  hudBackground() {}
 
   controls() {
     const c = this.ctx;

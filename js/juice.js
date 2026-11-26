@@ -24,7 +24,7 @@ export class Juice {
     this.physics.clear();this.camera.reset();this.callouts.clear();
   }
   stop(){this.hold=0;}
-  get target(){return this.mode==='stairs'?[395,152]:this.mode==='battle'?[459,168]:[557,65];}
+  get target(){return [566,55];}
   impact(e,x,y){
     const big=e.type==='explode'&&e.boss||['brake-win','sentence','mission-win'].includes(e.type);
     if(big&&!this.reduced.matches){

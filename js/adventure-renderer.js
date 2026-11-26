@@ -55,7 +55,15 @@ export class AdventureRenderer {
     for(let i=0;i<count;i++){const p=this.particles[this.cursor++%this.particles.length],a=i*2.4;Object.assign(p,{x,y,vx:Math.cos(a)*(big?260:155),vy:-140-Math.abs(Math.sin(a))*280,life:750,angle:a,brick:brick&&i%2===0,color:['#fff3ad','#ff7888','#8cffe5','#c3b5ff'][i%4]});}
   }
   effects(){const a=this.art,c=a.c;for(const p of this.particles){if(p.life<=0)continue;c.save();c.globalAlpha=Math.min(1,p.life/200);c.translate(p.x,p.y);c.rotate(p.angle);if(p.brick)a.poly([[0,-8],[7,0],[0,8],[-7,0]],p.color,'#0b132b',2.5);else a.star(0,0,6,p.color);c.restore();}}
-  header(title,canHome){const a=this.art;a.cached('header',[0,0,720,132],()=>{a.rect(0,0,720,130,'#0b132bf0');a.label(title,340,65,30,'#fff0c7','#0b132b');a.rect(526,30,174,71,'#0b132b',24);a.rect(529,33,168,65,'#162d54',22,'#ffbe0b');a.coin(557,64,.6);},title);a.home(canHome);a.counter(this.profile.coins,584,66,99,23,'#ffbe0b','left');}
+  header(title,canHome){
+    // Cookie Run / Brawl Stars Minimalist Floating Header (Zero full-width dark-navy curtain blocking the top sky!)
+    const a=this.art;
+    a.home(canHome);
+    a.rect(532,26,164,58,'#0b132b',29);
+    a.rect(535,29,158,52,'#1e293b',26,'#ffbe0b');
+    a.coin(566,55,.58);
+    a.counter(this.profile.coins,634,56,92,26,'#ffbe0b');
+  }
   runnerView(canHome,pressed=false){
     const a=this.art,c=a.c,s=this.runner.state,t=this.reduced?0:this.time,d=s.distance;
     const hitReaction=this.wagonHitMs/420;
@@ -236,34 +244,27 @@ export class AdventureRenderer {
     a.toy(0,0,scale,{time:t,run:s.y<=0,jump:jumpFactor,pitch,squash,gold:s.goldMs>0,glow:s.slot/3,palette:this.profile.palette});
     c.restore();
     this.effects();this.header('작전 3 · 폭주 기차칸 추격',canHome);
-    // Sleek, compact Arcade Chase Radar & 3-Stage Booster Core HUD (zero grammar worksheet flashcards!)
-    a.cached('sentence-slots',[22,138,676,96],()=>{
-      a.rect(26,142,668,80,'#0b132bf2',22,'#4cc9f0');
-      const labels=['⚡ 1단 범퍼 연결','🪽 2단 부스터 윙','🚀 3단 제트 점화'];
-      for(let i=0;i<3;i++){
-        const x=38+i*218,filled=i<s.slot,active=i===s.slot;
-        a.rect(x,151,196,62,filled?'#ffbe0b':active?'#1a3d6e':'#102342',16,filled?'#0b132b':active?'#00f5d4':'#4cc9f055');
-        a.label(labels[i],x+98,174,17,filled?'#ffffff':active?'#ffffff':'#8ab4cc','#0b132b');
-        a.label(filled?'★ 장착 완료!':active?'박치기 / 적 밟기!':'대기 중',x+98,198,12.5,filled?'#fff3b0':active?'#00f5d4':'#6e96b3','#0b132b');
-        if(i<2)a.label('›',x+207,181,24,'#ffbe0b','#0b132b');
-      }
-    },s.sentence*4+s.slot);
-    if(s.messageMs){
-      a.rect(76,242,568,72,'#0b132bf0',20,'#ffbe0b');
-      a.label(s.message==='GOLD RUSH!'?'★ 폭주 객차 도킹 & 황금 질주!':s.message,360,268,s.message==='GOLD RUSH!'?30:28,'#ffbe0b','#0b132b');
-      if(s.message==='GOLD RUSH!')a.text('회수한 부스터 객차가 로비 별빛특급에 합체됩니다!',360,298,17,'#00f5d4');
+    // Cookie Run Minimalist Open-Sky Booster Progress Pills (No giant dark-navy boxes covering the top 330px!)
+    const labels=['⚡ 1단 범퍼','🪽 2단 윙','🚀 3단 제트'];
+    for(let i=0;i<3;i++){
+      const x=136+i*126,filled=i<s.slot||s.goldMs>0,active=i===s.slot&&!s.goldMs;
+      a.rect(x-2,32,116,44,'#0b132b',22);
+      a.rect(x,34,112,40,filled?'#ffbe0b':active?'#1d4ed8':'#1e293b',20,filled?'#0b132b':active?'#00f5d4':'#475569');
+      a.label(labels[i],x+56,54,15,filled?'#ffffff':active?'#00f5d4':'#94a3b8','#0b132b');
     }
-    if(s.goldMs){a.rect(130,322,460,14,'#0b132b',8);a.rect(130,322,460*s.goldMs/CONFIG.runner.goldMs,14,'#ffbe0b',8);}
-    a.cached(pressed?'jump-held':'jump-ready',[64,1041,592,184],()=>{
-      a.rect(66,1058,588,162,'#0b132b',38);
-      a.rect(66,1044+(pressed?10:0),588,160,a.gradient(66,1044,66,1204,['#ffbe0b','#fb5607']),38,'#0b132b');
-      a.rect(82,1054+(pressed?10:0),556,58,'#ffffff28',26);
-      a.poly([[140,1136+(pressed?10:0)],[168,1096+(pressed?10:0)],[196,1136+(pressed?10:0)]],'#ffffff','#0b132b',3.5);
-      a.label('⚡ 터보 점프',382,1112+(pressed?10:0),44,'#ffffff','#0b132b');
-      a.label('길게 누르면 하이점프 & 적 밟기!',382,1166+(pressed?10:0),20,'#fff3b0','#0b132b');
+    if(s.goldMs){
+      a.rect(180,88,360,14,'#0b132b',7);
+      a.rect(183,91,354*s.goldMs/CONFIG.runner.goldMs,8,'#ffbe0b',4);
+    }
+    a.cached(pressed?'jump-held':'jump-ready',[64,1076,592,156],()=>{
+      a.rect(66,1090,588,134,'#0b132b',38);
+      a.rect(66,1078+(pressed?8:0),588,132,a.gradient(66,1078,66,1210,['#ffbe0b','#fb5607']),38,'#0b132b');
+      a.rect(82,1086+(pressed?8:0),556,46,'#ffffff28',24);
+      a.poly([[156,1158+(pressed?8:0)],[182,1122+(pressed?8:0)],[208,1158+(pressed?8:0)]],'#ffffff','#0b132b',3.5);
+      a.label('⚡ 터보 점프',382,1144+(pressed?8:0),42,'#ffffff','#0b132b');
     });
   }
-  iso(x,z){return{x:360+(x-z)*44,y:668+(x+z)*33};}
+  iso(x,z){return{x:360+(x-z)*52,y:648+(x+z)*39};}
   good(kind,x,y,scale=1){
     const a=this.art,c=a.c,color=GOODS[kind].color;c.save();c.translate(x,y);c.scale(scale,scale);
     a.ellipse(0,10,22,7,'#10295344');
@@ -334,67 +335,33 @@ export class AdventureRenderer {
     c.restore();
   }
   plazaView(canHome){
+    // Brawl Stars Spacious Isometric Arena + Minimalist Floating HUD (Zero giant top/bottom dark-navy boxes!)
     const a=this.art,c=a.c,s=this.plaza.state,t=this.reduced?0:this.time;
     const dock=this.iso(-2.2,3.4),collectedTotal=s.collectedA+s.collectedB;
     a.cached('plaza-ground',[0,0,720,1280],()=>{
-    a.c.fillStyle=a.gradient(0,0,720,1280,['#193258','#385d8a','#1f365c']);a.c.fillRect(0,0,720,1280);
-    for(let i=0;i<18;i++)a.star((i*173+19)%720,300+(i*71)%840,3+i%3,'#fff0bb55');
-    // Sleek Sky Harbor Control Balcony at top & Tactile Cyber-Radar Deck at bottom
-    a.rect(40,312,640,98,'#0b132be6',24,'#00f5d4');
-    a.line([[72,362],[648,362]],'#00f5d444',3);
-    for(let i=0;i<4;i++){
-      const px=126+i*156;
-      a.ellipse(px,362,24,24,'#0b132b');
-      a.ellipse(px,362,20,20,'#14284e');
-      a.ellipse(px,362,14,14,i%2?'#00f5d4':'#ffbe0b');
-      a.star(px,362,9,'#ffffff');
-    }
-    // Bottom Cel-Shaded Arcade Command & Radar Joystick Deck
-    a.rect(40,982,640,226,'#0b132bf0',28,'#4cc9f0');
-    a.rect(62,1006,184,178,'#132a4fe6',20,'#00f5d466');
-    a.label('⚡ 엔진 코어 슬롯',154,1036,16,'#00f5d4','#0b132b');
-    a.label('도면 부품을 모아',154,1132,13.5,'#b8d8ff','#0b132b');
-    a.label('대장 로봇에게 도킹!',154,1154,13.5,'#ffbe0b','#0b132b');
-    a.rect(474,1006,184,178,'#132a4fe6',20,'#ffbe0b66');
-    a.label('📡 자석 스캐너',566,1036,16,'#ffbe0b','#0b132b');
-    a.ellipse(566,1088,28,28,'#0b132b');
-    a.ellipse(566,1088,22,22,'#00f5d433');
-    a.star(566,1088,12,'#00f5d4');
-    a.label('부품 근처 접근 시',566,1134,13.5,'#b8d8ff','#0b132b');
-    a.label('이름표 자동 스캔!',566,1156,13.5,'#00f5d4','#0b132b');
-    a.ellipse(360,1076,66,66,'#0b132b');
-    a.ellipse(360,1076,60,60,'#14284e');
-    a.ellipse(360,1076,40,40,'#00f5d433');
-    a.ellipse(360,1076,18,18,'#00f5d4');
-    for(const [dx,dy]of[[0,-46],[0,46],[-46,0],[46,0]])a.ellipse(360+dx,1076+dy,6,6,'#ffbe0b');
-    const corners=[this.iso(-4,-4),this.iso(4,-4),this.iso(4,4),this.iso(-4,4)];
-    a.poly([corners[0],[corners[1].x,corners[1].y],[corners[2].x,corners[2].y+36],[corners[3].x,corners[3].y+36]].map(p=>Array.isArray(p)?p:[p.x,p.y+28]),'#1d3557','#0b132b',5);
-    for(let x=-4;x<4;x++)for(let z=-4;z<4;z++){
-      const points=[this.iso(x,z),this.iso(x+1,z),this.iso(x+1,z+1),this.iso(x,z+1)];
-      const border=x===-4||x===3||z===-4||z===3;
-      a.poly(points.map(p=>[p.x,p.y]),border?'#4cc9f0':(x+z)%2?'#a8dadc':'#caf0f8','#1d3557',1.8);
-      const center=this.iso(x+.5,z+.5);
-      a.ellipse(center.x,center.y-2,7.5,3.5,border?'#fff2b277':'#ffffff66');
-    }
-    // 4 Corner Cel-Shaded Holo-Beacon Pylons framing the workshop arena
-    for(const [cx,cz]of[[-3.8,-3.8],[3.8,-3.8],[3.8,3.8],[-3.8,3.8]]){
-      const cp=this.iso(cx,cz);
-      a.rect(cp.x-16,cp.y-46,32,46,'#0b132b',10);
-      a.rect(cp.x-13,cp.y-43,26,40,'#264e82',8,'#4cc9f0');
-      a.ellipse(cp.x,cp.y-48,11,6,'#0b132b');
-      a.ellipse(cp.x,cp.y-48,8,4,'#00f5d4');
-    }
+      a.c.fillStyle=a.gradient(0,0,720,1280,['#1e3a8a','#1d4ed8','#0f172a']);a.c.fillRect(0,0,720,1280);
+      for(let i=0;i<18;i++)a.star((i*173+19)%720,120+(i*71)%1040,3+i%3,'#fff0bb44');
+      const corners=[this.iso(-4,-4),this.iso(4,-4),this.iso(4,4),this.iso(-4,4)];
+      a.poly([corners[0],[corners[1].x,corners[1].y],[corners[2].x,corners[2].y+42],[corners[3].x,corners[3].y+42]].map(p=>Array.isArray(p)?p:[p.x,p.y+32]),'#1e293b','#0b132b',6);
+      for(let x=-4;x<4;x++)for(let z=-4;z<4;z++){
+        const points=[this.iso(x,z),this.iso(x+1,z),this.iso(x+1,z+1),this.iso(x,z+1)];
+        const border=x===-4||x===3||z===-4||z===3;
+        a.poly(points.map(p=>[p.x,p.y]),border?'#38bdf8':(x+z)%2?'#bae6fd':'#e0f2fe','#0284c7',2);
+        const center=this.iso(x+.5,z+.5);
+        a.ellipse(center.x,center.y-2,8.5,4,border?'#fff2b277':'#ffffff77');
+      }
+      // 4 Corner Cel-Shaded Holo-Beacon Pylons framing the workshop arena
+      for(const [cx,cz]of[[-3.8,-3.8],[3.8,-3.8],[3.8,3.8],[-3.8,3.8]]){
+        const cp=this.iso(cx,cz);
+        a.rect(cp.x-16,cp.y-46,32,46,'#0b132b',10);
+        a.rect(cp.x-13,cp.y-43,26,40,'#2563eb',8,'#38bdf8');
+        a.ellipse(cp.x,cp.y-48,11,6,'#0b132b');
+        a.ellipse(cp.x,cp.y-48,8,4,'#00f5d4');
+      }
     });
     const parts=trainParts(this.profile.data),captain=this.iso(0,3.15);
     const totalNeeded=this.plaza.mission.reduce((n,m)=>n+m.count,0);
     const dockPulse=this.dockPulseMs/480,dockDent=this.reduced?0:Math.sin(dockPulse*Math.PI)*.14;
-    // Live Core Module LED indicators inside the left bottom deck card
-    for(let i=0;i<3;i++){
-      const lit=i<collectedTotal||s.phase==='success',lx=106+i*48;
-      a.ellipse(lx,1084,18,18,'#0b132b');
-      a.ellipse(lx,1084,14,14,lit?'#ffbe0b':'#1e3a5f');
-      if(lit)a.star(lx,1084,9,'#ffffff');
-    }
     // Power conduits connecting the Captain Dock to the Starlight Express as core bricks are gathered
     for(let i=0;i<3;i++){
       const lit=collectedTotal>i||s.phase==='success';
@@ -504,36 +471,33 @@ export class AdventureRenderer {
       a.star(fx,fy,11,'#ffbe0b');
     }
     this.header('작전 4 · 기차 엔진 조립',canHome);
-    a.rect(30,148,660,143,'#0b132b',28);
-    a.rect(33,151,654,137,'#162d54',26,'#4cc9f0');
-    a.label(this.plaza.ready?'⚡ 코어 완성! 대장 로봇에게 합체!':`🔧 별빛특급 코어 수송 (STAGE ${s.round+1})`,310,183,24,'#fff3b0','#0b132b');
-    // During briefing or ♪ remind: show target items. During active movement: show collected cargo slots so working memory is genuinely engaged!
+    // Compact Floating Brawl Stars Objective Pill in Top-Center (leaves 88% of the screen open for the isometric plaza!)
+    a.rect(134,26,376,60,'#0b132b',30);
+    a.rect(137,29,370,54,'#1e293b',27,this.plaza.ready?'#ffbe0b':'#00f5d4');
     if(s.phase==='briefing'||s.remindMs>0){
       for(let i=0;i<2;i++){
         const m=this.plaza.mission[i],count=i?s.collectedB:s.collectedA;
-        this.good(m.kind,195+i*260,244,.7);a.label(count+' / '+m.count,264+i*260,239,30,'#00f5d4','#0b132b');
+        this.good(m.kind,210+i*150,62,.52);a.label(count+'/'+m.count,258+i*150,56,24,'#00f5d4','#0b132b');
       }
     }else{
-      a.bag(128,240,.65);
       let slotIdx=0;
       this.plaza.mission.forEach((m,mi)=>{
         const got=mi?s.collectedB:s.collectedA;
         for(let n=0;n<m.count;n++){
-          const sx=206+slotIdx*72,filled=n<got;
-          a.rect(sx-30,210,60,60,'#0b132b',16);
-          a.rect(sx-27,213,54,54,filled?'#1e40af':'#0f172a',14,filled?'#00f5d4':'#4cc9f055');
-          if(filled)this.good(m.kind,sx,248,.52);else a.label('?',sx,241,24,'#7aa2c4','#0b132b');
+          const sx=196+slotIdx*58,filled=n<got;
+          a.rect(sx-22,34,44,44,filled?'#1d4ed8':'#0f172a',12,filled?'#00f5d4':'#475569');
+          if(filled)this.good(m.kind,sx,62,.42);else a.label('?',sx,56,20,'#94a3b8','#0b132b');
           slotIdx++;
         }
       });
-      a.label(`${collectedTotal}/${totalNeeded}`,532,240,26,'#00f5d4','#0b132b');
+      a.label(this.plaza.ready?'도킹!':`${collectedTotal}/${totalNeeded}`,442,56,22,this.plaza.ready?'#ffbe0b':'#00f5d4','#0b132b');
     }
     a.rect(602,162,66,56,'#0b132b',17);
-    a.rect(605,165,60,50,'#1d4ed8',15,'#00f5d4');a.label('♪',635,191,30,'#ffffff','#0b132b');
+    a.rect(605,165,60,50,'#1d4ed8',15,'#00f5d4');a.label('♪',635,191,28,'#ffffff','#0b132b');
     if(s.phase==='briefing'||s.remindMs>0){
-      a.rect(54,310,612,236,'#0b132bf5',27,'#00f5d4');a.label('⚡ 기차 엔진에 조립할 스타 코어 도면!',360,350,27,'#ffbe0b','#0b132b');
-      this.plaza.mission.forEach((m,i)=>{this.good(m.kind,220+i*270,411,.95);a.label(m.count+'개',280+i*270,403,29,'#00f5d4','#0b132b');a.label(GOODS[m.kind].name,225+i*270,453,20,'#d8edff','#0b132b');});
-      a.text('가까이 다가가 이름표를 확인하고, 고장·과열 부품은 피해 수거!',360,507,18.5,'#c9c4e8');
+      a.rect(64,230,592,220,'#0b132bf2',28,'#00f5d4');a.label('⚡ 기차 엔진에 조립할 스타 코어 도면!',360,268,26,'#ffbe0b','#0b132b');
+      this.plaza.mission.forEach((m,i)=>{this.good(m.kind,220+i*270,334,.92);a.label(m.count+'개',280+i*270,326,28,'#00f5d4','#0b132b');a.label(GOODS[m.kind].name,225+i*270,374,20,'#d8edff','#0b132b');});
+      a.text('가까이 다가가 이름표를 확인하고, 고장·과열 부품은 피해 수거!',360,418,18,'#c9c4e8');
     }
     if(s.phase==='retry'){a.rect(110,381,500,135,'#0b132bf2',28,'#ff2a6d');a.label('앗! 고장·과열 부품이야! 도면을 다시 확인하자!',360,435,24,'#ffe0ba','#0b132b');}
     if(s.phase==='success'){
@@ -547,7 +511,12 @@ export class AdventureRenderer {
       a.rect(127,1046,466,130,s.phase==='success'?'#ffbe0b':'#00f5d4',35,'#0b132b');
       a.label(s.phase==='success'?'다음 심부름':'출동!',360,1110,40,'#ffffff','#0b132b');
     }else{
-      if(!this.joystick)a.label(this.plaza.ready?'반짝이는 원으로!':'손가락으로 어디서나 이동',360,1118,22,'#eaf3ff','#0b132b');
+      if(!this.joystick){
+        a.ellipse(360,1148,46,46,'#0b132b88');
+        a.ellipse(360,1148,38,38,'#00f5d433');
+        a.ellipse(360,1148,16,16,'#00f5d4');
+        a.label(this.plaza.ready?'대장 로봇의 황금 원으로!':'드래그하여 이동',360,1214,20,'#eaf3ff','#0b132b');
+      }
       const j=this.joystick;if(j){a.ellipse(j.x,j.y,CONFIG.plaza.joystickRadius,CONFIG.plaza.joystickRadius,'#0b132b88');a.ellipse(j.x,j.y,CONFIG.plaza.joystickRadius-4,CONFIG.plaza.joystickRadius-4,'#00f5d422');a.ellipse(j.knobX,j.knobY+4,38,38,'#0b132b');a.ellipse(j.knobX,j.knobY,33,33,'#00f5d4');a.ellipse(j.knobX-8,j.knobY-10,12,6,'#ffffff88');}
     }
   }

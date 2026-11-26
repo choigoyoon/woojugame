@@ -114,11 +114,12 @@ export class Art {
         }
       }
     }else{
-      // Subtle integrated shoulder & chest trims that NEVER cover up the character's torso!
+      // Smooth Rounded Chibi Shoulder Pauldrons (no sharp polygon triangles sticking out of torso!)
       if(layer!=='head'&&(parts.body==='armor'||parts.body==='solar')){
         const gold=golden||parts.body==='solar';
         for(const side of [-1,1]){
-          this.poly([[side*22,-98],[side*44,-108],[side*40,-82],[side*22,-80]],gold?'#ffbe0b':'#4cc9f0','#0b132b',3);
+          this.ellipse(side*28,-90,13,9,'#0b132b');
+          this.ellipse(side*28,-90,10,6.5,gold?'#ffbe0b':'#38bdf8');
         }
       }
       if(layer!=='head'&&parts.body==='mint'){
@@ -129,15 +130,17 @@ export class Art {
       }
       if(layer!=='body'&&parts.head==='cat'){
         for(const side of [-1,1]){
-          this.poly([[side*16,-158],[side*36,-192],[side*40,-152]],'#ff4d8d','#0b132b',3.5);
-          this.poly([[side*20,-160],[side*33,-181],[side*35,-156]],'#00f5d4');
+          this.poly([[side*16,-162],[side*34,-192],[side*38,-154]],'#ff4d8d','#0b132b',4);
+          this.poly([[side*20,-164],[side*31,-181],[side*34,-158]],'#00f5d4');
         }
       }
       if(layer!=='body'&&parts.head==='crown'){
-        // Sleek Mecha V-Fin Star Diadem integrated cleanly on the helmet forehead!
-        this.poly([[-28,-158],[-42,-188],[-14,-170],[0,-196],[14,-170],[42,-188],[28,-158]],'#ffbe0b','#0b132b',3.5);
-        this.poly([[-20,-160],[-30,-178],[-10,-167],[0,-184],[10,-167],[30,-178],[20,-160]],'#fff3b0');
-        this.ellipse(0,-168,5.5,5.5,'#ff2a6d');
+        // Cute Rounded Chibi King Crown (Brawl Stars / Cookie Run style) sitting cleanly on top of the helmet dome!
+        this.poly([[-24,-166],[-28,-194],[-11,-178],[0,-200],[11,-178],[28,-194],[24,-166]],'#ffbe0b','#0b132b',4);
+        this.rect(-24,-172,48,9,'#ff9f1c',4,'#0b132b');
+        this.ellipse(0,-180,5,5,'#ff2a6d');
+        this.ellipse(-15,-179,3.5,3.5,'#00f5d4');
+        this.ellipse(15,-179,3.5,3.5,'#00f5d4');
       }
     }c.restore();
   }
@@ -147,124 +150,128 @@ export class Art {
     const phase=t/CONFIG.motion.avatarStrideMs;
     const stride=run?Math.sin(phase):0,snap=run?Math.sin(phase*2):0,breath=Math.sin(t/460);
     const lift=run?(Math.abs(stride)*8.5+Math.max(0,snap)*2.8):breath*2.8;
-    const lean=(run?stride*.075+(back?0:.048):Math.sin(t/1100)*.035)+pitch+turn*.15;
+    const lean=(run?stride*.07+(back?0:.04):Math.sin(t/1100)*.03)+pitch+turn*.14;
     const stretch=1+jump*.12+(run?Math.abs(stride)*.05:0)-squash*.15;
     const squashX=1-jump*.06-(run?Math.abs(stride)*.03:0)+squash*.16;
     c.save();c.translate(x,y);c.scale(scale,scale);
-    const shadowRx=Math.max(18,40-jump*11-lift*.4),shadowRy=Math.max(5,12-jump*3-lift*.15);
-    this.ellipse(2,2,shadowRx,shadowRy,'#06112466');
-    if(run||jump>0||gold){
-      this.ellipse(0,0,shadowRx*.7,shadowRy*.6,gold?'#ffbe0b77':'#00f5d466');
-    }
-    c.translate(run?stride*2.4:0,-lift);c.rotate(lean);c.scale(squashX,stretch);
+    const shadowRx=Math.max(18,38-jump*11-lift*.4),shadowRy=Math.max(5,11-jump*3-lift*.15);
+    this.ellipse(0,2,shadowRx,shadowRy,'#06112455');
+    c.translate(run?stride*2.2:0,-lift);c.rotate(lean);c.scale(squashX,stretch);
+
     const suit=gold?'#ffbe0b':palette.shirt;
-    const helmet=gold?'#ffd166':palette.helmet;
+    const helmet=gold?'#ffe66d':palette.helmet;
 
-    if(!back)this.gear(palette.parts,t,'back',1,gold,{run,jump,stride,back});
+    // BACK VIEW (Last War / Mob Control / Brawl Stars style):
+    // Ultra-clean, consolidated rounded vinyl-toy silhouette so 16+ squad units never look like overlapping toast boxes!
+    if(back){
+      for(const side of [-1,1]){
+        const legWave=run?Math.sin(phase+(side>0?0:Math.PI)):0;
+        const bootY=-18+legWave*7;
+        this.ellipse(side*14,bootY,12,11,'#0b132b');
+        this.ellipse(side*14,bootY,8.5,7.5,'#38bdf8');
+      }
+      // Rounded Bean Torso & Compact Jetpack Core
+      this.rect(-26,-92,52,62,'#0b132b',24);
+      this.rect(-22,-88,44,54,'#1d4ed8',20);
+      this.rect(-15,-78,30,32,'#0b132b',12);
+      this.ellipse(0,-62,9,9,'#00f5d4');
+      this.ellipse(0,-62,4.5,4.5,'#ffffff');
+      // Smooth Spherical Cobalt-Cyan Ranger Helmet Dome (zero beige strips or spiky triangles!)
+      this.ellipse(0,-126,37,35,'#0b132b');
+      this.ellipse(0,-126,32,30,gold?'#ffbe0b':'#38bdf8');
+      this.ellipse(0,-123,27,24,gold?'#fb923c':'#0284c7');
+      this.ellipse(-10,-138,13,7,'#ffffff88');
+      this.rect(-18,-122,36,10,'#0b132b',5);
+      this.rect(-14,-120,28,6,'#00f5d4',3);
+      if(palette.parts?.head==='crown'){
+        this.poly([[-18,-154],[-22,-176],[-8,-163],[0,-182],[8,-163],[22,-176],[18,-154]],'#ffbe0b','#0b132b',3.5);
+      }
+      c.restore();
+      return;
+    }
 
-    // Connected, sturdy Cel-Shaded Mecha Legs & Thruster Boots (thick #0b132b ink outline!)
+    this.gear(palette.parts,t,'back',1,gold,{run,jump,stride,back});
+
+    // Bouncy Rounded Chibi Boots (Brawl Stars / Cookie Run style)
     for(const side of [-1,1]) {
       const legPhase=phase+(side>0?0:Math.PI);
       const wave=run?Math.sin(legPhase):0;
-      const hipAngle=wave*.56-jump*(side>0?.52:-.22)-squash*side*.14;
-      const kneeAngle=(run?Math.max(0,-Math.cos(legPhase))*.62:Math.max(0,breath)*side*.04)+jump*(side>0?.72:.24)+squash*.32;
-      c.save();c.translate(side*16,-44);c.rotate(hipAngle);
-      // Upper thigh armor connected to hip
-      this.rect(-10,-4,20,24,'#1d2d50',8,'#0b132b');
-      c.translate(0,16);c.rotate(kneeAngle);
-      // Heavy Mecha Boot with thick dark contour & cyan thruster sole
-      this.rect(-13,0,26,24,'#f8f9fa',10,'#0b132b');
-      this.rect(-11,10,22,8,suit,4);
-      this.rect(-12,18,24,6,gold?'#ffbe0b':'#00f5d4',3,'#0b132b');
+      const hipAngle=wave*.52-jump*(side>0?.48:-.2)-squash*side*.12;
+      c.save();c.translate(side*16,-42);c.rotate(hipAngle);
+      this.rect(-13,-4,26,38,'#0b132b',13);
+      this.rect(-10,-1,20,32,'#ffffff',10);
+      this.rect(-10,16,20,9,suit,4);
+      this.rect(-10,23,20,7,gold?'#ffbe0b':'#00f5d4',3.5);
       c.restore();
     }
 
-    // Heroic Tapered Mecha Torso with thick #0b132b ink contour
-    this.poly([[-30,-102],[30,-102],[24,-44],[-24,-44]],suit,'#0b132b',4);
-    this.poly([[-22,-98],[22,-98],[17,-50],[-17,-50]],'#14213d','#0b132b',2.5);
-    // Utility Belt & Golden Buckle
-    this.rect(-26,-52,52,11,'#0b132b',5);
-    this.rect(-10,-53,20,12,'#ffbe0b',4,'#0b132b');
+    // Chibi Rounded Capsule Torso (no sharp polygon trapezoid!)
+    this.rect(-30,-102,60,64,'#0b132b',26);
+    this.rect(-26,-98,52,56,suit,22);
+    this.rect(-19,-92,38,42,'#14213d',16);
+    // Glowing Star Reactor Core on Chest
+    this.ellipse(0,-72,13,13,'#0b132b');
+    this.ellipse(0,-72,10,10,gold?'#ffbe0b':'#00f5d4');
+    this.star(0,-72,7.5,'#ffffff');
+    // Cute Golden Belt Buckle
+    this.rect(-24,-52,48,10,'#0b132b',5);
+    this.rect(-9,-53,18,11,'#ffbe0b',5,'#0b132b');
 
-    if(back){
-      // Back View: Twin Plasma Jetpack Nozzles & Neural Spine Core (never looks like a front face!)
-      this.gear(palette.parts,t,'back',1,gold,{run,jump,stride,back});
-      this.rect(-18,-92,36,34,'#1d3557',10,'#0b132b');
-      for(const sx of [-9,9]){
-        this.rect(sx-5,-86,10,22,'#0b132b',4);
-        this.ellipse(sx,-64,6,6,'#00f5d4');
-      }
-    }else{
-      // Front View: Glowing Starlight Arc-Reactor Emblem
-      this.ellipse(0,-76,14,14,'#0b132b');
-      this.ellipse(0,-76,10.5,10.5,gold?'#ffbe0b':'#00f5d4');
-      this.star(0,-76,8,'#ffffff');
-    }
-
-    // Articulated Power-Gauntlet Arms with thick #0b132b outlines
+    // Chubby Rounded Chibi Arms & Mitt Hands
     for(const side of [-1,1]) {
       const armPhase=phase+(side>0?Math.PI:0)-.32;
-      const armSwing=run?Math.sin(armPhase)*.66:side*(.14+breath*.05);
-      const shoulderAngle=armSwing-jump*(side>0?.92:.42)-squash*side*.22-(hurt?side*.45:0);
-      const elbowAngle=(run?-Math.abs(Math.sin(armPhase-.35))*.48-.14:-side*(.14+breath*.03))-jump*.34;
-      c.save();c.translate(side*33,-94);c.rotate(shoulderAngle);
-      this.rect(-11,-4,22,22,helmet,9,'#0b132b');
-      c.translate(0,16);c.rotate(elbowAngle);
-      this.rect(-11,0,22,20,suit,9,'#0b132b');
-      this.ellipse(0,20,10,9,'#f8f9fa');
-      c.beginPath();c.ellipse(0,20,10,9,0,0,Math.PI*2);c.strokeStyle='#0b132b';c.lineWidth=3;c.stroke();
+      const armSwing=run?Math.sin(armPhase)*.62:side*(.16+breath*.05);
+      const shoulderAngle=armSwing-jump*(side>0?.85:.38)-squash*side*.2-(hurt?side*.45:0);
+      c.save();c.translate(side*30,-88);c.rotate(shoulderAngle);
+      this.rect(-12,-6,24,38,'#0b132b',12);
+      this.rect(-9,-3,18,22,suit,9);
+      this.ellipse(0,22,11,10,'#0b132b');
+      this.ellipse(0,22,8,7.5,'#ffffff');
       c.restore();
     }
 
-    // Cel-Shaded Astro-Ranger Helmet with Side Wing-Fins & Expressive Visor
+    // Round, Appealing Chibi Space-Ranger Head (Smooth spherical/oval dome + cute round ear-pods!)
     c.save();
-    c.translate(run?stride*1.8:0,-110);
-    c.rotate((run?-lean*.55+Math.sin(phase-.45)*.06:Math.sin(t/1500)*.045)-jump*.12+(hurt?Math.sin(t/45)*.15:0));
-    c.translate(0,110);
+    c.translate(run?stride*1.6:0,-106);
+    c.rotate((run?-lean*.5+Math.sin(phase-.45)*.05:Math.sin(t/1500)*.04)-jump*.1+(hurt?Math.sin(t/45)*.15:0));
+    c.translate(0,106);
 
-    // Side Mecha Wing-Ears (like Astro Bot / Mega Man / Brawl Stars)
+    // Cute Rounded Ear-Pods (replaces sharp spiky triangle fins!)
     for(const side of [-1,1]){
-      this.poly([[side*34,-146],[side*48,-164],[side*44,-128],[side*34,-126]],'#f8f9fa','#0b132b',3.5);
-      this.rect(side*32-(side>0?0:9),-148,9,24,suit,4,'#0b132b');
+      this.ellipse(side*38,-136,11,15,'#0b132b');
+      this.ellipse(side*38,-136,7.5,11,suit);
+      this.ellipse(side*38,-136,3.5,6,'#00f5d4');
     }
 
-    // Main Contoured Helmet Shell with bold #0b132b ink outline
-    this.rect(-36,-170,72,64,'#f8f9fa',26,'#0b132b');
-    this.rect(-33,-167,66,24,helmet,16);
-    // Top Specular Highlight & Central Crest
-    this.ellipse(-10,-159,18,6,'#ffffff88');
-    this.poly([[-8,-172],[0,-182],[8,-172]],suit,'#0b132b',2.5);
+    // Smooth Chibi Helmet Dome
+    this.ellipse(0,-138,41,37,'#0b132b');
+    this.ellipse(0,-138,37,33,'#ffffff');
+    this.ellipse(0,-148,31,18,helmet);
+    this.ellipse(-12,-158,13,6,'#ffffffaa');
 
-    if(back){
-      // Back of Helmet: Clean armored rear plate with glowing cyan V-vent (NEVER looks like eyeballs!)
-      this.rect(-26,-152,52,28,helmet,12,'#0b132b');
-      this.poly([[-14,-142],[0,-134],[14,-142],[10,-138],[0,-130],[-10,-138]],'#00f5d4');
+    // Glossy Dark-Sapphire Visor Screen
+    this.rect(-31,-152,62,36,'#0b132b',18);
+    this.rect(-28,-149,56,30,'#0f172a',15,'#00f5d4');
+    this.line([[-18,-144],[-6,-144]],'#ffffff66',2.5);
+
+    const look=run?0:Math.sin(t/1800)*2.2;
+    const eyeColor=gold?'#ffbe0b':'#00f5d4';
+    if(hurt||helmetOff){
+      this.line([[-18,-140],[-8,-134],[-18,-128]],'#ff2a6d',4);
+      this.line([[18,-140],[8,-134],[18,-128]],'#ff2a6d',4);
+    }else if(t>0&&t%3800<130){
+      this.line([[-18,-134],[-12,-139],[-6,-134]],eyeColor,3.8);
+      this.line([[6,-134],[12,-139],[18,-134]],eyeColor,3.8);
+    }else if(glow>0||jump>.35||gold){
+      this.star(-12+look,-135,8.5,'#ffbe0b');
+      this.star(12+look,-135,8.5,'#ffbe0b');
+      this.line([[-5,-125],[0,-121],[5,-125]],'#ffffff',2.8);
     }else{
-      // Front Panoramic Glossy Visor Screen
-      this.rect(-30,-152,60,36,'#0b132b',16,'#00f5d4');
-      this.rect(-27,-149,54,30,'#101d3b',14);
-      this.line([[-18,-145],[-5,-145]],'#ffffff55',2.5);
-
-      const look=run?0:Math.sin(t/1800)*2.2;
-      const eyeColor=gold?'#ffbe0b':'#00f5d4';
-      if(hurt||helmetOff){
-        this.line([[-18,-140],[-8,-134],[-18,-128]],'#ff2a6d',4);
-        this.line([[18,-140],[8,-134],[18,-128]],'#ff2a6d',4);
-      }else if(t>0&&t%3800<130){
-        this.line([[-18,-134],[-12,-139],[-6,-134]],eyeColor,3.8);
-        this.line([[6,-134],[12,-139],[18,-134]],eyeColor,3.8);
-      }else if(glow>0||jump>.35||gold){
-        this.star(-12+look,-135,8.5,'#ffbe0b');
-        this.star(12+look,-135,8.5,'#ffbe0b');
-        this.line([[-6,-125],[0,-121],[6,-125]],'#ffffff',2.8);
-      }else{
-        // Expressive Brawl-Arcade Glowing Eyes with Heroic Upper Brow Curve
-        this.ellipse(-12+look,-135,6.5,8,eyeColor);
-        this.ellipse(12+look,-135,6.5,8,eyeColor);
-        this.ellipse(-14+look,-138,2.5,2.8,'#ffffff');
-        this.ellipse(10+look,-138,2.5,2.8,'#ffffff');
-        this.line([[-6,-124],[0,-121],[6,-124]],'#00f5d4',2.6);
-      }
+      this.ellipse(-12+look,-135,6.5,8,eyeColor);
+      this.ellipse(12+look,-135,6.5,8,eyeColor);
+      this.ellipse(-14+look,-138,2.5,2.8,'#ffffff');
+      this.ellipse(10+look,-138,2.5,2.8,'#ffffff');
+      this.line([[-5,-124],[0,-121],[5,-124]],'#00f5d4',2.6);
     }
     if(!helmetOff)this.gear(palette.parts,t,'head',1,gold,{back});
     c.restore();

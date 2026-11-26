@@ -205,71 +205,63 @@ export class BattleRenderer {
     a.line([[-17,20],[0,35],[17,20]],color,7);c.restore();
   }
   crane(entity) {
-    // Dreadnought Kraken-Claw Mecha Boss — Heavy Gunmetal & Crimson Armor with Bold #0b132b Ink Outlines (Never turns beige!)
+    // Chunky Rounded Cartoon Mecha-Crab Boss Pod (Dr. Eggman / Brawl Stars Mecha Boss style — no flat trapezoid with stick arms!)
     const a=this.art,c=a.c,p=this.project(0,entity.z),s=p.s,m=this.game.harbor.state,round=this.game.state.round??0;
     const warning=this.game.state.attack?.phase==='warning',lift=warning?20+Math.sin(this.time/80)*6:0;
     const impact=(entity.hitMs??0)/CONFIG.battle.hitMs,dent=this.reduced?0:Math.sin(impact*Math.PI)*.14;
     const ratio=Math.max(0,Math.min(1,entity.hp/Math.max(1,entity.maxHp)));
     const stage=ratio<.34?3:ratio<.67?2:ratio<.92?1:0;
-    const palettes=[['#1f2d50','#ff2a6d','#ffbe0b'],['#2d1e54','#ff4d8d','#00f5d4'],['#1b263b','#ff6b35','#ffbe0b']];
-    const [hull,accent,coreCol]=palettes[round]??palettes[0];
+    const palettes=[['#e11d48','#1e293b','#ffbe0b'],['#7c3aed','#1e1b4b','#00f5d4'],['#ea580c','#1e293b','#ffbe0b']];
+    const [hull,darkHull,coreCol]=palettes[round]??palettes[0];
     c.save();c.translate(p.x,p.y);
     if(!this.reduced&&impact>0)c.rotate(Math.sin(impact*10)*impact*.05);
     c.scale(s*(1+dent),s*(1-dent*.72));
-    a.ellipse(0,8,255,36,'#06112466');
-    if(stage>=1){
-      for(let i=0;i<stage+1;i++){
-        const f=((this.time/600)+i*.33)%1,sx=(i%2?86:-86)+(i-1)*24;
-        a.ellipse(sx,-390-lift-f*75,16+f*22,12+f*15,stage>=3?`rgba(255,42,109,${(1-f)*.65})`:`rgba(45,62,94,${(1-f)*.55})`);
-      }
-    }
-    // Articulated Dual Hydraulic Plasma Pincer Claws with Bold Ink Outlines
+    a.ellipse(0,8,255,36,'#06112455');
+    // Ball-Jointed Chunky Mechanical Arms & Oversized Hazard Pincer Claws
     for(const side of[-1,1]){
       const broken=m.locksBroken>=(side<0?1:2);
       const jitter=!this.reduced&&(broken||stage>=2)?Math.sin(this.time/50+side)*7:0;
-      a.line([[side*112,-310-lift],[side*226+jitter,-236-lift],[side*190+jitter,-66]],'#0b132b',42);
-      a.line([[side*112,-310-lift],[side*222+jitter,-238-lift],[side*186+jitter,-68]],broken?'#4a5d75':accent,22);
-      a.ellipse(side*224+jitter,-236-lift,27,27,'#0b132b');
-      a.ellipse(side*224+jitter,-236-lift,15,15,broken?'#7a8ca0':coreCol);
-      a.poly([[side*190+jitter,-72],[side*146+jitter,-20],[side*166+jitter,-84]],broken?'#7a8ca0':coreCol,'#0b132b',3.5);
-      a.poly([[side*190+jitter,-72],[side*220+jitter,-18],[side*208+jitter,-84]],broken?'#7a8ca0':accent,'#0b132b',3.5);
+      const sx=side*148,sy=-320-lift,ex=side*224+jitter,ey=-218-lift,cx=side*196+jitter,cy=-78;
+      // Shoulder & Elbow Ball Joints + Segmented Arm Capsules
+      a.line([[sx,sy],[ex,ey],[cx,cy]],'#0b132b',48);
+      a.line([[sx,sy],[ex,ey],[cx,cy]],broken?'#64748b':'#475569',28);
+      a.ellipse(sx,sy,28,28,'#0b132b');a.ellipse(sx,sy,20,20,broken?'#64748b':coreCol);
+      a.ellipse(ex,ey,30,30,'#0b132b');a.ellipse(ex,ey,21,21,broken?'#64748b':hull);
+      // Chunky Rounded Mechanical Pincer Housing
+      a.ellipse(cx,cy,32,26,'#0b132b');a.ellipse(cx,cy,25,19,broken?'#475569':coreCol);
+      a.poly([[cx-side*10,cy+6],[cx-side*42,cy+56],[cx-side*28,cy-4]],broken?'#94a3b8':'#ffbe0b','#0b132b',4);
+      a.poly([[cx+side*10,cy+6],[cx+side*34,cy+56],[cx+side*26,cy-4]],broken?'#94a3b8':hull,'#0b132b',4);
     }
-    // Angular Dreadnought Battleship Hull (Rich Gunmetal Navy + Thick #0b132b Ink Contour)
-    a.poly([[-162,-340-lift],[-120,-416-lift],[120,-416-lift],[162,-340-lift],[134,-240-lift],[-134,-240-lift]],hull,'#0b132b',6);
-    a.poly([[-146,-340-lift],[-110,-404-lift],[110,-404-lift],[146,-340-lift],[122,-252-lift],[-122,-252-lift]],'#2b3d66',accent,3);
-    // Detachable Shoulder Missile Pods (shatter below 67% HP)
-    for(const side of[-1,1]){
-      if(stage<2||side<0&&stage<3){
-        a.poly([[side*118,-414-lift],[side*172,-440-lift],[side*178,-364-lift],[side*142,-346-lift]],accent,'#0b132b',4);
-        a.ellipse(side*150,-394-lift,13,13,'#0b132b');
-        a.ellipse(side*150,-394-lift,9,9,coreCol);
-      }
-    }
-    // Menacing V-Shaped Cyber-Visor & Glowing Tactical Optics
-    a.poly([[-118,-378-lift],[0,-358-lift],[118,-378-lift],[102,-314-lift],[0,-300-lift],[-102,-314-lift]],'#081021','#0b132b',4);
+    // Rounded Spherical/Capsule Boss Mech Body (Chunky Vinyl-Toy Mecha Silhouette)
+    a.ellipse(0,-402-lift,102,48,'#0b132b');
+    a.ellipse(0,-400-lift,94,42,'#38bdf8');
+    a.ellipse(-28,-414-lift,34,12,'#ffffff99');
+    a.rect(-164,-394-lift,328,162,'#0b132b',78);
+    a.rect(-156,-386-lift,312,146,hull,72);
+    a.rect(-140,-374-lift,280,44,'#fb718566',22);
+    // Expressive Curved Dark Visor & Big Cartoon Boss Eyes
+    a.rect(-126,-364-lift,252,92,'#0b132b',44);
+    a.rect(-118,-356-lift,236,76,darkHull,38,'#00f5d4');
     for(const side of[-1,1]){
       const eyeColor=m.weakMs?'#00f5d4':warning||stage>=2?'#ff2a6d':coreCol;
       if(stage>=2||impact>.2){
-        a.line([[side*58-20,-352-lift],[side*58+20,-328-lift]],eyeColor,6.5);
-        a.line([[side*58+20,-352-lift],[side*58-20,-328-lift]],eyeColor,6.5);
+        a.line([[side*54-18,-330-lift],[side*54+18,-302-lift]],eyeColor,7);
+        a.line([[side*54+18,-330-lift],[side*54-18,-302-lift]],eyeColor,7);
       }else{
-        a.poly([[side*32,-344-lift],[side*88,-358-lift],[side*82,-330-lift],[side*32,-326-lift]],eyeColor);
-        a.ellipse(side*58,-340-lift,6,6,'#ffffff');
+        a.ellipse(side*54,-316-lift,22,24,eyeColor);
+        a.ellipse(side*54-side*5,-320-lift,8,9,'#ffffff');
+        // Angry Cartoon Brow
+        a.line([[side*24,-338-lift],[side*82,-350-lift]],'#0b132b',10);
       }
     }
-    // Localized Impact Spark Ring on Hit (keeps hull colors rich and dark!)
-    if(impact>.15){
-      a.star((Math.sin(this.time)*45),-335-lift,26*impact,'#fff3b0');
-    }
-    // Clean, Unobstructed Boss HP Badge on Forehead Crest
-    a.rect(-64,-402-lift,128,36,'#0b132b',12,coreCol);
-    a.label(Math.ceil(entity.hp),0,-384-lift,26,'#fff8d6','#0b132b');
+    if(impact>.15)a.star((Math.sin(this.time)*45),-320-lift,26*impact,'#fff3b0');
+    // Clean Boss HP Pill on Top Dome
+    a.rect(-62,-428-lift,124,38,'#0b132b',19,coreCol);
+    a.label(Math.ceil(entity.hp),0,-409-lift,26,'#ffffff','#0b132b');
     const trainY=-52+Math.sin(this.time/350)*5;
     if(round===0)train(a,0,trainY,.82,{time:this.time,held:m.locksBroken<2});
     else wagon(a,0,trainY,1.6,this.time,round===2);
-    if(m.locksBroken<2)for(const side of[-1,1])if(side>0||m.locksBroken===0)a.line([[side*86,-248],[side*86,trainY-115]],'#00f5d4',5);
-    a.rect(-154,-480,308,38,'#0b132bf2',14,m.weakMs?'#00f5d4':'#ffbe0b');
-    a.text(m.locksBroken<2?'플라즈마 볼트  '+(2-m.locksBroken)+'개 남음':m.weakMs?'⚡ 장갑 파손! 본체 집중 사격!':stage>=2?'🔥 보스 코어 과열 직전!':'볼트 해제 완료! 본체를 밀어내!',0,-461,20,m.weakMs?'#00f5d4':'#fff2bd');
+    if(m.locksBroken<2)for(const side of[-1,1])if(side>0||m.locksBroken===0)a.line([[side*86,-238],[side*86,trainY-105]],'#00f5d4',6);
     c.restore();
   }
   barrel(entity) {
@@ -448,74 +440,52 @@ export class BattleRenderer {
   lootEffects() {
     const a=this.art,c=a.c;
     for(const p of this.loot){if(p.life<=0)continue;const t=1-p.life/p.duration,e=t*t;
-      const x=p.x+(552-p.x)*e+Math.sin(t*Math.PI)*p.offset,y=p.y+(168-p.y)*e-Math.sin(t*Math.PI)*100;
+      const x=p.x+(566-p.x)*e+Math.sin(t*Math.PI)*p.offset,y=p.y+(55-p.y)*e-Math.sin(t*Math.PI)*100;
       c.save();c.globalAlpha=Math.min(1,p.life/80);a.coin(x,y,(.45+Math.sin(t*Math.PI)*.17));c.restore();
     }
   }
   hud(canHome) {
+    // Last War: Survival / Mob Control Minimalist Diegetic HUD (Zero giant dark-navy boxes blocking the top 400px of the screen!)
     const a=this.art,c=a.c,s=this.game.state;
-    a.cached('hud',[0,0,720,240],()=>{
-      const c=a.c;c.fillStyle=a.gradient(0,0,0,240,['#0b132bf0','#0b132b00']);c.fillRect(0,0,720,240);
-      a.label('작전 1 · 기차 탈환 배틀',403,62,29,'#fff2c7','#0b132b');
-      a.rect(28,123,278,90,'#0b132b',27);
-      a.rect(31,125,272,84,'#162d54',24,'#00f5d4');a.toy(67,194,.28,{time:0,palette:this.profile.palette});
-      a.rect(415,123,278,90,'#0b132b',27);
-      a.rect(418,125,272,84,'#162d54',24,'#ffbe0b');a.coin(459,168,.9);
-    },this.spritePalette);
-    a.home(canHome);a.label(s.squad,184,168,43,'#00f5d4','#0b132b');a.counter(this.profile.coins,566,168,206,36,'#ffbe0b');
-    a.label(this.game.campaign?'하늘 항구  '+(s.round+1)+' / 3  ·  '+this.game.round.title:'WAVE '+s.wave,360,244,19,'#fff4d4','#0b132b');
+    a.home(canHome);
+    // Compact Floating Coin Pill in Top-Right
+    a.rect(532,26,164,58,'#0b132b',29);
+    a.rect(535,29,158,52,'#1e293b',26,'#ffbe0b');
+    a.coin(566,55,.58);
+    a.counter(this.profile.coins,634,56,92,26,'#ffbe0b');
+    // Clean Floating Top-Center Stage & Boss Progress Bar
     const boss=this.game.entities.find(entity=>entity.kind==='boss');
-    a.rect(140,272,440,13,'#0b132b',6);a.rect(142,274,436*(boss?boss.hp/boss.maxHp:Math.min(1,s.waveMs/this.game.rules.bossAtMs)),9,boss?'#ff2a6d':'#00f5d4',5);
-    if(!boss&&this.game.campaign){
-      const route=Math.min(1,s.waveMs/this.game.rules.bossAtMs),at=CONFIG.campaign.sectionFractions;
-      for(let i=0;i<=at.length;i++){const point=at[i]??1,x=142+436*point;a.ellipse(x,278,7,7,point<=route?'#00f5d4':'#0b132b');}
-      const section=at.reduce((found,point,index)=>route>=point?index:found,0);
-      a.label(CONFIG.campaign.sectionNames[section]+' · 보스까지 '+Math.max(0,Math.ceil((this.game.rules.bossAtMs-s.waveMs)/1000))+'초',360,308,18,'#d8f6e9','#0b132b');
-    }
-    if(boss){
-      const locksBroken=this.game.harbor?.state.locksBroken??2;
-      a.label(this.game.harbor?['1-1 철통 집게 크레인','1-2 쌍둥이 자석 집게','1-3 항구 수호 거인'][s.round]:this.game.campaign?this.game.round.boss+(boss.rage?' !':''):boss.rage?'BOSS • RAGE':'BOSS',360,310,22,boss.rage?'#ffbe0b':'#fff1d3','#0b132b');
-      if(this.game.harbor){
-        for(const [idx,lx]of[[0,118],[1,602]]){
-          const intact=locksBroken<=idx;
-          a.rect(lx-18,266,36,24,intact?'#ff9f1c':'#0b132b',8,intact?'#0b132b':'#00f5d4');
-          a.text(intact?'🔩':'✓',lx,278,15,intact?'#fff8d6':'#00f5d4');
-        }
+    const title=boss?(this.game.harbor?['1-1 크라켄 집게 보스','1-2 쌍둥이 자석 보스','1-3 항구 수호 거인'][s.round]:'BOSS')
+      :(this.game.campaign?'하늘 항구 '+(s.round+1)+'/3 · '+this.game.round.title:'WAVE '+s.wave);
+    a.label(title,320,42,22,'#ffffff','#0b132b');
+    a.rect(158,64,324,18,'#0b132b',9);
+    a.rect(162,67,316*(boss?boss.hp/boss.maxHp:Math.min(1,s.waveMs/this.game.rules.bossAtMs)),12,boss?'#ff2a6d':'#00f5d4',6);
+    if(boss&&this.game.harbor){
+      const locksBroken=this.game.harbor.state.locksBroken??2;
+      for(const [idx,lx]of[[0,136],[1,504]]){
+        const intact=locksBroken<=idx;
+        a.ellipse(lx,73,14,14,'#0b132b');
+        a.ellipse(lx,73,11,11,intact?'#ff9f1c':'#00f5d4');
+        a.text(intact?'🔩':'✓',lx,73,12,'#0b132b');
       }
-    }
-    const mission=this.game.harbor?.state;
-    if(mission?.signalMs>0&&s.bannerMs<=0){
-      a.rect(64,337,592,62,'#0b132bf0',22,'#00f5d4');
-      picoToy(a,106,389,.38,this.time);
-      a.label('삐코 무전 · '+mission.signal,382,368,23,'#fff1c4','#0b132b');
     }
     if(s.bannerMs>0){
       c.save();c.globalAlpha=Math.min(1,s.bannerMs/260);
       const clear=s.banner==='CLEAR!';
-      a.rect(clear?133:220,340,clear?454:280,clear?123:95,'#0b132bf2',27,clear?'#ffbe0b':'#00f5d4');
-      a.label(s.banner,360,clear?383:374,clear?53:48,clear?'#ffbe0b':s.gateResult?.change>=0?'#00f5d4':'#ff2a6d','#0b132b');
-      if(clear){a.coin(310,430,.6);a.label('+'+CONFIG.battle.bossCoins,376,430,28,'#fff4ac','#0b132b');}
-      else if(s.gateResult)a.label(s.gateResult.change>=0?'아스트로 지원군 합류!':'부대를 지켜!',360,413,22,'#fff5dd','#0b132b');
+      a.label(s.banner,360,210,clear?56:48,clear?'#ffbe0b':s.gateResult?.change>=0?'#00f5d4':'#ff2a6d','#0b132b');
+      if(clear)a.label('+'+CONFIG.battle.bossCoins+' COINS!',360,262,28,'#fff4ac','#0b132b');
       c.restore();
     }
     if(this.chainMs>0&&this.chain>1){
       c.save();c.globalAlpha=Math.min(1,this.chainMs/220);
-      a.rect(236,1040,248,38,'#0b132bf0',14,'#ffbe0b');
-      a.label('STAR CHAIN ×'+this.chain,360,1059,24,'#ffbe0b','#0b132b');
+      a.label('★ CHAIN ×'+this.chain,360,1048,26,'#ffbe0b','#0b132b');
       c.restore();
     }
+    // Single Compact Weapon Fever Pill at the bottom edge (leaves the bridge 100% open!)
     const powered=s.powerMs>0,charge=powered?s.powerMs/CONFIG.battle.powerMs:s.charge/CONFIG.battle.chargeKills;
-    a.rect(200,1090,320,55,'#0b132bf0',20,powered?'#00f5d4':'#ffbe0b');
-    a.poly([[224,1100],[213,1118],[224,1118],[217,1134],[239,1111],[226,1111]],powered?'#00f5d4':'#ffbe0b');
-    a.label(powered?(this.powerIntro>0?'HYPER STAR BURST!':'HYPER STAR BURST'):(CONFIG.campaign.weapons[s.weapon]?.name??'BLAST')+' · 피버 '+s.charge+'/'+CONFIG.battle.chargeKills,376,1109,this.powerIntro>0?22:18,powered?'#00f5d4':'#ffe7aa','#0b132b');
-    a.rect(250,1126,242,7,'#1e293b',4);a.rect(250,1126,242*charge,7,powered?'#00f5d4':'#ffbe0b',4);
-    // Sleek Cel-Shaded Left/Right Thruster Steer Bar (replaces old peach hand blob!)
-    a.cached('drag-cue',[190,1156,340,78],()=>{
-      a.rect(196,1160,328,64,'#0b132bf0',32,'#00f5d4');
-      a.poly([[224,1192],[244,1178],[244,1206]],'#00f5d4','#0b132b',2.5);
-      a.poly([[496,1192],[476,1178],[476,1206]],'#00f5d4','#0b132b',2.5);
-      a.label('좌우 드래그하여 분대 기동',360,1192,18,'#fff3b0','#0b132b');
-    });
+    a.rect(220,1206,280,48,'#0b132be6',24,powered?'#00f5d4':'#ffbe0b');
+    a.label(powered?'⚡ HYPER STAR BURST!':(CONFIG.campaign.weapons[s.weapon]?.name??'BLAST')+' · 피버 '+s.charge+'/'+CONFIG.battle.chargeKills,360,1223,16,powered?'#00f5d4':'#ffffff','#0b132b');
+    a.rect(254,1239,212,6,'#1e293b',3);a.rect(254,1239,212*charge,6,powered?'#00f5d4':'#ffbe0b',3);
   }
   weaponIcon(id,x,y,rank=1) {
     const a=this.art,c=a.c,color=CONFIG.campaign.weapons[id].color;

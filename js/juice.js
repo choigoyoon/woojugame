@@ -68,7 +68,7 @@ export class Juice {
           for(const item of this.callouts.items){
             if(item.life>0)item.life=0;
           }
-          const cx=this.mode==='runner'?430:x,cy=this.mode==='runner'?385:y-48;
+          const cx=this.mode==='runner'?360:x,cy=this.mode==='runner'?364:y-48;
           this.callouts.spawn(callout[0],cx,cy,callout[1]);
         }
       }

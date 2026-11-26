@@ -228,7 +228,7 @@ export class Renderer {
   arrow(x, y, direction, scale, color = '#fff') {
     const c = this.ctx;
     c.save(); c.translate(x, y); c.scale(scale * direction, scale);
-    this.polygon([[-24, -7], [4, -7], [4, -23], [30, 0], [4, 23], [4, 7], [-24, 7]], color);
+    this.polygon([[-24, -7], [4, -7], [4, -23], [30, 0], [4, 23], [4, 7], [-24, 7]], color, '#0b132b', 5);
     c.restore();
   }
 
@@ -583,8 +583,9 @@ export class Renderer {
       if (particle.life <= 0) continue;
       c.save(); c.globalAlpha = Math.min(1, particle.life / 220);
       c.translate(particle.x, this.screenY(particle.y)); c.rotate(particle.rotation);
-      this.rect(-particle.size / 2, -particle.size / 2, particle.size, particle.size * (0.5 + Math.abs(Math.cos(particle.rotation)) * 0.5), particle.color, 1);
-      this.rect(-particle.size / 2, -particle.size / 2, particle.size, 2, '#ffffff6b', 1); c.restore();
+      this.star(0, 0, particle.size * 0.72, '#0b132b');
+      this.star(0, 0, particle.size * 0.54, particle.color);
+      c.restore();
     }
     for (const popup of this.popups) {
       if (popup.life <= 0 || (!popup.bonus && this.popups.some((other) => other.bonus && other.life > 0))) continue;

@@ -39,14 +39,12 @@ export class Lobby {
     const a=this.art,c=a.c,{x,y,accent,colors}=card,w=306,h=364;
     a.cached('cabinet-'+card.id,[x-7,y-4,w+25,h+25],()=>{
       const c=a.c;
-      a.ellipse(x+w/2+7,y+h+15,w*.46,15,'#040e2266');
-      a.poly([[x+24,y+4],[x+w-15,y+4],[x+w+12,y+26],[x+w+12,y+h-3],[x+w-7,y+h+15],[x+14,y+h+15],[x-1,y+h-1],[x-1,y+27]],'#112c48','#091b31',3);
-      a.poly([[x+w-14,y+7],[x+w+12,y+26],[x+w+12,y+h-3],[x+w-14,y+h-16]],colors[1]);
-      a.rect(x,y,w-2,h,a.gradient(x,y,x+w,y+h,[colors[0],colors[1]]),30,accent);
-      a.rect(x+7,y+7,w-16,h-16,'#132d481c',25,'#ffffff43');
-      a.rect(x+13,y+47,w-30,218,'#101e35',22,'#152037');
+      a.ellipse(x+w/2+5,y+h+14,w*.46,15,'#040e2266');
+      a.rect(x-4,y-2,w+10,h+14,'#0b132b',34);
+      a.rect(x,y,w-2,h,a.gradient(x,y,x+w,y+h,[colors[0],colors[1]]),30,'#0b132b');
+      a.rect(x+13,y+47,w-30,218,'#0b132b',22);
       const sky=card.id==='battle'?['#efaa9c','#ffd69d']:card.id==='runner'?['#81d5e0','#d4f1c6']:card.id==='plaza'?['#8d9bdf','#ddbcdf']:['#32558f','#619cc7'];
-      a.rect(x+20,y+54,w-44,204,a.gradient(x,y+54,x,y+258,sky),16);
+      a.rect(x+20,y+54,w-44,204,a.gradient(x,y+54,x,y+258,sky),16,'#0b132b');
       c.save();c.beginPath();c.roundRect(x+20,y+54,w-44,204,16);c.clip();
       a.ellipse(x+220,y+95,29,29,'#fff3c980');
       if(card.id==='plaza'){
@@ -63,10 +61,8 @@ export class Lobby {
       }
       c.restore();
       a.line([[x+35,y+57],[x+123,y+57]],'#fff7d47c',3);
-      a.poly([[x+9,y+274],[x+w-12,y+274],[x+w-2,y+306],[x+2,y+306]],'#142a42');
-      a.rect(x+11,y+306,w-24,47,'#132b48',14,'#ffffff26');
-      for(let i=0;i<4;i++)a.stud(x+56+i*64,y+3,14,4.5,5,colors[0],accent);
-      for(const sx of[x+18,x+w-22]){a.ellipse(sx,y+24,5,5,'#e8f8df');a.line([[sx-2,y+24],[sx+2,y+24]],'#517184',1);}
+      a.poly([[x+9,y+274],[x+w-12,y+274],[x+w-2,y+306],[x+2,y+306]],'#0b132b');
+      a.rect(x+11,y+306,w-24,47,'#0b132b',14,accent);
     });
   }
   mini(mode,x,y) {

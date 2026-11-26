@@ -309,27 +309,29 @@ export class AdventureRenderer {
     c.restore();
   }
   robot(x,y){
-    // Sleek Harbor Commander Mecha-Unit (Captain Dock) with bold Cel-Shaded ink contours
-    const a=this.art,t=this.reduced?0:this.time,bob=Math.sin(t/220)*3;
-    a.ellipse(x,y,42,14,'#0d224055');
-    a.ellipse(x,y-2,30,10,'#00f5d444');
+    // Sleek Compact Harbor Commander Mecha-Unit (Captain Dock) — scaled so antenna never overlaps tile (-2,1) behind him!
+    const a=this.art,c=a.c,t=this.reduced?0:this.time,bob=Math.sin(t/220)*2.5;
+    c.save();c.translate(x,y);c.scale(.74,.74);
+    a.ellipse(0,0,42,14,'#0d224055');
+    a.ellipse(0,-2,30,10,'#00f5d444');
     // Hover Base & Contoured Commander Torso
-    a.rect(x-30,y-70+bob,60,56,'#0b132b',22);
-    a.rect(x-27,y-67+bob,54,50,'#264e82',19,'#4cc9f0');
-    a.ellipse(x,y-42+bob,16,16,'#0b132b');
-    a.star(x,y-42+bob,13,'#ffbe0b');
+    a.rect(-30,-70+bob,60,56,'#0b132b',22);
+    a.rect(-27,-67+bob,54,50,'#264e82',19,'#4cc9f0');
+    a.ellipse(0,-42+bob,16,16,'#0b132b');
+    a.star(0,-42+bob,13,'#ffbe0b');
     // Commander Space-Dome Head & Panoramic Cyan Visor
-    a.rect(x-37,y-127+bob,74,58,'#0b132b',26);
-    a.rect(x-34,y-124+bob,68,52,'#ffffff',24,'#4cc9f0');
-    a.rect(x-26,y-112+bob,52,28,'#0b132b',14,'#00f5d4');
-    a.ellipse(x-11,y-98+bob,5.5,7,'#00f5d4');
-    a.ellipse(x+11,y-98+bob,5.5,7,'#00f5d4');
-    a.ellipse(x-12,y-100+bob,2,2,'#ffffff');
-    a.ellipse(x+10,y-100+bob,2,2,'#ffffff');
+    a.rect(-37,-127+bob,74,58,'#0b132b',26);
+    a.rect(-34,-124+bob,68,52,'#ffffff',24,'#4cc9f0');
+    a.rect(-26,-112+bob,52,28,'#0b132b',14,'#00f5d4');
+    a.ellipse(-11,-98+bob,5.5,7,'#00f5d4');
+    a.ellipse(11,-98+bob,5.5,7,'#00f5d4');
+    a.ellipse(-12,-100+bob,2,2,'#ffffff');
+    a.ellipse(10,-100+bob,2,2,'#ffffff');
     // Golden Commander Crest & Beacon Antenna
-    a.poly([[x-18,y-124+bob],[x,y-144+bob],[x+18,y-124+bob]],'#ffbe0b','#0b132b',3);
-    a.ellipse(x,y-148+bob,8,8,'#0b132b');
-    a.ellipse(x,y-148+bob,5.5,5.5,'#00f5d4');
+    a.poly([[-18,-124+bob],[0,-144+bob],[18,-124+bob]],'#ffbe0b','#0b132b',3.5);
+    a.ellipse(0,-148+bob,8,8,'#0b132b');
+    a.ellipse(0,-148+bob,5.5,5.5,'#00f5d4');
+    c.restore();
   }
   plazaView(canHome){
     const a=this.art,c=a.c,s=this.plaza.state,t=this.reduced?0:this.time;
@@ -533,18 +535,20 @@ export class AdventureRenderer {
       this.plaza.mission.forEach((m,i)=>{this.good(m.kind,220+i*270,411,.95);a.label(m.count+'개',280+i*270,403,29,'#00f5d4','#0b132b');a.label(GOODS[m.kind].name,225+i*270,453,20,'#d8edff','#0b132b');});
       a.text('가까이 다가가 이름표를 확인하고, 고장·과열 부품은 피해 수거!',360,507,18.5,'#c9c4e8');
     }
-    if(s.phase==='retry'){a.rect(110,381,500,135,'#392d5ce8',28);a.text('앗! 고장·과열 부품이야! 도면을 다시 확인하자!',360,435,24,'#ffe0ba');}
+    if(s.phase==='retry'){a.rect(110,381,500,135,'#0b132bf2',28,'#ff2a6d');a.label('앗! 고장·과열 부품이야! 도면을 다시 확인하자!',360,435,24,'#ffe0ba','#0b132b');}
     if(s.phase==='success'){
-      a.rect(64,344,592,319,'#192e56f5',32,'#fff0a5');a.text('★ 별빛 엔진 코어 장착 완료!',360,392,33,'#ffe79b');
-      a.text('로비의 별빛특급에 터보 원자로가 조립되었습니다!',360,432,19,'#b6ffe8');
+      a.rect(64,344,592,319,'#0b132bf5',32,'#ffbe0b');a.label('★ 별빛 엔진 코어 장착 완료!',360,392,33,'#ffbe0b','#0b132b');
+      a.label('로비의 별빛특급에 터보 원자로가 조립되었습니다!',360,432,19,'#00f5d4','#0b132b');
       train(a,375,542,.48,{time:t,cars:parts.harborCars,beacon:parts.beacon,coach:parts.coach,reactor:true,complete:parts.complete});
-      a.text('+'+CONFIG.plaza.reward,360,612,44,'#fff0b8');
+      a.label('+'+CONFIG.plaza.reward,360,612,44,'#ffbe0b','#0b132b');
     }
     if(['briefing','success'].includes(s.phase)){
-      a.rect(127,1060,466,130,'#263152',35);a.rect(127,1046,466,130,s.phase==='success'?'#ffd579':'#8ce6ce',35,'#efffdc');a.text(s.phase==='success'?'다음 심부름':'출동!',360,1110,40,'#264660');
+      a.rect(125,1058,470,134,'#0b132b',36);
+      a.rect(127,1046,466,130,s.phase==='success'?'#ffbe0b':'#00f5d4',35,'#0b132b');
+      a.label(s.phase==='success'?'다음 심부름':'출동!',360,1110,40,'#ffffff','#0b132b');
     }else{
-      if(!this.joystick)a.text(this.plaza.ready?'반짝이는 원으로!':'손가락으로 어디서나 이동',360,1118,22,'#eaf3ff');
-      const j=this.joystick;if(j){a.ellipse(j.x,j.y,CONFIG.plaza.joystickRadius,CONFIG.plaza.joystickRadius,'#12304e66');a.ellipse(j.x,j.y,CONFIG.plaza.joystickRadius,CONFIG.plaza.joystickRadius,'#b8f1f322');a.ellipse(j.knobX+2,j.knobY+9,39,15,'#102d5966');a.ellipse(j.knobX,j.knobY+4,35,35,'#4d9fba');a.ellipse(j.knobX,j.knobY-3,34,34,'#c5f9e8');a.ellipse(j.knobX-8,j.knobY-14,14,7,'#ffffff77');}
+      if(!this.joystick)a.label(this.plaza.ready?'반짝이는 원으로!':'손가락으로 어디서나 이동',360,1118,22,'#eaf3ff','#0b132b');
+      const j=this.joystick;if(j){a.ellipse(j.x,j.y,CONFIG.plaza.joystickRadius,CONFIG.plaza.joystickRadius,'#0b132b88');a.ellipse(j.x,j.y,CONFIG.plaza.joystickRadius-4,CONFIG.plaza.joystickRadius-4,'#00f5d422');a.ellipse(j.knobX,j.knobY+4,38,38,'#0b132b');a.ellipse(j.knobX,j.knobY,33,33,'#00f5d4');a.ellipse(j.knobX-8,j.knobY-10,12,6,'#ffffff88');}
     }
   }
 }

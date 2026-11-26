@@ -315,10 +315,28 @@ export class AdventureRenderer {
     c.save();c.translate(x,y);c.scale(.72,.72);
     a.ellipse(0,0,42,14,'#0d224055');
     a.ellipse(0,-2,30,10,'#00f5d444');
+    // Stubby Chibi Boots
+    for(const side of[-1,1]){
+      a.rect(side*11-9,-16+bob,18,18,'#0b132b',9);
+      a.rect(side*11-6,-13+bob,12,12,'#ffffff',6);
+    }
     // Tiny Stubby Commander Torso (-48..-4, width 44px)
-    a.rect(-22,-50+bob,44,44,'#0b132b',20);
-    a.rect(-18,-46+bob,36,36,'#1d4ed8',16);
-    a.star(0,-28+bob,11,'#ffbe0b');
+    a.rect(-22,-50+bob,44,42,'#0b132b',20);
+    a.rect(-18,-46+bob,36,34,'#1d4ed8',16);
+    a.star(0,-29+bob,11,'#ffbe0b');
+    // Outstretched Chubby Chibi Arms & Seamless Mitten Gloves
+    for(const side of[-1,1]){
+      c.save();c.translate(side*19,-41+bob);c.rotate(-side*.58);
+      a.rect(-8,-3,16,16,'#0b132b',8);
+      a.rect(-5.5,0,11,11,'#1d4ed8',5.5);
+      a.rect(-8,8,16,6,'#0b132b',3);
+      a.rect(-5.5,9.5,11,3,'#ffbe0b',1.5);
+      a.ellipse(-side*6,16,5.2,4.8,'#0b132b');
+      a.ellipse(0,18.5,9.5,9,'#0b132b');
+      a.ellipse(-side*5.5,16,3,2.8,'#ffffff');
+      a.ellipse(0,18,6.5,6.2,'#ffffff');
+      c.restore();
+    }
     // Oversized 2-Head Super-Chibi Commander Head (-122..-42, width 88px, height 78px!)
     for(const side of[-1,1]){
       a.ellipse(side*43,-82+bob,9,13,'#0b132b');

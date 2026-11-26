@@ -54,6 +54,13 @@ export function cocoToy(a,x,y,scale=1,time=0){
   a.rect(-19,-36,38,32,'#0b132b',16);
   a.rect(-15,-33,30,26,'#10b981',13);
   a.ellipse(0,-20,10,9,'#fef08a');
+  // Cute Outstretched Chubby Dragon Paws
+  for(const side of[-1,1]){
+    c.save();c.translate(side*16,-25);c.rotate(-side*.58);
+    a.ellipse(0,8,7.5,6.5,'#0b132b');
+    a.ellipse(0,8,4.8,4,'#34d399');
+    c.restore();
+  }
   // Oversized 2-Head Super-Chibi Dragon Head (-86..-26, width 68px!)
   for(const side of[-1,1]){
     a.poly([[side*14,-82],[side*26,-102],[side*28,-78]],'#ffbe0b','#0b132b',4);

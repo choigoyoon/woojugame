@@ -166,16 +166,26 @@ export class Art {
         this.rect(side*13-7,by+3,14,18,'#ffffff',7);
         this.rect(side*13-7,by+14,14,6,'#00f5d4',3);
       }
-      // Compact Chibi Bean Torso & Tiny Outstretched Paws
-      for(const side of [-1,1]){
-        const armWave=run?Math.sin(phase+(side>0?Math.PI:0)):0;
-        this.ellipse(side*28,-50+armWave*4,9,8,'#0b132b');
-        this.ellipse(side*28,-50+armWave*4,6,5.5,'#ffffff');
-      }
+      // Compact Chibi Bean Torso
       this.rect(-24,-74,48,54,'#0b132b',22);
       this.rect(-20,-70,40,46,suit,18);
       // Cute Golden Star Capelet / Scarf on Upper Back
       this.poly([[-22,-70],[22,-70],[16,-44],[0,-38],[-16,-44]],'#ffbe0b','#0b132b',3.5);
+      // Outstretched Chubby Chibi Arms & Seamless Mitten Gloves (Drawn AFTER torso, angled OUTWARD via -side!)
+      for(const side of [-1,1]){
+        const armWave=run?Math.sin(phase+(side>0?Math.PI:0)):0;
+        const outward=.52+armWave*.16;
+        c.save();c.translate(side*21,-60);c.rotate(-side*outward);
+        this.rect(-8,-3,16,17,'#0b132b',8);
+        this.rect(-5.5,0,11,12,suit,5.5);
+        this.rect(-8,9,16,6,'#0b132b',3);
+        this.rect(-5.5,10.5,11,3,'#00f5d4',1.5);
+        this.ellipse(-side*6,17,5.2,4.8,'#0b132b');
+        this.ellipse(0,19.5,9.5,9,'#0b132b');
+        this.ellipse(-side*5.5,17,3,2.8,'#ffffff');
+        this.ellipse(0,19.2,6.5,6.2,'#ffffff');
+        c.restore();
+      }
       // Oversized 2-Head Super-Chibi Helmet Back Dome (Clean glossy white & sky-blue cap — no creepy eye slots!)
       for(const side of [-1,1]){
         this.ellipse(side*43,-110,9,13,'#0b132b');
@@ -210,20 +220,7 @@ export class Art {
       c.restore();
     }
 
-    // 2. Outstretched Chubby Chibi Arms (-68..-36) — angled outward so hands NEVER overlap the torso!
-    for(const side of [-1,1]) {
-      const armPhase=phase+(side>0?Math.PI:0)-.32;
-      const armSwing=run?Math.sin(armPhase)*.55:0;
-      const shoulderAngle=side*.42+armSwing-jump*(side*.75)-squash*side*.18-(hurt?side*.4:0);
-      c.save();c.translate(side*23,-66);c.rotate(shoulderAngle);
-      this.rect(-10,-4,20,30,'#0b132b',10);
-      this.rect(-7,-1,14,18,suit,7);
-      this.ellipse(0,18,10,9.5,'#0b132b');
-      this.ellipse(0,18,7,6.5,'#ffffff');
-      c.restore();
-    }
-
-    // 3. Compact, Clean Chibi Bean Torso (-78..-22, width 48px — clean 60-30-10 color blocking!)
+    // 2. Compact, Clean Chibi Bean Torso (-78..-22, width 48px — drawn BEFORE arms so arms & hands are never sliced!)
     this.rect(-25,-78,50,56,'#0b132b',24);
     this.rect(-21,-74,42,48,suit,20);
     // Cute Hero Collar / Scarf & Single Bold Star Emblem on Chest
@@ -231,6 +228,28 @@ export class Art {
     this.star(0,-45,14,'#0b132b');
     this.star(0,-45,10.5,'#ffbe0b');
     this.ellipse(0,-45,3.5,3.5,'#ffffff');
+
+    // 3. Outstretched Chubby Chibi Arms & Seamless Mitten Gloves (Angled OUTWARD with -side*outward so hands are 100% visible!)
+    for(const side of [-1,1]) {
+      const armPhase=phase+(side>0?Math.PI:0)-.32;
+      const armSwing=run?Math.sin(armPhase)*.22+.12:Math.sin(t/720)*.05;
+      const outward=.56+armSwing+jump*.78+squash*.14+(hurt?.35:0);
+      const shoulderAngle=-side*outward;
+      c.save();c.translate(side*21,-63);c.rotate(shoulderAngle);
+      // Tapered Chubby Arm Sleeve
+      this.rect(-9.5,-4,19,20,'#0b132b',9.5);
+      this.rect(-6.5,-1,13,14,suit,6.5);
+      // Glowing Cyan/Gold Wrist Cuff Band
+      this.rect(-9.5,9.5,19,7.5,'#0b132b',3.8);
+      this.rect(-6.5,11.5,13,3.5,gold?'#fff3b0':'#00f5d4',1.8);
+      // Seamless Plump Astro-Mitten Glove + Inner Thumb (Outlines drawn first, then white fills fused together!)
+      this.ellipse(-side*7.5,20,6.5,6,'#0b132b');
+      this.ellipse(0,23,11.5,11,'#0b132b');
+      this.ellipse(0,24.2,8.2,7.2,'#dbeafe');
+      this.ellipse(-side*7,20,3.8,3.5,'#ffffff');
+      this.ellipse(0,22.2,8.2,7.8,'#ffffff');
+      c.restore();
+    }
 
     // 4. Oversized 2-Head Super-Chibi Head (-156..-68, width 94px, height 86px!)
     c.save();

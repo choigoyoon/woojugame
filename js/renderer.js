@@ -435,7 +435,7 @@ export class Renderer {
         this.star(Math.cos(angle) * 56, -242 + Math.sin(angle) * 14, 11, '#fff298');
       }
     } else {
-      this.arrow(state.facing * 64, -172, state.facing, 0.54, '#7effe8');
+      this.arrow(state.facing * 92, -162, state.facing, 0.54, '#7effe8');
     }
     c.restore();
   }

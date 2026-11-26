@@ -90,17 +90,25 @@ export class Lobby {
         a.rect(side*64-5,-89,10,102,'#ff2a6d',2);
         a.line([[-64,-87],[64,-87]],'#ffbe0b',7);
       }
-      // Mini Rounded Cartoon Mecha-Pod Boss!
+      // Mini Giant Sea-Monster Kraken Boss on the Bridge!
       for(const side of[-1,1]){
-        a.line([[side*36,-54],[side*64,-34],[side*52,2]],'#0b132b',12);
-        a.line([[side*36,-54],[side*64,-34],[side*52,2]],'#475569',6.5);
-        a.ellipse(side*64,-34,9,9,'#0b132b');a.ellipse(side*64,-34,6,6,'#ffbe0b');
+        // Upper waving tentacles + front bridge tentacles
+        a.line([[side*28,-56],[side*62,-74],[side*74,-92]],'#0b132b',11);
+        a.line([[side*28,-56],[side*62,-74],[side*74,-92]],'#fb7185',6);
+        a.line([[side*32,-42],[side*64,-26],[side*54,4],[side*68,8]],'#0b132b',13);
+        a.line([[side*32,-42],[side*64,-26],[side*54,4],[side*68,8]],'#e11d48',7.5);
+        a.ellipse(side*50,-10,4.5,4.5,'#fda4af');
       }
-      a.ellipse(0,-78,28,14,'#0b132b');a.ellipse(0,-77,24,11,'#38bdf8');
-      a.rect(-48,-74,96,48,'#0b132b',24);
-      a.rect(-44,-70,88,40,'#e11d48',20);
-      a.rect(-34,-62,68,24,'#0b132b',12,'#00f5d4');
-      a.ellipse(-14,-50,6,6.5,'#ffbe0b');a.ellipse(14,-50,6,6.5,'#ffbe0b');
+      // Bulbous Octopus Mantle Head + Spots + Fierce Golden Slit Eyes
+      a.ellipse(0,-72,34,30,'#0b132b');a.ellipse(0,-50,42,22,'#0b132b');
+      a.ellipse(0,-72,29,25,'#e11d48');a.ellipse(0,-50,37,17,'#e11d48');
+      a.ellipse(-18,-80,6,4.5,'#fb7185');a.ellipse(18,-80,6,4.5,'#fb7185');
+      for(const side of[-1,1]){
+        a.ellipse(side*16,-52,9,8,'#0b132b');
+        a.ellipse(side*16,-52,7,6,'#ffbe0b');
+        a.ellipse(side*15,-52,2.2,5,'#0b132b');
+      }
+      a.ellipse(0,-38,8,6,'#0b132b');a.ellipse(0,-38,5,3.5,'#fb7185');
       for(const [px,py] of [[-22,88],[23,91],[0,65]])a.toy(px,py,.38,{time:t+px,run:true,back:true,palette:this.profile.palette});
       for(let i=0;i<4;i++){const yy=45-(t/5+i*27)%85;a.line([[0,yy],[0,yy-14]],'#00f5d4',5);}
     } else if(mode==='runner') {

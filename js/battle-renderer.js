@@ -205,66 +205,165 @@ export class BattleRenderer {
     a.line([[-17,20],[0,35],[17,20]],color,7);c.restore();
   }
   crane(entity) {
-    // Chunky Rounded Cartoon Mecha-Crab Boss Pod (Dr. Eggman / Brawl Stars Mecha Boss style — no flat trapezoid with stick arms!)
+    // Giant 2D Cel-Shaded Sea-Monster Kraken Boss (대왕 크라켄 보스) — Bulbous Octopus Mantle Dome, Cephalopod Fins, 8 Suction-Cupped Tentacles & Fierce Slit Eyes!
     const a=this.art,c=a.c,p=this.project(0,entity.z),s=p.s,m=this.game.harbor.state,round=this.game.state.round??0;
     const warning=this.game.state.attack?.phase==='warning',lift=warning?20+Math.sin(this.time/80)*6:0;
     const impact=(entity.hitMs??0)/CONFIG.battle.hitMs,dent=this.reduced?0:Math.sin(impact*Math.PI)*.14;
     const ratio=Math.max(0,Math.min(1,entity.hp/Math.max(1,entity.maxHp)));
     const stage=ratio<.34?3:ratio<.67?2:ratio<.92?1:0;
-    const palettes=[['#e11d48','#1e293b','#ffbe0b'],['#7c3aed','#1e1b4b','#00f5d4'],['#ea580c','#1e293b','#ffbe0b']];
-    const [hull,darkHull,coreCol]=palettes[round]??palettes[0];
+    const palettes=[
+      ['#e11d48','#fb7185','#fda4af','#ffbe0b'], // 1-1 Crimson Deep-Sea Kraken
+      ['#7c3aed','#a855f7','#d8b4fe','#00f5d4'], // 1-2 Abyssal Violet Kraken
+      ['#ea580c','#fb923c','#fed7aa','#ffbe0b'], // 1-3 Magma Emperor Kraken
+    ];
+    const [hull,hullLight,suckerCol,coreCol]=palettes[round]??palettes[0];
+    const t=this.reduced?0:this.time;
     c.save();c.translate(p.x,p.y);
     if(!this.reduced&&impact>0)c.rotate(Math.sin(impact*10)*impact*.05);
     c.scale(s*(1+dent),s*(1-dent*.72));
-    a.ellipse(0,8,255,36,'#06112455');
-    // Ball-Jointed Chunky Mechanical Arms & Oversized Hazard Pincer Claws
+    a.ellipse(0,8,265,38,'#06112455');
+
+    // Helper to draw a curved Kraken tentacle with bold #0b132b cel-shaded outline, inner tentacle fill, and round suction cups
+    const drawTentacle=(pts,wStart,wEnd,col,cupSide=1,broken=false)=>{
+      const mainCol=broken?'#64748b':col;
+      const cupFill=broken?'#94a3b8':suckerCol;
+      // Draw suction cups peeking out along the tentacle curve first so they sit cleanly along the edge
+      for(let i=1;i<pts.length;i++){
+        const [x,y]=pts[i],r=Math.max(7,wEnd*.55+(wStart-wEnd)*(1-i/pts.length)*.35);
+        const nx=cupSide*r*.72,ny=r*.35;
+        a.ellipse(x+nx,y+ny,r*.65+3.5,r*.55+3.5,'#0b132b');
+        a.ellipse(x+nx,y+ny,r*.65,r*.55,cupFill);
+      }
+      // Segmented overlapping smooth tentacle body (outline pass, then fill pass)
+      for(let pass=0;pass<2;pass++){
+        const extra=pass===0?14:0;
+        const strokeCol=pass===0?'#0b132b':mainCol;
+        for(let i=0;i<pts.length-1;i++){
+          const p0=pts[i],p1=pts[i+1];
+          const w=((wStart+(wEnd-wStart)*(i/(pts.length-1)))+extra);
+          a.line([p0,p1],strokeCol,w);
+        }
+        // Curled tentacle tip spiral
+        const tip=pts[pts.length-1];
+        a.ellipse(tip[0],tip[1],(wEnd*.55)+extra*.5,(wEnd*.55)+extra*.5,strokeCol);
+      }
+    };
+
+    // 1. Four Writhing Background/Upper Sea-Monster Tentacles (waving behind the mantle)
+    for(const side of[-1,1]){
+      const w1=Math.sin(t/180+side)*14,w2=Math.cos(t/220+side*2)*16;
+      // Upper waving tentacle
+      drawTentacle([
+        [side*95,-355-lift],
+        [side*175,-395+w1*.5-lift],
+        [side*238,-435+w1-lift],
+        [side*272,-485+w2-lift],
+        [side*246,-512+w2-lift]
+      ],34,16,hull,side,false);
+      // Mid waving tentacle
+      drawTentacle([
+        [side*115,-300-lift],
+        [side*195,-318-w2*.5-lift],
+        [side*258,-348-w2-lift],
+        [side*292,-392+w1-lift],
+        [side*268,-418+w1-lift]
+      ],36,16,hullLight,side,false);
+    }
+
+    // 2. Two Massive Front Bridge-Slamming Tentacles (reaching forward onto the bridge deck at x=±196, y=-75)
     for(const side of[-1,1]){
       const broken=m.locksBroken>=(side<0?1:2);
-      const jitter=!this.reduced&&(broken||stage>=2)?Math.sin(this.time/50+side)*7:0;
-      const sx=side*148,sy=-320-lift,ex=side*224+jitter,ey=-218-lift,cx=side*196+jitter,cy=-78;
-      // Shoulder & Elbow Ball Joints + Segmented Arm Capsules
-      a.line([[sx,sy],[ex,ey],[cx,cy]],'#0b132b',48);
-      a.line([[sx,sy],[ex,ey],[cx,cy]],broken?'#64748b':'#475569',28);
-      a.ellipse(sx,sy,28,28,'#0b132b');a.ellipse(sx,sy,20,20,broken?'#64748b':coreCol);
-      a.ellipse(ex,ey,30,30,'#0b132b');a.ellipse(ex,ey,21,21,broken?'#64748b':hull);
-      // Chunky Rounded Mechanical Pincer Housing
-      a.ellipse(cx,cy,32,26,'#0b132b');a.ellipse(cx,cy,25,19,broken?'#475569':coreCol);
-      a.poly([[cx-side*10,cy+6],[cx-side*42,cy+56],[cx-side*28,cy-4]],broken?'#94a3b8':'#ffbe0b','#0b132b',4);
-      a.poly([[cx+side*10,cy+6],[cx+side*34,cy+56],[cx+side*26,cy-4]],broken?'#94a3b8':hull,'#0b132b',4);
+      const jitter=!this.reduced&&(broken||stage>=2)?Math.sin(t/50+side)*8:Math.sin(t/240+side)*5;
+      drawTentacle([
+        [side*112,-255-lift],
+        [side*192+jitter,-215-lift],
+        [side*226+jitter,-150-lift*.5],
+        [side*198+jitter,-82],
+        [side*234+jitter,-58],
+        [side*252+jitter,-82]
+      ],44,20,hull,-side,broken);
     }
-    // Rounded Spherical/Capsule Boss Mech Body with Spiked Boss Crown & Shark-Tooth Cyber Visor
-    a.poly([[-68,-392-lift],[-82,-448-lift],[-28,-416-lift],[0,-458-lift],[28,-416-lift],[82,-448-lift],[68,-392-lift]],'#ffbe0b','#0b132b',5);
-    a.rect(-164,-394-lift,328,162,'#0b132b',78);
-    a.rect(-156,-386-lift,312,146,hull,72);
-    a.rect(-140,-374-lift,280,44,'#fb718566',22);
-    // Expressive Curved Dark Visor & Big Cartoon Boss Eyes
-    a.rect(-126,-364-lift,252,96,'#0b132b',44);
-    a.rect(-118,-356-lift,236,80,darkHull,38,'#00f5d4');
+
+    // 3. Bulbous Giant Kraken Cephalopod Mantle Head (Tall octopus dome + side ear-fins + bio-spots!)
     for(const side of[-1,1]){
+      const finFlap=Math.sin(t/170+side)*8;
+      a.poly([
+        [side*98,-435-lift],
+        [side*174,-472+finFlap-lift],
+        [side*162,-408+finFlap-lift],
+        [side*108,-392-lift]
+      ],hullLight,'#0b132b',5);
+    }
+    // Kraken King Crown on Top of the Mantle Dome
+    a.poly([[-54,-478-lift],[-68,-532-lift],[-22,-502-lift],[0,-544-lift],[22,-502-lift],[68,-532-lift],[54,-478-lift]],'#ffbe0b','#0b132b',5);
+
+    // Seamless Octopus Mantle Silhouette (All #0b132b outlines first, then Kraken skin fills!)
+    a.ellipse(0,-396-lift,124,106,'#0b132b');
+    a.ellipse(0,-308-lift,152,78,'#0b132b');
+    for(const lx of[-108,-54,0,54,108])a.ellipse(lx,-244-lift,38,26,'#0b132b');
+
+    a.ellipse(0,-396-lift,115,97,hull);
+    a.ellipse(0,-308-lift,143,69,hull);
+    for(const lx of[-108,-54,0,54,108])a.ellipse(lx,-244-lift,30,19,hull);
+
+    // Kraken Bio-Luminescent Octopus Spots & Glossy Dome Highlight
+    for(const side of[-1,1]){
+      a.ellipse(side*68,-432-lift,22,16,hullLight);
+      a.ellipse(side*92,-388-lift,15,12,hullLight);
+      a.ellipse(side*112,-326-lift,14,11,hullLight);
+    }
+    a.ellipse(-42,-458-lift,34,13,'#ffffff55');
+
+    // 4. Fierce Kraken Eyes (Glowing Amber Sclera + Vertical Cephalopod Slit Pupils + Angry Brow Ridge)
+    for(const side of[-1,1]){
+      const ex=side*58,ey=-312-lift;
       const eyeColor=m.weakMs?'#00f5d4':warning||stage>=2?'#ff2a6d':coreCol;
-      if(stage>=2||impact>.2){
-        a.line([[side*54-18,-332-lift],[side*54+18,-304-lift]],eyeColor,7.5);
-        a.line([[side*54+18,-332-lift],[side*54-18,-304-lift]],eyeColor,7.5);
+      a.ellipse(ex,ey,34,30,'#0b132b');
+      a.ellipse(ex,ey,27,23,'#0f172a');
+      if(stage>=3||impact>.65){
+        a.line([[ex-16,ey-14],[ex+16,ey+14]],eyeColor,7.5);
+        a.line([[ex+16,ey-14],[ex-16,ey+14]],eyeColor,7.5);
       }else{
-        a.ellipse(side*54,-320-lift,22,25,eyeColor);
-        a.ellipse(side*54-side*6,-325-lift,8.5,9.5,'#ffffff');
-        // Angry Cartoon V-Brow
-        a.line([[side*22,-336-lift],[side*84,-352-lift]],'#0b132b',11);
+        a.ellipse(ex,ey,23,20,eyeColor);
+        // Vertical Cephalopod Slit Pupil
+        a.ellipse(ex-side*3,ey,7,16,'#0b132b');
+        a.ellipse(ex-side*9,ey-6,5.5,5.5,'#ffffff');
+        // Heavy Angry Kraken Brow Ridge
+        a.poly([[side*18,ey-10],[side*94,ey-30],[side*88,ey-42],[side*14,ey-24]],'#0b132b');
+        a.poly([[side*20,ey-13],[side*90,ey-31],[side*86,ey-38],[side*18,ey-22]],hullLight);
       }
     }
-    // Menacing Glowing Shark-Tooth Cyber Grin
-    for(let ti=-2;ti<=2;ti++){
-      const tx=ti*24;
-      a.poly([[tx-9,-286-lift],[tx+9,-286-lift],[tx,-299-lift]],'#ffbe0b');
-    }
-    if(impact>.15)a.star((Math.sin(this.time)*45),-320-lift,26*impact,'#fff3b0');
+
+    // 5. Octopus Siphon / Fanged Kraken Mouth at Center-Bottom of Mantle
+    const my=-260-lift;
+    a.ellipse(0,my,32,25,'#0b132b');
+    a.ellipse(0,my,25,18,hullLight);
+    a.ellipse(0,my,16,11,'#0b132b');
+    a.poly([[-10,my-8],[-4,my-8],[-7,my+2]],'#ffffff');
+    a.poly([[4,my-8],[10,my-8],[7,my+2]],'#ffffff');
+
+    if(impact>.15)a.star((Math.sin(t)*45),-320-lift,26*impact,'#fff3b0');
+
     // Clean Boss HP Pill on Top Crown
-    a.rect(-62,-428-lift,124,38,'#0b132b',19,coreCol);
-    a.label(Math.ceil(entity.hp),0,-409-lift,26,'#ffffff','#0b132b');
-    const trainY=-52+Math.sin(this.time/350)*5;
-    if(round===0)train(a,0,trainY,.82,{time:this.time,held:m.locksBroken<2});
-    else wagon(a,0,trainY,1.6,this.time,round===2);
-    if(m.locksBroken<2)for(const side of[-1,1])if(side>0||m.locksBroken===0)a.line([[side*86,-238],[side*86,trainY-105]],'#00f5d4',6);
+    a.rect(-62,-510-lift,124,38,'#0b132b',19,coreCol);
+    a.label(Math.ceil(entity.hp),0,-491-lift,26,'#ffffff','#0b132b');
+
+    // 6. Captured Starlight Express Train & Coiling Capture Tentacles wrapping the train!
+    const trainY=-52+Math.sin(t/350)*5;
+    if(round===0)train(a,0,trainY,.82,{time:t,held:m.locksBroken<2});
+    else wagon(a,0,trainY,1.6,t,round===2);
+    if(m.locksBroken<2){
+      for(const side of[-1,1]){
+        if(side>0||m.locksBroken===0){
+          drawTentacle([
+            [side*74,-236-lift],
+            [side*104,-178],
+            [side*88,trainY-78],
+            [side*58,trainY-36]
+          ],24,12,hullLight,side,false);
+        }
+      }
+    }
     c.restore();
   }
   barrel(entity) {
@@ -427,17 +526,18 @@ export class BattleRenderer {
       for(const direction of attack.lane===2?[-1,1]:[attack.lane===0?1:-1])a.line([[p.x,p.y+4],[p.x+direction*100,p.y+4],[p.x+direction*82,p.y-10]],'#fff3bd',7);
       a.rect(p.x-30,p.y-10,60*(attack.remainingMs/this.game.rules.bossWarningMs),5,'#ffe693',2);
       a.rect(p.x-78,p.y-116,156,28,'#3a1728e6',10,'#ffd59b');
-      a.text('집게 낙하! 옆 선로로!',p.x,p.y-102,13.5,'#fff2bd');
+      a.text('촉수 강타! 옆 선로로!',p.x,p.y-102,13.5,'#fff2bd');
     }else{
       c.save();c.globalAlpha=attack.remainingMs/CONFIG.battle.bossSlamMs;
-      const t=1-c.globalAlpha;const front=this.project(attack.lane===2?0:attack.lane===0?-.55:.55,2.2);
-      // Cel-Shaded Dreadnought Plasma Pincer Claw smashing down onto the bridge deck (no brown box!)
-      a.ellipse(front.x,front.y,55+t*170,20+t*65,'#ff2a6d88');
-      a.poly([[front.x-54*front.s,front.y-118*front.s],[front.x+54*front.s,front.y-118*front.s],[front.x+42*front.s,front.y-36*front.s],[front.x-42*front.s,front.y-36*front.s]],'#1f2d50','#0b132b',5*front.s);
-      a.poly([[front.x-44*front.s,front.y-42*front.s],[front.x-16*front.s,front.y+10*front.s],[front.x-22*front.s,front.y-42*front.s]],'#ff2a6d','#0b132b',3.5*front.s);
-      a.poly([[front.x+44*front.s,front.y-42*front.s],[front.x+16*front.s,front.y+10*front.s],[front.x+22*front.s,front.y-42*front.s]],'#ff2a6d','#0b132b',3.5*front.s);
-      a.ellipse(front.x,front.y-78*front.s,16*front.s,16*front.s,'#0b132b');
-      a.ellipse(front.x,front.y-78*front.s,11*front.s,11*front.s,'#ffbe0b');
+      const t=1-c.globalAlpha;const front=this.project(attack.lane===2?0:attack.lane===0?-.55:.55,2.2),fs=front.s;
+      // Giant Crimson Kraken Tentacle with Suction Cups slamming down onto the bridge deck!
+      a.ellipse(front.x,front.y,60+t*170,22+t*65,'#ff2a6d88');
+      for(const [cx,cy,cr]of[[-36,-98,14],[-42,-58,16],[-32,-22,14]]){
+        a.ellipse(front.x+cx*fs,front.y+cy*fs,(cr+4)*fs,(cr+3)*fs,'#0b132b');
+        a.ellipse(front.x+cx*fs,front.y+cy*fs,cr*fs,(cr-1)*fs,'#fda4af');
+      }
+      a.line([[front.x+18*fs,front.y-150*fs],[front.x-10*fs,front.y-75*fs],[front.x+8*fs,front.y-12*fs],[front.x+42*fs,front.y-28*fs]],'#0b132b',54*fs);
+      a.line([[front.x+18*fs,front.y-150*fs],[front.x-10*fs,front.y-75*fs],[front.x+8*fs,front.y-12*fs],[front.x+42*fs,front.y-28*fs]],'#e11d48',36*fs);
       c.restore();
     }
   }
@@ -459,7 +559,7 @@ export class BattleRenderer {
     a.counter(this.profile.coins,634,56,92,26,'#ffbe0b');
     // Clean Floating Top-Center Stage & Boss Progress Bar
     const boss=this.game.entities.find(entity=>entity.kind==='boss');
-    const title=boss?(this.game.harbor?['1-1 크라켄 집게 보스','1-2 쌍둥이 자석 보스','1-3 항구 수호 거인'][s.round]:'보스전')
+    const title=boss?(this.game.harbor?['1-1 대왕 크라켄 보스','1-2 심해 크라켄 보스','1-3 제왕 크라켄 보스'][s.round]:'보스전')
       :(this.game.campaign?'하늘 항구 '+(s.round+1)+'/3 · '+this.game.round.title:'웨이브 '+s.wave);
     a.label(title,320,42,22,'#ffffff','#0b132b');
     a.rect(158,64,324,18,'#0b132b',9);

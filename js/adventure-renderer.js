@@ -310,28 +310,36 @@ export class AdventureRenderer {
     c.restore();
   }
   robot(x,y){
-    // Sleek Compact Harbor Commander Mecha-Unit (Captain Dock) — scaled so antenna never overlaps tile (-2,1) behind him!
+    // 2-Head Super-Chibi Harbor Commander (Captain Dock) — Big Cute Head, Tiny Stubby Body, Big Shiny Eyes & Golden Captain Cap!
     const a=this.art,c=a.c,t=this.reduced?0:this.time,bob=Math.sin(t/220)*2.5;
-    c.save();c.translate(x,y);c.scale(.74,.74);
+    c.save();c.translate(x,y);c.scale(.72,.72);
     a.ellipse(0,0,42,14,'#0d224055');
     a.ellipse(0,-2,30,10,'#00f5d444');
-    // Hover Base & Contoured Commander Torso
-    a.rect(-30,-70+bob,60,56,'#0b132b',22);
-    a.rect(-27,-67+bob,54,50,'#264e82',19,'#4cc9f0');
-    a.ellipse(0,-42+bob,16,16,'#0b132b');
-    a.star(0,-42+bob,13,'#ffbe0b');
-    // Commander Space-Dome Head & Panoramic Cyan Visor
-    a.rect(-37,-127+bob,74,58,'#0b132b',26);
-    a.rect(-34,-124+bob,68,52,'#ffffff',24,'#4cc9f0');
-    a.rect(-26,-112+bob,52,28,'#0b132b',14,'#00f5d4');
-    a.ellipse(-11,-98+bob,5.5,7,'#00f5d4');
-    a.ellipse(11,-98+bob,5.5,7,'#00f5d4');
-    a.ellipse(-12,-100+bob,2,2,'#ffffff');
-    a.ellipse(10,-100+bob,2,2,'#ffffff');
-    // Golden Commander Crest & Beacon Antenna
-    a.poly([[-18,-124+bob],[0,-144+bob],[18,-124+bob]],'#ffbe0b','#0b132b',3.5);
-    a.ellipse(0,-148+bob,8,8,'#0b132b');
-    a.ellipse(0,-148+bob,5.5,5.5,'#00f5d4');
+    // Tiny Stubby Commander Torso (-48..-4, width 44px)
+    a.rect(-22,-50+bob,44,44,'#0b132b',20);
+    a.rect(-18,-46+bob,36,36,'#1d4ed8',16);
+    a.star(0,-28+bob,11,'#ffbe0b');
+    // Oversized 2-Head Super-Chibi Commander Head (-122..-42, width 88px, height 78px!)
+    for(const side of[-1,1]){
+      a.ellipse(side*43,-82+bob,9,13,'#0b132b');
+      a.ellipse(side*43,-82+bob,6,9,'#38bdf8');
+    }
+    a.rect(-44,-122+bob,88,78,'#0b132b',38);
+    a.rect(-39,-117+bob,78,68,'#ffffff',34);
+    a.rect(-33,-104+bob,66,44,'#0f172a',22,'#00f5d4');
+    // Rosy Cheeks & Big Friendly Cyan Eyes
+    a.ellipse(-22,-70+bob,6,3.5,'#ff4d8d88');
+    a.ellipse(22,-70+bob,6,3.5,'#ff4d8d88');
+    for(const ex of[-14,14]){
+      a.ellipse(ex,-82+bob,9.5,12,'#00f5d4');
+      a.ellipse(ex-3,-86+bob,4,4.5,'#ffffff');
+      a.ellipse(ex+3,-77+bob,1.8,2,'#ffffff');
+    }
+    a.line([[-5,-69+bob],[0,-65+bob],[5,-69+bob]],'#ffffff',3);
+    // Cute Golden Captain Cap & Star Emblem on Top
+    a.rect(-28,-132+bob,56,16,'#1e3a8a',8,'#0b132b');
+    a.rect(-32,-120+bob,64,8,'#ffbe0b',4,'#0b132b');
+    a.star(0,-125+bob,8,'#ffbe0b');
     c.restore();
   }
   plazaView(canHome){

@@ -91,56 +91,47 @@ export class Art {
     if(!parts)return;const c=this.c,t=MOTION?.matches?0:time;c.save();c.scale(scale,scale);
     if(layer==='back'){
       if(parts.back==='cape'){
-        const sway=t?Math.sin(t/105)*(run?15:5)+stride*8:0,lift=jump*20+(run?10:0);
-        this.poly([[-24,-96],[24,-96],[52+sway,-18-lift],[sway*.5,-28-lift*.7],[-52+sway*.3,-18-lift]],'#6c3ce8','#0b132b',3.5);
-        this.poly([[-16,-92],[16,-92],[34+sway*.7,-26-lift],[-34+sway*.3,-26-lift]],'#a374ff');
+        const sway=t?Math.sin(t/105)*(run?14:5)+stride*7:0,lift=jump*16+(run?8:0);
+        this.poly([[-22,-74],[22,-74],[46+sway,-14-lift],[sway*.5,-22-lift*.7],[-46+sway*.3,-14-lift]],'#7c3aed','#0b132b',4);
+        this.poly([[-14,-70],[14,-70],[28+sway*.7,-20-lift],[-28+sway*.3,-20-lift]],'#c084fc');
       }
       if(parts.back==='jet'){
-        const thrust=run||jump>0?26+Math.sin(t/38)*10+jump*18:12+Math.sin(t/65)*5;
+        // Compact angled waist thrusters tucked cleanly behind the lower back (never collides with arms or shoulders!)
+        const thrust=run||jump>0?24+Math.sin(t/38)*9+jump*16:11+Math.sin(t/65)*4;
         for(const side of [-1,1]){
-          this.rect(side*36-11,-102,22,48,'#1b3b6f',8,'#0b132b');
-          this.rect(side*36-8,-96,16,18,'#00f5d4',5);
-          this.poly([[side*36-10,-52],[side*36+10,-52],[side*36,-52+thrust]],'#ff9f1c','#ffbe0b',2);
-          this.poly([[side*36-5,-52],[side*36+5,-52],[side*36,-52+thrust*.65]],'#ffffff');
+          this.poly([[side*18,-44],[side*32,-44],[side*26,-44+thrust]],'#ff9f1c','#0b132b',3);
+          this.poly([[side*21,-44],[side*29,-44],[side*25,-44+thrust*.6]],'#fff3b0');
         }
       }
       if(parts.back==='wings'){
-        const flap=t?Math.sin(t/(run||jump>0?90:220))*(run||jump>0?.24:.08)+jump*.18:0;
+        const flap=t?Math.sin(t/(run||jump>0?90:220))*(run||jump>0?.22:.08)+jump*.16:0;
         for(const side of [-1,1]){
-          c.save();c.translate(side*18,-92);c.rotate(side*flap);c.translate(-side*18,92);
-          this.poly([[side*18,-98],[side*96,-142],[side*82,-92],[side*52,-64],[side*22,-66]],'#00f5d4','#0b132b',3.5);
-          this.poly([[side*24,-94],[side*78,-126],[side*66,-92],[side*34,-76]],'#fff3b0');
+          c.save();c.translate(side*20,-70);c.rotate(side*flap);c.translate(-side*20,70);
+          this.poly([[side*18,-74],[side*88,-118],[side*76,-70],[side*46,-46],[side*20,-50]],'#00f5d4','#0b132b',4);
+          this.poly([[side*24,-71],[side*70,-102],[side*60,-71],[side*32,-56]],'#fff3b0');
           c.restore();
         }
       }
-    }else{
-      // Smooth Rounded Chibi Shoulder Pauldrons (no sharp polygon triangles sticking out of torso!)
-      if(layer!=='head'&&(parts.body==='armor'||parts.body==='solar')){
-        const gold=golden||parts.body==='solar';
+    }else if(layer==='head'){
+      if(parts.head==='visor'&&!back){
+        // Cool Cyber Star-Shades / Visor across the upper forehead
+        this.poly([[-38,-146],[0,-136],[38,-146],[32,-128],[0,-120],[-32,-128]],'#7c3aed','#0b132b',3.5);
+        this.line([[-22,-136],[-6,-132]],'#00f5d4',3);
+        this.line([[22,-136],[6,-132]],'#00f5d4',3);
+      }
+      if(parts.head==='cat'){
         for(const side of [-1,1]){
-          this.ellipse(side*28,-90,13,9,'#0b132b');
-          this.ellipse(side*28,-90,10,6.5,gold?'#ffbe0b':'#38bdf8');
+          this.poly([[side*18,-150],[side*42,-188],[side*46,-140]],'#ff4d8d','#0b132b',4.5);
+          this.poly([[side*23,-152],[side*38,-175],[side*40,-145]],'#00f5d4');
         }
       }
-      if(layer!=='head'&&parts.body==='mint'){
-        this.line([[-18,-88],[18,-88]],'#00f5d4',4);
-      }
-      if(layer!=='body'&&parts.head==='visor'&&!back){
-        this.poly([[-34,-148],[0,-140],[34,-148],[28,-132],[0,-126],[-28,-132]],'#7209b7','#00f5d4',2.5);
-      }
-      if(layer!=='body'&&parts.head==='cat'){
-        for(const side of [-1,1]){
-          this.poly([[side*16,-162],[side*34,-192],[side*38,-154]],'#ff4d8d','#0b132b',4);
-          this.poly([[side*20,-164],[side*31,-181],[side*34,-158]],'#00f5d4');
-        }
-      }
-      if(layer!=='body'&&parts.head==='crown'){
-        // Cute Rounded Chibi King Crown (Brawl Stars / Cookie Run style) sitting cleanly on top of the helmet dome!
-        this.poly([[-24,-166],[-28,-194],[-11,-178],[0,-200],[11,-178],[28,-194],[24,-166]],'#ffbe0b','#0b132b',4);
-        this.rect(-24,-172,48,9,'#ff9f1c',4,'#0b132b');
-        this.ellipse(0,-180,5,5,'#ff2a6d');
-        this.ellipse(-15,-179,3.5,3.5,'#00f5d4');
-        this.ellipse(15,-179,3.5,3.5,'#00f5d4');
+      if(parts.head==='crown'){
+        // Chunky, Iconic Chibi King Crown sitting snugly on the oversized head!
+        this.poly([[-26,-154],[-32,-188],[-12,-170],[0,-196],[12,-170],[32,-188],[26,-154]],'#ffbe0b','#0b132b',4.5);
+        this.rect(-27,-160,54,10,'#ff9f1c',5,'#0b132b');
+        this.ellipse(0,-171,5.5,5.5,'#ff2a6d');
+        this.ellipse(-16,-169,4,4,'#00f5d4');
+        this.ellipse(16,-169,4,4,'#00f5d4');
       }
     }c.restore();
   }
@@ -149,139 +140,162 @@ export class Art {
     if(MOTION?.matches){run=false;jump=0;pitch=0;squash=0;turn=0;}
     const phase=t/CONFIG.motion.avatarStrideMs;
     const stride=run?Math.sin(phase):0,snap=run?Math.sin(phase*2):0,breath=Math.sin(t/460);
-    const lift=run?(Math.abs(stride)*8.5+Math.max(0,snap)*2.8):breath*2.8;
-    const lean=(run?stride*.07+(back?0:.04):Math.sin(t/1100)*.03)+pitch+turn*.14;
-    const stretch=1+jump*.12+(run?Math.abs(stride)*.05:0)-squash*.15;
-    const squashX=1-jump*.06-(run?Math.abs(stride)*.03:0)+squash*.16;
+    const lift=run?(Math.abs(stride)*8+Math.max(0,snap)*2.5):breath*2.5;
+    const lean=(run?stride*.065+(back?0:.035):Math.sin(t/1100)*.028)+pitch+turn*.13;
+    const stretch=1+jump*.11+(run?Math.abs(stride)*.045:0)-squash*.14;
+    const squashX=1-jump*.055-(run?Math.abs(stride)*.025:0)+squash*.15;
     c.save();c.translate(x,y);c.scale(scale,scale);
-    const shadowRx=Math.max(18,38-jump*11-lift*.4),shadowRy=Math.max(5,11-jump*3-lift*.15);
+    const shadowRx=Math.max(18,38-jump*10-lift*.4),shadowRy=Math.max(5,11-jump*3-lift*.15);
     this.ellipse(0,2,shadowRx,shadowRy,'#06112455');
-    c.translate(run?stride*2.2:0,-lift);c.rotate(lean);c.scale(squashX,stretch);
+    c.translate(run?stride*2:0,-lift);c.rotate(lean);c.scale(squashX,stretch);
 
-    const suit=gold?'#ffbe0b':palette.shirt;
-    const helmet=gold?'#ffe66d':palette.helmet;
+    // Map dull catalog colors to vibrant, high-saturation Brawl Stars / Cookie Run hero colors!
+    const bodyId=palette.parts?.body??'coral';
+    const suit=gold?'#ffbe0b':bodyId==='armor'?'#2563eb':bodyId==='mint'?'#06d6a0':bodyId==='solar'?'#ff9f1c':'#ff2a6d';
 
-    // BACK VIEW (Last War / Mob Control / Brawl Stars style):
-    // Ultra-clean, consolidated rounded vinyl-toy silhouette so 16+ squad units never look like overlapping toast boxes!
+    // =========================================================================
+    // BACK VIEW (Battle Squad): True 2-Head Super-Chibi Back View!
+    // Big cute rounded white-and-blue space helmet dome + stubby body (ZERO horizontal slots/dots that look like backward faces!)
+    // =========================================================================
     if(back){
+      // Stubby Chibi Boots
       for(const side of [-1,1]){
         const legWave=run?Math.sin(phase+(side>0?0:Math.PI)):0;
-        const bootY=-18+legWave*7;
-        this.ellipse(side*14,bootY,12,11,'#0b132b');
-        this.ellipse(side*14,bootY,8.5,7.5,'#38bdf8');
+        const by=-24+legWave*6;
+        this.rect(side*13-10,by,20,24,'#0b132b',10);
+        this.rect(side*13-7,by+3,14,18,'#ffffff',7);
+        this.rect(side*13-7,by+14,14,6,'#00f5d4',3);
       }
-      // Rounded Bean Torso & Compact Jetpack Core
-      this.rect(-26,-92,52,62,'#0b132b',24);
-      this.rect(-22,-88,44,54,'#1d4ed8',20);
-      this.rect(-15,-78,30,32,'#0b132b',12);
-      this.ellipse(0,-62,9,9,'#00f5d4');
-      this.ellipse(0,-62,4.5,4.5,'#ffffff');
-      // Smooth Spherical Cobalt-Cyan Ranger Helmet Dome (zero beige strips or spiky triangles!)
-      this.ellipse(0,-126,37,35,'#0b132b');
-      this.ellipse(0,-126,32,30,gold?'#ffbe0b':'#38bdf8');
-      this.ellipse(0,-123,27,24,gold?'#fb923c':'#0284c7');
-      this.ellipse(-10,-138,13,7,'#ffffff88');
-      this.rect(-18,-122,36,10,'#0b132b',5);
-      this.rect(-14,-120,28,6,'#00f5d4',3);
+      // Compact Chibi Bean Torso & Tiny Outstretched Paws
+      for(const side of [-1,1]){
+        const armWave=run?Math.sin(phase+(side>0?Math.PI:0)):0;
+        this.ellipse(side*28,-50+armWave*4,9,8,'#0b132b');
+        this.ellipse(side*28,-50+armWave*4,6,5.5,'#ffffff');
+      }
+      this.rect(-24,-74,48,54,'#0b132b',22);
+      this.rect(-20,-70,40,46,suit,18);
+      // Cute Golden Star Capelet / Scarf on Upper Back
+      this.poly([[-22,-70],[22,-70],[16,-44],[0,-38],[-16,-44]],'#ffbe0b','#0b132b',3.5);
+      // Oversized 2-Head Super-Chibi Helmet Back Dome (Clean glossy white & sky-blue cap — no creepy eye slots!)
+      for(const side of [-1,1]){
+        this.ellipse(side*43,-110,9,13,'#0b132b');
+        this.ellipse(side*43,-110,6,9,suit);
+      }
+      this.rect(-44,-150,88,78,'#0b132b',39);
+      this.rect(-39,-145,78,68,'#ffffff',34);
+      this.poly([[-35,-118],[-12,-143],[12,-143],[35,-118],[24,-84],[-24,-84]],'#38bdf8');
+      this.ellipse(-16,-132,14,7,'#ffffffcc');
       if(palette.parts?.head==='crown'){
-        this.poly([[-18,-154],[-22,-176],[-8,-163],[0,-182],[8,-163],[22,-176],[18,-154]],'#ffbe0b','#0b132b',3.5);
+        this.poly([[-22,-148],[-28,-178],[-10,-162],[0,-186],[10,-162],[28,-178],[22,-148]],'#ffbe0b','#0b132b',4);
       }
       c.restore();
       return;
     }
 
+    // =========================================================================
+    // FRONT / 3/4 VIEW: True 2-Head Super-Chibi Hero (Brawl Stars / Cookie Run / Astro Bot style!)
+    // Head is 94px wide (55% of height), Torso is compact 48px wide, ZERO overlapping chest clutter!
+    // =========================================================================
     this.gear(palette.parts,t,'back',1,gold,{run,jump,stride,back});
 
-    // Bouncy Rounded Chibi Boots (Brawl Stars / Cookie Run style)
+    // 1. Short, Stubby, Bouncy Chibi Boots (-28..0)
     for(const side of [-1,1]) {
       const legPhase=phase+(side>0?0:Math.PI);
       const wave=run?Math.sin(legPhase):0;
-      const hipAngle=wave*.52-jump*(side>0?.48:-.2)-squash*side*.12;
-      c.save();c.translate(side*16,-42);c.rotate(hipAngle);
-      this.rect(-13,-4,26,38,'#0b132b',13);
-      this.rect(-10,-1,20,32,'#ffffff',10);
-      this.rect(-10,16,20,9,suit,4);
-      this.rect(-10,23,20,7,gold?'#ffbe0b':'#00f5d4',3.5);
+      const hipAngle=wave*.48-jump*(side>0?.42:-.18)-squash*side*.1;
+      c.save();c.translate(side*14,-26);c.rotate(hipAngle);
+      this.rect(-12,-4,24,30,'#0b132b',12);
+      this.rect(-9,-1,18,24,'#ffffff',9);
+      this.rect(-9,14,18,8,suit,4);
       c.restore();
     }
 
-    // Chibi Rounded Capsule Torso (no sharp polygon trapezoid!)
-    this.rect(-30,-102,60,64,'#0b132b',26);
-    this.rect(-26,-98,52,56,suit,22);
-    this.rect(-19,-92,38,42,'#14213d',16);
-    // Glowing Star Reactor Core on Chest
-    this.ellipse(0,-72,13,13,'#0b132b');
-    this.ellipse(0,-72,10,10,gold?'#ffbe0b':'#00f5d4');
-    this.star(0,-72,7.5,'#ffffff');
-    // Cute Golden Belt Buckle
-    this.rect(-24,-52,48,10,'#0b132b',5);
-    this.rect(-9,-53,18,11,'#ffbe0b',5,'#0b132b');
-
-    // Chubby Rounded Chibi Arms & Mitt Hands
+    // 2. Outstretched Chubby Chibi Arms (-68..-36) — angled outward so hands NEVER overlap the torso!
     for(const side of [-1,1]) {
       const armPhase=phase+(side>0?Math.PI:0)-.32;
-      const armSwing=run?Math.sin(armPhase)*.62:side*(.16+breath*.05);
-      const shoulderAngle=armSwing-jump*(side>0?.85:.38)-squash*side*.2-(hurt?side*.45:0);
-      c.save();c.translate(side*30,-88);c.rotate(shoulderAngle);
-      this.rect(-12,-6,24,38,'#0b132b',12);
-      this.rect(-9,-3,18,22,suit,9);
-      this.ellipse(0,22,11,10,'#0b132b');
-      this.ellipse(0,22,8,7.5,'#ffffff');
+      const armSwing=run?Math.sin(armPhase)*.55:0;
+      const shoulderAngle=side*.42+armSwing-jump*(side*.75)-squash*side*.18-(hurt?side*.4:0);
+      c.save();c.translate(side*23,-66);c.rotate(shoulderAngle);
+      this.rect(-10,-4,20,30,'#0b132b',10);
+      this.rect(-7,-1,14,18,suit,7);
+      this.ellipse(0,18,10,9.5,'#0b132b');
+      this.ellipse(0,18,7,6.5,'#ffffff');
       c.restore();
     }
 
-    // Round, Appealing Chibi Space-Ranger Head (Smooth spherical/oval dome + cute round ear-pods!)
-    c.save();
-    c.translate(run?stride*1.6:0,-106);
-    c.rotate((run?-lean*.5+Math.sin(phase-.45)*.05:Math.sin(t/1500)*.04)-jump*.1+(hurt?Math.sin(t/45)*.15:0));
-    c.translate(0,106);
+    // 3. Compact, Clean Chibi Bean Torso (-78..-22, width 48px — clean 60-30-10 color blocking!)
+    this.rect(-25,-78,50,56,'#0b132b',24);
+    this.rect(-21,-74,42,48,suit,20);
+    // Cute Hero Collar / Scarf & Single Bold Star Emblem on Chest
+    this.poly([[-20,-72],[20,-72],[13,-58],[-13,-58]],'#ffbe0b','#0b132b',3);
+    this.star(0,-45,14,'#0b132b');
+    this.star(0,-45,10.5,'#ffbe0b');
+    this.ellipse(0,-45,3.5,3.5,'#ffffff');
 
-    // Cute Rounded Ear-Pods (replaces sharp spiky triangle fins!)
+    // 4. Oversized 2-Head Super-Chibi Head (-156..-68, width 94px, height 86px!)
+    c.save();
+    c.translate(run?stride*1.5:0,-74);
+    c.rotate((run?-lean*.45+Math.sin(phase-.45)*.045:Math.sin(t/1500)*.035)-jump*.09+(hurt?Math.sin(t/45)*.14:0));
+    c.translate(0,74);
+
+    // Cute Rounded Headphone Ear-Pods on Sides
     for(const side of [-1,1]){
-      this.ellipse(side*38,-136,11,15,'#0b132b');
-      this.ellipse(side*38,-136,7.5,11,suit);
-      this.ellipse(side*38,-136,3.5,6,'#00f5d4');
+      this.ellipse(side*46,-112,11,16,'#0b132b');
+      this.ellipse(side*46,-112,7.5,12,suit);
+      this.ellipse(side*46,-112,3.5,6.5,'#00f5d4');
     }
 
-    // Smooth Chibi Helmet Dome
-    this.ellipse(0,-138,41,37,'#0b132b');
-    this.ellipse(0,-138,37,33,'#ffffff');
-    this.ellipse(0,-148,31,18,helmet);
-    this.ellipse(-12,-158,13,6,'#ffffffaa');
+    // Wide, Squishy Chibi Helmet Shell (Pure glossy white + top V-accent — NO yellow bald forehead patch!)
+    this.rect(-47,-156,94,86,'#0b132b',42);
+    this.rect(-42,-151,84,76,'#ffffff',38);
+    // Sleek Top Center Crest & Specular Shine
+    this.poly([[-14,-151],[14,-151],[8,-137],[-8,-137]],suit,'#0b132b',3);
+    this.ellipse(-20,-142,14,6,'#ffffff');
 
-    // Glossy Dark-Sapphire Visor Screen
-    this.rect(-31,-152,62,36,'#0b132b',18);
-    this.rect(-28,-149,56,30,'#0f172a',15,'#00f5d4');
-    this.line([[-18,-144],[-6,-144]],'#ffffff66',2.5);
+    // Wide Rounded Glossy Visor Face Screen (-36..-84)
+    this.rect(-37,-137,74,54,'#0b132b',26);
+    this.rect(-34,-134,68,48,'#0f172a',23,'#00f5d4');
 
-    const look=run?0:Math.sin(t/1800)*2.2;
+    const look=run?0:Math.sin(t/1800)*2.5;
     const eyeColor=gold?'#ffbe0b':'#00f5d4';
+    // Rosy Holographic Chibi Cheek Blushes
+    this.ellipse(-24,-99,6.5,3.8,'#ff4d8d88');
+    this.ellipse(24,-99,6.5,3.8,'#ff4d8d88');
+
     if(hurt||helmetOff){
-      this.line([[-18,-140],[-8,-134],[-18,-128]],'#ff2a6d',4);
-      this.line([[18,-140],[8,-134],[18,-128]],'#ff2a6d',4);
+      this.line([[-22,-118],[-10,-111],[-22,-104]],'#ff2a6d',4.5);
+      this.line([[22,-118],[10,-111],[22,-104]],'#ff2a6d',4.5);
+      this.ellipse(0,-97,5,4,'#ff2a6d');
     }else if(t>0&&t%3800<130){
-      this.line([[-18,-134],[-12,-139],[-6,-134]],eyeColor,3.8);
-      this.line([[6,-134],[12,-139],[18,-134]],eyeColor,3.8);
+      this.line([[-23,-112],[-15,-118],[-7,-112]],eyeColor,4.2);
+      this.line([[7,-112],[15,-118],[23,-112]],eyeColor,4.2);
+      this.line([[-5,-98],[0,-94],[5,-98]],'#ffffff',3);
     }else if(glow>0||jump>.35||gold){
-      this.star(-12+look,-135,8.5,'#ffbe0b');
-      this.star(12+look,-135,8.5,'#ffbe0b');
-      this.line([[-5,-125],[0,-121],[5,-125]],'#ffffff',2.8);
+      this.star(-16+look,-113,12,'#ffbe0b');
+      this.star(16+look,-113,12,'#ffbe0b');
+      this.ellipse(-18+look,-116,3.5,3.5,'#ffffff');
+      this.ellipse(14+look,-116,3.5,3.5,'#ffffff');
+      // Big Happy Open Chibi Smile
+      this.poly([[-7,-99],[7,-99],[5,-92],[0,-90],[-5,-92]],'#ff2a6d');
+      this.line([[-7,-99],[0,-96],[7,-99]],'#ffffff',3);
     }else{
-      this.ellipse(-12+look,-135,6.5,8,eyeColor);
-      this.ellipse(12+look,-135,6.5,8,eyeColor);
-      this.ellipse(-14+look,-138,2.5,2.8,'#ffffff');
-      this.ellipse(10+look,-138,2.5,2.8,'#ffffff');
-      this.line([[-5,-124],[0,-121],[5,-124]],'#00f5d4',2.6);
+      // HUGE Expressive Chibi Anime/Cartoon Eyes (11.5 x 14.5 radius with dual catchlights!)
+      for(const ex of [-16,16]){
+        this.ellipse(ex+look,-113,11,13.5,eyeColor);
+        this.ellipse(ex-3.5+look,-117,4.5,5,'#ffffff');
+        this.ellipse(ex+3.5+look,-107,2,2.2,'#ffffff');
+      }
+      // Cute Happy Chibi Smile
+      this.line([[-6,-97],[0,-93],[6,-97]],'#ffffff',3.2);
     }
     if(!helmetOff)this.gear(palette.parts,t,'head',1,gold,{back});
     c.restore();
-    this.gear(palette.parts,t,'body',1,gold,{back});
     if(flash>.15){
       c.save();c.globalAlpha=Math.min(.45,flash*.5);
       this.star(0,-95,28,'#fff3b0');
       c.restore();
     }
-    if(glow>0){c.globalAlpha=Math.min(1,glow);this.star(40,-158,11,'#fff4a5');}
+    if(glow>0){c.globalAlpha=Math.min(1,glow);this.star(46,-152,11,'#fff4a5');}
     c.restore();
   }
 }

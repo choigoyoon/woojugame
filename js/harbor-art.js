@@ -13,79 +13,67 @@ export function trainParts(data={}){
 }
 
 export function picoToy(a,x,y,scale=1,time=0){
-  // Sleek Floating Spherical Holo-Navigator Drone (Pico) with Bold #0b132b Cel-Shaded Outlines
+  // Super-Chibi Winged Holo-Fairy Bot (Pico) — Big Expressive Eyes & Rosy Cheeks!
   const c=a.c;c.save();c.translate(x,y);c.scale(scale,scale);
   const bob=Math.sin(time/200)*4;c.translate(0,bob);
   a.ellipse(0,8,24,7,'#07183255');
-  // Anti-gravity glowing cyan hover rings
-  a.ellipse(0,-4,20+Math.sin(time/120)*2,6,'#0b132b');
-  a.ellipse(0,-4,17+Math.sin(time/120)*2,4,'#00f5d4');
-  // Floating magnetic wing-fins
   for(const side of[-1,1]){
-    const flap=Math.sin(time/150)*4;
-    a.poly([[side*24,-46],[side*42,-62-flap],[side*37,-35-flap]],'#00f5d4','#0b132b',3.5);
+    const flap=Math.sin(time/140)*5;
+    a.poly([[side*26,-48],[side*52,-68-flap],[side*46,-36-flap]],'#00f5d4','#0b132b',4);
   }
-  // Spherical Glossy Drone Hull with Bold Ink Silhouette
-  a.ellipse(0,-46,31,31,'#0b132b');
-  a.ellipse(0,-46,27,27,'#ffffff');
-  a.ellipse(0,-45,24,24,'#4cc9f0');
-  a.ellipse(-8,-58,12,7,'#ffffffaa');
-  // Curved Dark-Sapphire Visor & Big Cyan Holo-LED Eyes
-  a.rect(-22,-59,44,26,'#0b132b',13,'#00f5d4');
+  // Oversized Chibi Head Shell
+  a.rect(-36,-82,72,66,'#0b132b',33);
+  a.rect(-32,-78,64,58,'#ffffff',29);
+  a.rect(-27,-68,54,38,'#0f172a',19,'#00f5d4');
+  // Big Shiny Chibi Eyes & Rosy Cheeks
+  a.ellipse(-18,-42,5,3,'#ff4d8d88');
+  a.ellipse(18,-42,5,3,'#ff4d8d88');
   const blink=time>0&&time%3200<120;
-  for(const ex of[-8,8]){
-    if(blink)a.line([[ex-5,-46],[ex+5,-46]],'#00f5d4',3.5);
+  for(const ex of[-11,11]){
+    if(blink)a.line([[ex-6,-50],[ex+6,-50]],'#00f5d4',3.5);
     else{
-      a.ellipse(ex,-46,5,6.5,'#00f5d4');
-      a.ellipse(ex-1.5,-48,2,2.2,'#ffffff');
+      a.ellipse(ex,-50,7.5,9.5,'#00f5d4');
+      a.ellipse(ex-2.5,-53,3,3.5,'#ffffff');
     }
   }
-  // Top Radar Dish & Pulsing Beacon
-  a.ellipse(0,-75,12,5,'#0b132b');
-  a.ellipse(0,-75,9,3.5,'#ffbe0b');
-  a.line([[0,-77],[0,-91]],'#0b132b',6);
-  a.line([[0,-77],[0,-91]],'#00f5d4',3);
-  a.ellipse(0,-94,8,8,'#0b132b');
-  a.ellipse(0,-94,5.5,5.5,Math.floor(time/240)%2?'#ffbe0b':'#00f5d4');
+  a.line([[-4,-40],[0,-37],[4,-40]],'#ffffff',2.5);
+  // Cute Star Antenna on Top
+  a.line([[0,-82],[0,-94]],'#0b132b',6);
+  a.star(0,-98,12,'#0b132b');
+  a.star(0,-98,9,'#ffbe0b');
   c.restore();
 }
 
 export function cocoToy(a,x,y,scale=1,time=0){
-  // Adorable Round Chibi Mecha-Dragon Engineer (Coco) with Bold #0b132b Cel-Shaded Outlines
+  // 2-Head Super-Chibi Baby Dragon Engineer (Coco) — Big Cute Head, Tiny Stubby Body, Big Shiny Eyes & Golden Horns!
   const c=a.c;c.save();c.translate(x,y);c.scale(scale,scale);
   const bob=Math.abs(Math.sin(time/190))*3.5;c.translate(0,-bob);
   a.ellipse(0,7,30,8,'#07183255');
-  // Mecha-Dragon Tail with glowing golden dorsal fin
-  a.poly([[-12,-14],[-46,-27],[-36,-5],[-10,-4]],'#00f5d4','#0b132b',3.5);
-  a.star(-46,-27,10,'#0b132b');
-  a.star(-46,-27,7.5,'#ffbe0b');
-  // Rounded Chibi Pod Body & Golden Engineer Harness
-  a.ellipse(0,-30,27,25,'#0b132b');
-  a.ellipse(0,-30,23,21,'#06d6a0');
-  a.ellipse(2,-28,15,13,'#d6ffea');
-  a.rect(-19,-33,38,10,'#ffbe0b',5,'#0b132b');
-  a.star(0,-28,6.5,'#ffffff');
-  // Rounded Chibi Dragon Head & Snout
-  a.ellipse(0,-62,26,23,'#0b132b');
-  a.ellipse(10,-56,17,14,'#0b132b');
-  a.ellipse(0,-62,22,19,'#10b981');
-  a.ellipse(10,-56,13.5,10.5,'#34d399');
-  // Oversized Golden Aviator Goggles on forehead
-  a.rect(-19,-79,36,14,'#ff9f1c',7,'#0b132b');
-  a.ellipse(-7,-72,6,5,'#00f5d4');
-  a.ellipse(7,-72,6,5,'#00f5d4');
-  // Big expressive eyes & happy grin
-  a.ellipse(-2,-60,4.5,5.5,'#0b132b');
-  a.ellipse(11,-60,4.5,5.5,'#0b132b');
-  a.ellipse(-3,-62,1.8,2,'#ffffff');
-  a.ellipse(10,-62,1.8,2,'#ffffff');
-  a.line([[5,-49],[11,-46],[17,-49]],'#0b132b',3);
-  // Waving Star-Wrench Arm
-  const wave=Math.sin(time/130)*7;
-  a.line([[16,-32],[30,-42-wave]],'#0b132b',10);
-  a.line([[16,-32],[30,-42-wave]],'#10b981',5.5);
-  a.star(33,-45-wave,10,'#0b132b');
-  a.star(33,-45-wave,7.5,'#ffbe0b');
+  // Cute Stubby Dragon Tail & Tiny Body
+  a.poly([[-12,-14],[-42,-24],[-32,-4],[-10,-4]],'#10b981','#0b132b',3.5);
+  a.rect(-19,-36,38,32,'#0b132b',16);
+  a.rect(-15,-33,30,26,'#10b981',13);
+  a.ellipse(0,-20,10,9,'#fef08a');
+  // Oversized 2-Head Super-Chibi Dragon Head (-86..-26, width 68px!)
+  for(const side of[-1,1]){
+    a.poly([[side*14,-82],[side*26,-102],[side*28,-78]],'#ffbe0b','#0b132b',4);
+  }
+  a.rect(-34,-86,68,58,'#0b132b',28);
+  a.rect(-30,-82,60,50,'#34d399',25);
+  // Rosy Cheeks & Big Expressive Cartoon Eyes
+  a.ellipse(-20,-48,6,3.5,'#ff4d8d88');
+  a.ellipse(20,-48,6,3.5,'#ff4d8d88');
+  for(const ex of[-12,12]){
+    a.ellipse(ex,-58,8.5,10.5,'#0b132b');
+    a.ellipse(ex-2.5,-61,3.5,4,'#ffffff');
+    a.ellipse(ex+2.5,-54,1.8,2,'#ffffff');
+  }
+  // Cute Happy Snout Smile
+  a.poly([[-5,-46],[5,-46],[3,-40],[0,-39],[-3,-40]],'#ff2a6d');
+  // Golden Engineer Goggles on Forehead
+  a.rect(-24,-84,48,14,'#ff9f1c',7,'#0b132b');
+  a.ellipse(-10,-77,6,4.5,'#00f5d4');
+  a.ellipse(10,-77,6,4.5,'#00f5d4');
   c.restore();
 }
 

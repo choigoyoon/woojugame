@@ -232,30 +232,33 @@ export class BattleRenderer {
       a.poly([[cx-side*10,cy+6],[cx-side*42,cy+56],[cx-side*28,cy-4]],broken?'#94a3b8':'#ffbe0b','#0b132b',4);
       a.poly([[cx+side*10,cy+6],[cx+side*34,cy+56],[cx+side*26,cy-4]],broken?'#94a3b8':hull,'#0b132b',4);
     }
-    // Rounded Spherical/Capsule Boss Mech Body (Chunky Vinyl-Toy Mecha Silhouette)
-    a.ellipse(0,-402-lift,102,48,'#0b132b');
-    a.ellipse(0,-400-lift,94,42,'#38bdf8');
-    a.ellipse(-28,-414-lift,34,12,'#ffffff99');
+    // Rounded Spherical/Capsule Boss Mech Body with Spiked Boss Crown & Shark-Tooth Cyber Visor
+    a.poly([[-68,-392-lift],[-82,-448-lift],[-28,-416-lift],[0,-458-lift],[28,-416-lift],[82,-448-lift],[68,-392-lift]],'#ffbe0b','#0b132b',5);
     a.rect(-164,-394-lift,328,162,'#0b132b',78);
     a.rect(-156,-386-lift,312,146,hull,72);
     a.rect(-140,-374-lift,280,44,'#fb718566',22);
     // Expressive Curved Dark Visor & Big Cartoon Boss Eyes
-    a.rect(-126,-364-lift,252,92,'#0b132b',44);
-    a.rect(-118,-356-lift,236,76,darkHull,38,'#00f5d4');
+    a.rect(-126,-364-lift,252,96,'#0b132b',44);
+    a.rect(-118,-356-lift,236,80,darkHull,38,'#00f5d4');
     for(const side of[-1,1]){
       const eyeColor=m.weakMs?'#00f5d4':warning||stage>=2?'#ff2a6d':coreCol;
       if(stage>=2||impact>.2){
-        a.line([[side*54-18,-330-lift],[side*54+18,-302-lift]],eyeColor,7);
-        a.line([[side*54+18,-330-lift],[side*54-18,-302-lift]],eyeColor,7);
+        a.line([[side*54-18,-332-lift],[side*54+18,-304-lift]],eyeColor,7.5);
+        a.line([[side*54+18,-332-lift],[side*54-18,-304-lift]],eyeColor,7.5);
       }else{
-        a.ellipse(side*54,-316-lift,22,24,eyeColor);
-        a.ellipse(side*54-side*5,-320-lift,8,9,'#ffffff');
-        // Angry Cartoon Brow
-        a.line([[side*24,-338-lift],[side*82,-350-lift]],'#0b132b',10);
+        a.ellipse(side*54,-320-lift,22,25,eyeColor);
+        a.ellipse(side*54-side*6,-325-lift,8.5,9.5,'#ffffff');
+        // Angry Cartoon V-Brow
+        a.line([[side*22,-336-lift],[side*84,-352-lift]],'#0b132b',11);
       }
     }
+    // Menacing Glowing Shark-Tooth Cyber Grin
+    for(let ti=-2;ti<=2;ti++){
+      const tx=ti*24;
+      a.poly([[tx-9,-286-lift],[tx+9,-286-lift],[tx,-299-lift]],'#ffbe0b');
+    }
     if(impact>.15)a.star((Math.sin(this.time)*45),-320-lift,26*impact,'#fff3b0');
-    // Clean Boss HP Pill on Top Dome
+    // Clean Boss HP Pill on Top Crown
     a.rect(-62,-428-lift,124,38,'#0b132b',19,coreCol);
     a.label(Math.ceil(entity.hp),0,-409-lift,26,'#ffffff','#0b132b');
     const trainY=-52+Math.sin(this.time/350)*5;
@@ -372,13 +375,14 @@ export class BattleRenderer {
       else c.drawImage(this.troopSprites[phase],p.x-104*scale,p.y-bob-210*scale,208*scale,224*scale);
       if(this.glow>0)a.star(p.x+39*scale,p.y-bob-156*scale,10*scale,'#fff4a5');
       const powered=s.powerMs>0,weaponId=s.weapon??'pulse',wColor=powered?'#00f5d4':CONFIG.campaign.weapons[weaponId]?.color??'#ffbe0b';
-      const gx=p.x+16*p.s,gy=p.y-57*p.s+s.recoilMs/65*4,gw=(weaponId==='spread'?20:14)*p.s,gh=(weaponId==='pierce'?36:29)*p.s;
-      a.rect(gx-2*p.s,gy-2*p.s,gw+4*p.s,gh+4*p.s,'#0b132b',6*p.s);
-      a.rect(gx,gy,gw,gh,wColor,4*p.s);
-      a.ellipse(gx+gw*.5,gy+4*p.s,gw*.35,gw*.35,'#ffffff');
-      if(s.recoilMs>34&&i<Math.min(5,count)){
-        a.star(p.x+23*p.s,p.y-66*p.s,(powered?23:17)*p.s,powered?'#00f5d4':'#ffbe0b');
-        a.star(p.x+23*p.s,p.y-66*p.s,11*p.s,'#ffffff');
+      if(i<Math.min(5,count)){
+        const gx=p.x+16*p.s,gy=p.y-42*p.s+s.recoilMs/65*3;
+        a.ellipse(gx,gy,8*p.s,8*p.s,'#0b132b');
+        a.ellipse(gx,gy,5.5*p.s,5.5*p.s,wColor);
+        if(s.recoilMs>34){
+          a.star(gx,gy-12*p.s,(powered?20:14)*p.s,powered?'#00f5d4':'#ffbe0b');
+          a.star(gx,gy-12*p.s,8*p.s,'#ffffff');
+        }
       }
       c.restore();
     }

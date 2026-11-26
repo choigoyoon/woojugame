@@ -223,29 +223,30 @@ export class BattleRenderer {
     c.scale(s*(1+dent),s*(1-dent*.72));
     a.ellipse(0,8,265,38,'#06112455');
 
-    // Helper to draw a curved Kraken tentacle with bold #0b132b cel-shaded outline, inner tentacle fill, and round suction cups
-    const drawTentacle=(pts,wStart,wEnd,col,cupSide=1,broken=false)=>{
-      const mainCol=broken?'#64748b':col;
-      const cupFill=broken?'#94a3b8':suckerCol;
-      // Draw suction cups peeking out along the tentacle curve first so they sit cleanly along the edge
-      for(let i=1;i<pts.length;i++){
-        const [x,y]=pts[i],r=Math.max(7,wEnd*.55+(wStart-wEnd)*(1-i/pts.length)*.35);
-        const nx=cupSide*r*.72,ny=r*.35;
-        a.ellipse(x+nx,y+ny,r*.65+3.5,r*.55+3.5,'#0b132b');
-        a.ellipse(x+nx,y+ny,r*.65,r*.55,cupFill);
-      }
-      // Segmented overlapping smooth tentacle body (outline pass, then fill pass)
+    // Helper to draw a smooth tapered Kraken tentacle with bold #0b132b cel-shaded outline, crimson skin, and visible 2-ring suction cups!
+    const drawTentacle=(pts,wStart,wEnd,col,cupSide=1,recoil=false)=>{
+      const mainCol=recoil?'#be123c':col;
+      // 1. Smooth tapered tentacle body (Outer #0b132b ink pass, then inner Kraken skin pass, then highlight stripe)
       for(let pass=0;pass<2;pass++){
-        const extra=pass===0?14:0;
+        const extra=pass===0?12:0;
         const strokeCol=pass===0?'#0b132b':mainCol;
         for(let i=0;i<pts.length-1;i++){
           const p0=pts[i],p1=pts[i+1];
-          const w=((wStart+(wEnd-wStart)*(i/(pts.length-1)))+extra);
+          const w=wStart+(wEnd-wStart)*(i/(pts.length-1))+extra;
           a.line([p0,p1],strokeCol,w);
         }
-        // Curled tentacle tip spiral
         const tip=pts[pts.length-1];
-        a.ellipse(tip[0],tip[1],(wEnd*.55)+extra*.5,(wEnd*.55)+extra*.5,strokeCol);
+        a.ellipse(tip[0],tip[1],wEnd*.55+extra*.5,wEnd*.55+extra*.5,strokeCol);
+      }
+      // 2. Distinct Octopus Suction Cups (빨판: outer rim + inner cup pit) drawn along the tentacle edge so they are 100% visible!
+      for(let i=1;i<pts.length-1;i++){
+        const [x,y]=pts[i];
+        const w=wStart+(wEnd-wStart)*(i/(pts.length-1));
+        const r=Math.max(6.5,w*.34);
+        const cx=x+cupSide*(w*.46),cy=y+r*.25;
+        a.ellipse(cx,cy,r+3,r*.85+3,'#0b132b');
+        a.ellipse(cx,cy,r,r*.85,suckerCol);
+        a.ellipse(cx+cupSide*1.2,cy,r*.45,r*.38,hull);
       }
     };
 
@@ -317,16 +318,16 @@ export class BattleRenderer {
     // 4. Fierce Kraken Eyes (Glowing Amber Sclera + Vertical Cephalopod Slit Pupils + Angry Brow Ridge)
     for(const side of[-1,1]){
       const ex=side*58,ey=-312-lift;
-      const eyeColor=m.weakMs?'#00f5d4':warning||stage>=2?'#ff2a6d':coreCol;
+      const eyeColor=m.weakMs?'#00f5d4':warning||impact>.35?'#ffbe0b':coreCol;
       a.ellipse(ex,ey,34,30,'#0b132b');
       a.ellipse(ex,ey,27,23,'#0f172a');
-      if(stage>=3||impact>.65){
-        a.line([[ex-16,ey-14],[ex+16,ey+14]],eyeColor,7.5);
-        a.line([[ex+16,ey-14],[ex-16,ey+14]],eyeColor,7.5);
+      if(ratio<.18){
+        a.line([[ex-16,ey-14],[ex+16,ey+14]],'#ff2a6d',7.5);
+        a.line([[ex+16,ey-14],[ex-16,ey+14]],'#ff2a6d',7.5);
       }else{
         a.ellipse(ex,ey,23,20,eyeColor);
         // Vertical Cephalopod Slit Pupil
-        a.ellipse(ex-side*3,ey,7,16,'#0b132b');
+        a.ellipse(ex-side*3,ey,impact>.3?5:7.5,17,'#0b132b');
         a.ellipse(ex-side*9,ey-6,5.5,5.5,'#ffffff');
         // Heavy Angry Kraken Brow Ridge
         a.poly([[side*18,ey-10],[side*94,ey-30],[side*88,ey-42],[side*14,ey-24]],'#0b132b');

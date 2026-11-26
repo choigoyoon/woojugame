@@ -205,16 +205,16 @@ export class BattleRenderer {
     a.line([[-17,20],[0,35],[17,20]],color,7);c.restore();
   }
   crane(entity) {
-    // Giant 2D Cel-Shaded Sea-Monster Kraken Boss (대왕 크라켄 보스) — Bulbous Octopus Mantle Dome, Cephalopod Fins, 8 Suction-Cupped Tentacles & Fierce Slit Eyes!
+    // Giant 2D Cel-Shaded Deep-Sea Squid Kraken Boss (대왕오징어 크라켄 보스) — Spearhead Triangular Squid Fins, Torpedo Mantle + Collar, Hooked Kraken Beak, 8 Pointed Arms & 2 Diamond-Clubbed Feeding Tentacles!
     const a=this.art,c=a.c,p=this.project(0,entity.z),s=p.s,m=this.game.harbor.state,round=this.game.state.round??0;
     const warning=this.game.state.attack?.phase==='warning',lift=warning?20+Math.sin(this.time/80)*6:0;
     const impact=(entity.hitMs??0)/CONFIG.battle.hitMs,dent=this.reduced?0:Math.sin(impact*Math.PI)*.14;
     const ratio=Math.max(0,Math.min(1,entity.hp/Math.max(1,entity.maxHp)));
     const stage=ratio<.34?3:ratio<.67?2:ratio<.92?1:0;
     const palettes=[
-      ['#e11d48','#fb7185','#fda4af','#ffbe0b'], // 1-1 Crimson Deep-Sea Kraken
-      ['#7c3aed','#a855f7','#d8b4fe','#00f5d4'], // 1-2 Abyssal Violet Kraken
-      ['#ea580c','#fb923c','#fed7aa','#ffbe0b'], // 1-3 Magma Emperor Kraken
+      ['#e11d48','#fb7185','#fda4af','#ffbe0b'], // 1-1 Crimson Giant Squid Kraken
+      ['#7c3aed','#a855f7','#d8b4fe','#00f5d4'], // 1-2 Abyssal Violet Squid Kraken
+      ['#ea580c','#fb923c','#fed7aa','#ffbe0b'], // 1-3 Magma Emperor Squid Kraken
     ];
     const [hull,hullLight,suckerCol,coreCol]=palettes[round]??palettes[0];
     const t=this.reduced?0:this.time;
@@ -223,10 +223,10 @@ export class BattleRenderer {
     c.scale(s*(1+dent),s*(1-dent*.72));
     a.ellipse(0,8,265,38,'#06112455');
 
-    // Helper to draw a smooth tapered Kraken tentacle with bold #0b132b cel-shaded outline, crimson skin, and visible 2-ring suction cups!
-    const drawTentacle=(pts,wStart,wEnd,col,cupSide=1,recoil=false)=>{
+    // Helper to draw a tapered Squid Arm or Diamond-Clubbed Feeding Tentacle (촉완) with visible 2-ring suction cups!
+    const drawSquidLimb=(pts,wStart,wEnd,col,cupSide=1,hasClub=false,recoil=false)=>{
       const mainCol=recoil?'#be123c':col;
-      // 1. Smooth tapered tentacle body (Outer #0b132b ink pass, then inner Kraken skin pass, then highlight stripe)
+      // 1. Tapered squid arm shaft
       for(let pass=0;pass<2;pass++){
         const extra=pass===0?12:0;
         const strokeCol=pass===0?'#0b132b':mainCol;
@@ -235,133 +235,187 @@ export class BattleRenderer {
           const w=wStart+(wEnd-wStart)*(i/(pts.length-1))+extra;
           a.line([p0,p1],strokeCol,w);
         }
-        const tip=pts[pts.length-1];
-        a.ellipse(tip[0],tip[1],wEnd*.55+extra*.5,wEnd*.55+extra*.5,strokeCol);
       }
-      // 2. Distinct Octopus Suction Cups (빨판: outer rim + inner cup pit) drawn along the tentacle edge so they are 100% visible!
+      // 2. Suction cups along the shaft
       for(let i=1;i<pts.length-1;i++){
         const [x,y]=pts[i];
         const w=wStart+(wEnd-wStart)*(i/(pts.length-1));
-        const r=Math.max(6.5,w*.34);
-        const cx=x+cupSide*(w*.46),cy=y+r*.25;
+        const r=Math.max(6,w*.33);
+        const cx=x+cupSide*(w*.46),cy=y+r*.22;
         a.ellipse(cx,cy,r+3,r*.85+3,'#0b132b');
         a.ellipse(cx,cy,r,r*.85,suckerCol);
         a.ellipse(cx+cupSide*1.2,cy,r*.45,r*.38,hull);
       }
+      // 3. Tip: Either a broad Diamond/Spear Squid Tentacular Club (촉완 마름모 클럽) or a sharp pointed Squid Arm Tip!
+      const tip=pts[pts.length-1],prev=pts[pts.length-2];
+      const dx=tip[0]-prev[0],dy=tip[1]-prev[1],len=Math.hypot(dx,dy)||1,ux=dx/len,uy=dy/len,nx=-uy,ny=ux;
+      if(hasClub){
+        // Iconic Giant Squid Tentacular Club (넓적한 마름모/창끝 모양 촉완 클럽 + 3개의 대형 빨판)
+        const clubPoly=[
+          [prev[0]+ux*4,prev[1]+uy*4],
+          [tip[0]-ux*14+nx*34,tip[1]-uy*14+ny*34],
+          [tip[0]+ux*38,tip[1]+uy*38],
+          [tip[0]-ux*14-nx*34,tip[1]-uy*14-ny*34]
+        ];
+        a.poly(clubPoly,mainCol,'#0b132b',6);
+        a.poly([
+          [prev[0]+ux*10,prev[1]+uy*10],
+          [tip[0]-ux*12+nx*20,tip[1]-uy*12+ny*20],
+          [tip[0]+ux*24,tip[1]+uy*24],
+          [tip[0]-ux*12-nx*20,tip[1]-uy*12-ny*20]
+        ],hullLight);
+        for(const [ox,oy,cr]of[[-10,-6,7.5],[8,-4,7.5],[2,12,8.5]]){
+          a.ellipse(tip[0]+ox,tip[1]+oy,cr+2.5,cr+2.5,'#0b132b');
+          a.ellipse(tip[0]+ox,tip[1]+oy,cr,cr,suckerCol);
+          a.ellipse(tip[0]+ox,tip[1]+oy,cr*.45,cr*.45,hull);
+        }
+      }else{
+        // Sharp whip-like pointed squid arm tip
+        a.poly([
+          [tip[0]-ux*6+nx*(wEnd*.55),tip[1]-uy*6+ny*(wEnd*.55)],
+          [tip[0]+ux*26,tip[1]+uy*26],
+          [tip[0]-ux*6-nx*(wEnd*.55),tip[1]-uy*6-ny*(wEnd*.55)]
+        ],mainCol,'#0b132b',4.5);
+      }
     };
 
-    // 1. Four Writhing Background/Upper Sea-Monster Tentacles (waving behind the mantle)
+    // 1. Six Writhing Background/Side Squid Arms (pointed whip tips)
     for(const side of[-1,1]){
       const w1=Math.sin(t/180+side)*14,w2=Math.cos(t/220+side*2)*16;
-      // Upper waving tentacle
-      drawTentacle([
-        [side*95,-355-lift],
-        [side*175,-395+w1*.5-lift],
-        [side*238,-435+w1-lift],
-        [side*272,-485+w2-lift],
-        [side*246,-512+w2-lift]
-      ],34,16,hull,side,false);
-      // Mid waving tentacle
-      drawTentacle([
-        [side*115,-300-lift],
-        [side*195,-318-w2*.5-lift],
-        [side*258,-348-w2-lift],
-        [side*292,-392+w1-lift],
-        [side*268,-418+w1-lift]
-      ],36,16,hullLight,side,false);
+      // Upper squid arm
+      drawSquidLimb([
+        [side*88,-335-lift],
+        [side*172,-378+w1*.5-lift],
+        [side*238,-422+w1-lift],
+        [side*278,-475+w2-lift]
+      ],30,13,hull,side,false,false);
+      // Mid squid arm
+      drawSquidLimb([
+        [side*106,-292-lift],
+        [side*196,-308-w2*.5-lift],
+        [side*264,-342-w2-lift],
+        [side*304,-385+w1-lift]
+      ],32,13,hullLight,side,false,false);
+      // Lower-side squid arm
+      drawSquidLimb([
+        [side*112,-256-lift],
+        [side*202,-248+w1*.4-lift],
+        [side*268,-268+w2*.6-lift]
+      ],28,12,hull,side,false,false);
     }
 
-    // 2. Two Massive Front Bridge-Slamming Tentacles (reaching forward onto the bridge deck at x=±196, y=-75)
+    // 2. Two Extra-Long Front Feeding Tentacles with Flared Diamond Tentacular Clubs (대왕오징어 촉완 2개!)
     for(const side of[-1,1]){
       const broken=m.locksBroken>=(side<0?1:2);
       const jitter=!this.reduced&&(broken||stage>=2)?Math.sin(t/50+side)*8:Math.sin(t/240+side)*5;
-      drawTentacle([
-        [side*112,-255-lift],
-        [side*192+jitter,-215-lift],
-        [side*226+jitter,-150-lift*.5],
-        [side*198+jitter,-82],
-        [side*234+jitter,-58],
-        [side*252+jitter,-82]
-      ],44,20,hull,-side,broken);
+      drawSquidLimb([
+        [side*104,-242-lift],
+        [side*188+jitter,-202-lift],
+        [side*226+jitter,-142-lift*.5],
+        [side*202+jitter,-82]
+      ],36,18,hull,-side,true,broken);
     }
 
-    // 3. Bulbous Giant Kraken Cephalopod Mantle Head (Tall octopus dome + side ear-fins + bio-spots!)
+    // 3. Giant Squid Arrowhead / Spear-Tip Torpedo Mantle & Diamond Tail Fins (오징어 특유의 삼각 화살촉 지느러미 + 원뿔형 몸통!)
+    const finFlap=Math.sin(t/165)*7;
+    // Wide Diamond/Triangular Squid Rhomboid Fins at the top apex (-578..-390)
+    a.poly([
+      [0,-578-lift],
+      [194,-462+finFlap-lift],
+      [126,-398+finFlap*.5-lift],
+      [0,-422-lift],
+      [-126,-398+finFlap*.5-lift],
+      [-194,-462+finFlap-lift]
+    ],hullLight,'#0b132b',6);
+    // Inner fin membrane accent lines
     for(const side of[-1,1]){
-      const finFlap=Math.sin(t/170+side)*8;
       a.poly([
-        [side*98,-435-lift],
-        [side*174,-472+finFlap-lift],
-        [side*162,-408+finFlap-lift],
-        [side*108,-392-lift]
-      ],hullLight,'#0b132b',5);
+        [side*32,-532-lift],
+        [side*162,-462+finFlap-lift],
+        [side*114,-414+finFlap*.5-lift],
+        [side*52,-444-lift]
+      ],suckerCol);
     }
-    // Kraken King Crown on Top of the Mantle Dome
-    a.poly([[-54,-478-lift],[-68,-532-lift],[-22,-502-lift],[0,-544-lift],[22,-502-lift],[68,-532-lift],[54,-478-lift]],'#ffbe0b','#0b132b',5);
 
-    // Seamless Octopus Mantle Silhouette (All #0b132b outlines first, then Kraken skin fills!)
-    a.ellipse(0,-396-lift,124,106,'#0b132b');
-    a.ellipse(0,-308-lift,152,78,'#0b132b');
-    for(const lx of[-108,-54,0,54,108])a.ellipse(lx,-244-lift,38,26,'#0b132b');
-
-    a.ellipse(0,-396-lift,115,97,hull);
-    a.ellipse(0,-308-lift,143,69,hull);
-    for(const lx of[-108,-54,0,54,108])a.ellipse(lx,-244-lift,30,19,hull);
-
-    // Kraken Bio-Luminescent Octopus Spots & Glossy Dome Highlight
-    for(const side of[-1,1]){
-      a.ellipse(side*68,-432-lift,22,16,hullLight);
-      a.ellipse(side*92,-388-lift,15,12,hullLight);
-      a.ellipse(side*112,-326-lift,14,11,hullLight);
+    // Tapered Conical Torpedo Squid Mantle Body (-564..-316)
+    a.poly([
+      [0,-568-lift],
+      [78,-496-lift],
+      [118,-396-lift],
+      [98,-318-lift],
+      [-98,-318-lift],
+      [-118,-396-lift],
+      [-78,-496-lift]
+    ],hull,'#0b132b',6);
+    // Squid Dorsal Ridge & Bioluminescent Chevron Stripes on Torpedo Mantle
+    a.poly([[0,-548-lift],[18,-470-lift],[12,-332-lift],[-12,-332-lift],[-18,-470-lift]],hullLight);
+    for(const sy of[-472,-424,-376]){
+      for(const side of[-1,1]){
+        a.line([[side*26,sy-10-lift],[side*74,sy+8-lift]],suckerCol,6.5);
+      }
     }
-    a.ellipse(-42,-458-lift,34,13,'#ffffff55');
+    a.line([[-34,-512-lift],[-68,-430-lift]],'#ffffff66',8);
 
-    // 4. Fierce Kraken Eyes (Glowing Amber Sclera + Vertical Cephalopod Slit Pupils + Angry Brow Ridge)
+    // Flared Squid Mantle Collar Rim (오징어 몸통과 머리 사이의 칼라 테두리: y=-332..-304)
+    a.poly([
+      [-114,-334-lift],[114,-334-lift],
+      [134,-306-lift],[0,-294-lift],[-134,-306-lift]
+    ],hullLight,'#0b132b',5.5);
+
+    // 4. Muscular Lower Squid Head & Fierce Giant Squid Slit Eyes (y=-312..-228)
+    a.poly([
+      [-118,-312-lift],[118,-312-lift],
+      [132,-256-lift],[88,-226-lift],[-88,-226-lift],[-132,-256-lift]
+    ],hull,'#0b132b',6);
+
     for(const side of[-1,1]){
-      const ex=side*58,ey=-312-lift;
+      const ex=side*62,ey=-274-lift;
       const eyeColor=m.weakMs?'#00f5d4':warning||impact>.35?'#ffbe0b':coreCol;
-      a.ellipse(ex,ey,34,30,'#0b132b');
-      a.ellipse(ex,ey,27,23,'#0f172a');
+      a.ellipse(ex,ey,34,29,'#0b132b');
+      a.ellipse(ex,ey,27,22,'#0f172a');
       if(ratio<.18){
         a.line([[ex-16,ey-14],[ex+16,ey+14]],'#ff2a6d',7.5);
         a.line([[ex+16,ey-14],[ex-16,ey+14]],'#ff2a6d',7.5);
       }else{
-        a.ellipse(ex,ey,23,20,eyeColor);
+        a.ellipse(ex,ey,23,19,eyeColor);
         // Vertical Cephalopod Slit Pupil
-        a.ellipse(ex-side*3,ey,impact>.3?5:7.5,17,'#0b132b');
+        a.ellipse(ex-side*3,ey,impact>.3?5:7.5,16,'#0b132b');
         a.ellipse(ex-side*9,ey-6,5.5,5.5,'#ffffff');
-        // Heavy Angry Kraken Brow Ridge
-        a.poly([[side*18,ey-10],[side*94,ey-30],[side*88,ey-42],[side*14,ey-24]],'#0b132b');
-        a.poly([[side*20,ey-13],[side*90,ey-31],[side*86,ey-38],[side*18,ey-22]],hullLight);
+        // Heavy Angry Squid Brow Ridge
+        a.poly([[side*18,ey-10],[side*98,ey-28],[side*92,ey-40],[side*14,ey-22]],'#0b132b');
+        a.poly([[side*20,ey-13],[side*94,ey-29],[side*90,ey-36],[side*18,ey-20]],hullLight);
       }
     }
 
-    // 5. Octopus Siphon / Fanged Kraken Mouth at Center-Bottom of Mantle
-    const my=-260-lift;
-    a.ellipse(0,my,32,25,'#0b132b');
-    a.ellipse(0,my,25,18,hullLight);
-    a.ellipse(0,my,16,11,'#0b132b');
-    a.poly([[-10,my-8],[-4,my-8],[-7,my+2]],'#ffffff');
-    a.poly([[4,my-8],[10,my-8],[7,my+2]],'#ffffff');
+    // 5. Sharp Hooked Parrot-Like Kraken Squid Beak (날카로운 오징어 부리 + 이빨) at Center-Bottom (-244)
+    const by=-240-lift;
+    a.ellipse(0,by,36,24,'#0b132b');
+    a.ellipse(0,by,29,18,hullLight);
+    // Upper & Lower Hooked Black/Gold Squid Beak Mandibles
+    a.poly([[-20,by-4],[0,by-18],[20,by-4],[0,by+16]],'#0b132b');
+    a.poly([[-13,by-4],[0,by-13],[13,by-4],[0,by+9]],'#ffbe0b');
+    a.poly([[-7,by-2],[0,by-8],[7,by-2],[0,by+12]],'#0b132b');
 
-    if(impact>.15)a.star((Math.sin(t)*45),-320-lift,26*impact,'#fff3b0');
+    if(impact>.15)a.star((Math.sin(t)*45),-290-lift,26*impact,'#fff3b0');
 
-    // Clean Boss HP Pill on Top Crown
-    a.rect(-62,-510-lift,124,38,'#0b132b',19,coreCol);
-    a.label(Math.ceil(entity.hp),0,-491-lift,26,'#ffffff','#0b132b');
+    // Kraken King Crown & Boss HP Pill mounted prominently on the Squid Mantle Brow (-372)
+    a.poly([[-48,-342-lift],[-60,-384-lift],[-18,-360-lift],[0,-396-lift],[18,-360-lift],[60,-384-lift],[48,-342-lift]],'#ffbe0b','#0b132b',4.5);
+    a.rect(-62,-364-lift,124,38,'#0b132b',19,coreCol);
+    a.label(Math.ceil(entity.hp),0,-345-lift,26,'#ffffff','#0b132b');
 
-    // 6. Captured Starlight Express Train & Coiling Capture Tentacles wrapping the train!
+    // 6. Captured Starlight Express Train & Coiling Squid Arms wrapping the train!
     const trainY=-52+Math.sin(t/350)*5;
     if(round===0)train(a,0,trainY,.82,{time:t,held:m.locksBroken<2});
     else wagon(a,0,trainY,1.6,t,round===2);
     if(m.locksBroken<2){
       for(const side of[-1,1]){
         if(side>0||m.locksBroken===0){
-          drawTentacle([
-            [side*74,-236-lift],
-            [side*104,-178],
+          drawSquidLimb([
+            [side*72,-226-lift],
+            [side*104,-172],
             [side*88,trainY-78],
-            [side*58,trainY-36]
-          ],24,12,hullLight,side,false);
+            [side*54,trainY-32]
+          ],22,10,hullLight,side,false,false);
         }
       }
     }
@@ -531,14 +585,26 @@ export class BattleRenderer {
     }else{
       c.save();c.globalAlpha=attack.remainingMs/CONFIG.battle.bossSlamMs;
       const t=1-c.globalAlpha;const front=this.project(attack.lane===2?0:attack.lane===0?-.55:.55,2.2),fs=front.s;
-      // Giant Crimson Kraken Tentacle with Suction Cups slamming down onto the bridge deck!
+      // Giant Crimson Squid Tentacular Club (대왕오징어 마름모 촉완) slamming down onto the bridge deck!
       a.ellipse(front.x,front.y,60+t*170,22+t*65,'#ff2a6d88');
-      for(const [cx,cy,cr]of[[-36,-98,14],[-42,-58,16],[-32,-22,14]]){
-        a.ellipse(front.x+cx*fs,front.y+cy*fs,(cr+4)*fs,(cr+3)*fs,'#0b132b');
-        a.ellipse(front.x+cx*fs,front.y+cy*fs,cr*fs,(cr-1)*fs,'#fda4af');
+      a.line([[front.x+16*fs,front.y-165*fs],[front.x-4*fs,front.y-75*fs]],'#0b132b',42*fs);
+      a.line([[front.x+16*fs,front.y-165*fs],[front.x-4*fs,front.y-75*fs]],'#e11d48',26*fs);
+      a.poly([
+        [front.x-4*fs,front.y-92*fs],
+        [front.x+44*fs,front.y-42*fs],
+        [front.x+4*fs,front.y+14*fs],
+        [front.x-44*fs,front.y-42*fs]
+      ],'#e11d48','#0b132b',6*fs);
+      a.poly([
+        [front.x-4*fs,front.y-76*fs],
+        [front.x+26*fs,front.y-42*fs],
+        [front.x+4*fs,front.y-2*fs],
+        [front.x-26*fs,front.y-42*fs]
+      ],'#fb7185');
+      for(const [cx,cy,cr]of[[-10,-52,9],[12,-46,9],[0,-24,10]]){
+        a.ellipse(front.x+cx*fs,front.y+cy*fs,(cr+3)*fs,(cr+3)*fs,'#0b132b');
+        a.ellipse(front.x+cx*fs,front.y+cy*fs,cr*fs,cr*fs,'#fda4af');
       }
-      a.line([[front.x+18*fs,front.y-150*fs],[front.x-10*fs,front.y-75*fs],[front.x+8*fs,front.y-12*fs],[front.x+42*fs,front.y-28*fs]],'#0b132b',54*fs);
-      a.line([[front.x+18*fs,front.y-150*fs],[front.x-10*fs,front.y-75*fs],[front.x+8*fs,front.y-12*fs],[front.x+42*fs,front.y-28*fs]],'#e11d48',36*fs);
       c.restore();
     }
   }

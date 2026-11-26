@@ -90,25 +90,26 @@ export class Lobby {
         a.rect(side*64-5,-89,10,102,'#ff2a6d',2);
         a.line([[-64,-87],[64,-87]],'#ffbe0b',7);
       }
-      // Mini Giant Sea-Monster Kraken Boss on the Bridge!
+      // Mini Giant Squid Kraken Boss on the Bridge (Spearhead triangular squid fins + conical mantle + diamond tentacle clubs)!
       for(const side of[-1,1]){
-        // Upper waving tentacles + front bridge tentacles
-        a.line([[side*28,-56],[side*62,-74],[side*74,-92]],'#0b132b',11);
-        a.line([[side*28,-56],[side*62,-74],[side*74,-92]],'#fb7185',6);
-        a.line([[side*32,-42],[side*64,-26],[side*54,4],[side*68,8]],'#0b132b',13);
-        a.line([[side*32,-42],[side*64,-26],[side*54,4],[side*68,8]],'#e11d48',7.5);
-        a.ellipse(side*50,-10,4.5,4.5,'#fda4af');
+        a.line([[side*24,-46],[side*62,-62],[side*78,-78]],'#0b132b',9.5);
+        a.line([[side*24,-46],[side*62,-62],[side*78,-78]],'#fb7185',5);
+        a.line([[side*26,-36],[side*62,-20],[side*54,4]],'#0b132b',11);
+        a.line([[side*26,-36],[side*62,-20],[side*54,4]],'#e11d48',6.5);
+        // Diamond squid tentacular club at tip
+        a.poly([[side*54,-4],[side*66,6],[side*54,18],[side*42,6]],'#e11d48','#0b132b',2.5);
       }
-      // Bulbous Octopus Mantle Head + Spots + Fierce Golden Slit Eyes
-      a.ellipse(0,-72,34,30,'#0b132b');a.ellipse(0,-50,42,22,'#0b132b');
-      a.ellipse(0,-72,29,25,'#e11d48');a.ellipse(0,-50,37,17,'#e11d48');
-      a.ellipse(-18,-80,6,4.5,'#fb7185');a.ellipse(18,-80,6,4.5,'#fb7185');
+      // Diamond Triangular Squid Tail Fins + Pointed Torpedo Mantle
+      a.poly([[0,-98],[56,-68],[34,-52],[-34,-52],[-56,-68]],'#fb7185','#0b132b',3);
+      a.poly([[0,-95],[24,-74],[32,-48],[-32,-48],[-24,-74]],'#e11d48','#0b132b',3);
+      a.poly([[-34,-50],[34,-50],[38,-41],[-38,-41]],'#fb7185','#0b132b',2.5);
+      a.poly([[-32,-43],[32,-43],[35,-26],[-35,-26]],'#e11d48','#0b132b',3);
       for(const side of[-1,1]){
-        a.ellipse(side*16,-52,9,8,'#0b132b');
-        a.ellipse(side*16,-52,7,6,'#ffbe0b');
-        a.ellipse(side*15,-52,2.2,5,'#0b132b');
+        a.ellipse(side*16,-35,8.5,7,'#0b132b');
+        a.ellipse(side*16,-35,6.5,5.2,'#ffbe0b');
+        a.ellipse(side*15,-35,2,4.5,'#0b132b');
       }
-      a.ellipse(0,-38,8,6,'#0b132b');a.ellipse(0,-38,5,3.5,'#fb7185');
+      a.poly([[-7,-26],[0,-31],[7,-26],[0,-19]],'#ffbe0b','#0b132b',2);
       for(const [px,py] of [[-22,88],[23,91],[0,65]])a.toy(px,py,.38,{time:t+px,run:true,back:true,palette:this.profile.palette});
       for(let i=0;i<4;i++){const yy=45-(t/5+i*27)%85;a.line([[0,yy],[0,yy-14]],'#00f5d4',5);}
     } else if(mode==='runner') {

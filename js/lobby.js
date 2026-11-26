@@ -196,7 +196,6 @@ export class Lobby {
       a.label(card.id==='battle'&&cleared>0?'계속':'출동',x+226,y+327+dy,17,'#ffffff','#0b132b');
       a.poly([[x+258,y+321+dy],[x+268,y+327+dy],[x+258,y+333+dy]],'#ffffff','#0b132b',2);
     }
-    webglStage.renderLobby(this,CARTRIDGES);
     const note=this.profile.status==='memory'?'이번 실행에서만 보관':this.profile.status==='update-required'?'새 버전으로 열어 주세요':parts.complete?'★ 4대 스타 파츠가 모두 합체된 별빛특급 대장!':`조립 완료 파츠 ${parts.doneCount}/4 · 각 게임을 깨면 내 기차가 진화해요`;
     a.text(note,38,1222,18,this.profile.status==='memory'?'#ffbf9e':'#a8c6d6','left',650);
     a.rect(536,1188,149,69,'#0b132b',22);

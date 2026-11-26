@@ -1062,29 +1062,7 @@ export class OGLStage {
   /**
    * LOBBY: 3D Mecha Hangar Showcase & Cartridge 3D Emblems (`renderLobby`)
    */
-  renderLobby(view, cards) {
-    const c = view.art.c;
-    const t = view.motion?.matches ? 0 : view.time;
-    this.beginPass();
-    this.setCamera(0, 0, 20, 0, 0, 0);
-
-    for (const card of cards) {
-      const cx = card.x + 152, cy = card.y + 154;
-      const rot = t * 0.0022 + card.x * 0.01;
-      if (card.id === 'stairs') {
-        this.addLegoBrick(cx - 22, cy + 18, -0.5, 52, 22, 36, '#06b6d4', '#a5f3fc', 0.35, rot, 0, 0, 0.25, 2);
-        this.addLegoBrick(cx + 18, cy - 10, -0.2, 52, 22, 36, '#ffbe0b', '#fef08a', 0.35, rot, 0, 0, 0.35, 2);
-      } else if (card.id === 'battle') {
-        this.addLegoBrick(cx, cy - 14, -0.3, 64, 44, 44, '#ff2a6d', '#ffbe0b', 0.32, rot, 0, 0, 0.28, 2);
-      } else if (card.id === 'runner') {
-        this.addLegoBrick(cx + 12, cy - 18, -0.3, 56, 38, 40, '#ffbe0b', '#00f5d4', 0.32, rot, 0, 0, 0.32, 2);
-      } else {
-        this.addLegoBrick(cx, cy - 6, -0.3, 48, 42, 42, '#8b5cf6', '#00f5d4', 0.55, rot, 0.78, 0, 0.38, 2);
-      }
-    }
-
-    this.endPass(c);
-  }
+  renderLobby() {}
 
   /**
    * JUICE: 3D Rigid-Body Voxel Explosion Physics (`renderJuice`)
